@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, FlaskConical, Map, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles } from "lucide-react";
+import { BookOpen, FlaskConical, Map, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
 
@@ -187,7 +187,7 @@ const Index = () => {
     { label: "Explore the Martech Map", done: false, href: "/martech" },
   ];
 
-  const hasRecommendations = recommendations.models.length > 0 || recommendations.vendors.length > 0 || recommendations.resources.length > 0;
+  const hasRecommendations = recommendations.models.length > 0 || recommendations.martechCategories.length > 0 || recommendations.resources.length > 0;
 
   return (
     <AppLayout>
@@ -205,90 +205,108 @@ const Index = () => {
 
         {/* Personalized Recommendations */}
         {!recommendations.loading && hasRecommendations && (
-          <section className="bg-gradient-to-br from-primary/5 via-primary/10 to-transparent rounded-2xl p-6 border border-primary/20">
-            <div className="flex items-center gap-2 mb-6">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Recommended For You</h2>
+          <section className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/40">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Recommended For You</h2>
+                  <p className="text-sm text-muted-foreground">Curated based on your profile and interests</p>
+                </div>
+              </div>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Recommended Models */}
-              {recommendations.models.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Models</h3>
-                  <div className="space-y-2">
-                    {recommendations.models.slice(0, 3).map((model) => (
-                      <Link key={model.id} to={`/models/${model.id}`}>
-                        <Card className="hover:shadow-md transition-all hover:border-primary/50">
-                          <CardContent className="p-4 flex items-center gap-3">
-                            <span className="text-2xl">{model.emoji || "📚"}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{model.name}</p>
-                              <p className="text-sm text-muted-foreground truncate">{model.short_description}</p>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recommended Vendors */}
-              {recommendations.vendors.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Martech</h3>
-                  <div className="space-y-2">
-                    {recommendations.vendors.slice(0, 3).map((vendor) => (
-                      <Link key={vendor.id} to="/martech">
-                        <Card className="hover:shadow-md transition-all hover:border-primary/50">
-                          <CardContent className="p-4 flex items-center gap-3">
-                            {vendor.logo_url ? (
-                              <img src={vendor.logo_url} alt={vendor.name} className="h-8 w-8 rounded object-contain" />
-                            ) : (
-                              <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                                <span className="text-xs font-bold">{vendor.name.charAt(0)}</span>
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Recommended Models */}
+                {recommendations.models.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📚</span>
+                      <h3 className="font-medium">Growth Models</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {recommendations.models.slice(0, 3).map((model) => (
+                        <Link key={model.id} to={`/models/${model.id}`}>
+                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
+                            <CardContent className="p-4 flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">
+                                {model.emoji || "📚"}
                               </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{vendor.name}</p>
-                              <p className="text-sm text-muted-foreground truncate">{vendor.description}</p>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Recommended Insights */}
-              {recommendations.resources.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Insights Hub</h3>
-                  <div className="space-y-2">
-                    {recommendations.resources.slice(0, 3).map((resource) => (
-                      <a key={resource.id} href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
-                        <Card className="hover:shadow-md transition-all hover:border-primary/50">
-                          <CardContent className="p-4 flex items-center gap-3">
-                            <span className="text-2xl">{resource.emoji || "📄"}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium truncate">{resource.title}</p>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Badge variant="secondary" className="text-xs">{resource.type}</Badge>
-                                {resource.author && <span className="truncate">{resource.author}</span>}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate group-hover:text-primary transition-colors">{model.name}</p>
+                                <p className="text-sm text-muted-foreground truncate">{model.short_description}</p>
                               </div>
-                            </div>
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                          </CardContent>
-                        </Card>
-                      </a>
-                    ))}
+                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Recommended Martech Categories */}
+                {recommendations.martechCategories.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🗺️</span>
+                      <h3 className="font-medium">Martech Map</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {recommendations.martechCategories.slice(0, 3).map((category) => (
+                        <Link key={category.id} to={`/martech?category=${encodeURIComponent(category.name)}`}>
+                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
+                            <CardContent className="p-4 flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-secondary/80 flex items-center justify-center shrink-0">
+                                <MapPin className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate group-hover:text-primary transition-colors">{category.name}</p>
+                                <p className="text-sm text-muted-foreground">Explore vendors</p>
+                              </div>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommended Insights */}
+                {recommendations.resources.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💡</span>
+                      <h3 className="font-medium">Insights Hub</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {recommendations.resources.slice(0, 3).map((resource) => (
+                        <a key={resource.id} href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
+                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
+                            <CardContent className="p-4 flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-accent/50 flex items-center justify-center text-xl shrink-0">
+                                {resource.emoji || "📄"}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate group-hover:text-primary transition-colors">{resource.title}</p>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Badge variant="secondary" className="text-xs capitalize">{resource.type}</Badge>
+                                  {resource.author && <span className="truncate">by {resource.author}</span>}
+                                </div>
+                              </div>
+                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                            </CardContent>
+                          </Card>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}

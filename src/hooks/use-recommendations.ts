@@ -40,11 +40,9 @@ export interface RecommendedModel {
   slug: string | null;
 }
 
-export interface RecommendedVendor {
+export interface RecommendedVendorCategory {
   id: string;
   name: string;
-  description: string | null;
-  logo_url: string | null;
 }
 
 export interface RecommendedResource {
@@ -61,7 +59,7 @@ export interface RecommendedResource {
 export interface Recommendations {
   topics: ScoredTopic[];
   models: RecommendedModel[];
-  vendors: RecommendedVendor[];
+  martechCategories: RecommendedVendorCategory[];
   resources: RecommendedResource[];
   loading: boolean;
 }
@@ -123,7 +121,7 @@ export function useRecommendations(maxTopics: number = 5) {
   const [recommendations, setRecommendations] = useState<Recommendations>({
     topics: [],
     models: [],
-    vendors: [],
+    martechCategories: [],
     resources: [],
     loading: true,
   });
@@ -171,7 +169,7 @@ export function useRecommendations(maxTopics: number = 5) {
           .slice(0, maxTopics);
 
         let models: RecommendedModel[] = [];
-        let vendors: RecommendedVendor[] = [];
+        let martechCategories: RecommendedVendorCategory[] = [];
         let resources: RecommendedResource[] = [];
 
         const topTopicIds = scoredTopics.map((t) => t.id);
@@ -188,28 +186,27 @@ export function useRecommendations(maxTopics: number = 5) {
           const vendorCategoryIds = [...new Set((linkedVendorCats.data || []).map((l) => l.category_id))];
           const resourceCategoryIds = [...new Set((linkedResourceCats.data || []).map((l) => l.category_id))];
 
-          const [modelLinks, vendorLinks, resourceLinks] = await Promise.all([
-            modelCategoryIds.length > 0
-              ? supabase.from('model_category_links').select('model_id').in('category_id', modelCategoryIds)
-              : Promise.resolve({ data: [] }),
-            vendorCategoryIds.length > 0
-              ? supabase.from('vendor_categories').select('vendor_id').in('category_id', vendorCategoryIds)
-              : Promise.resolve({ data: [] }),
-            resourceCategoryIds.length > 0
-              ? supabase.from('resource_category_links').select('resource_id').in('category_id', resourceCategoryIds)
-              : Promise.resolve({ data: [] }),
-          ]);
+          // Fetch models via category links
+          const modelLinks = modelCategoryIds.length > 0
+            ? await supabase.from('model_category_links').select('model_id').in('category_id', modelCategoryIds)
+            : { data: [] };
+
+          // Fetch martech categories directly (not vendors)
+          const martechCatsRes = vendorCategoryIds.length > 0
+            ? await supabase.from('martech_categories').select('id, name').in('id', vendorCategoryIds)
+            : { data: [] };
+
+          // Fetch resources via category links
+          const resourceLinks = resourceCategoryIds.length > 0
+            ? await supabase.from('resource_category_links').select('resource_id').in('category_id', resourceCategoryIds)
+            : { data: [] };
 
           const modelIds = [...new Set((modelLinks.data || []).map((l) => l.model_id))];
-          const vendorIds = [...new Set((vendorLinks.data || []).map((l) => l.vendor_id))];
           const resourceIds = [...new Set((resourceLinks.data || []).map((l) => l.resource_id))];
 
-          const [modelsRes, vendorsRes, resourcesRes] = await Promise.all([
+          const [modelsRes, resourcesRes] = await Promise.all([
             modelIds.length > 0
               ? supabase.from('models').select('id, name, emoji, short_description, slug').in('id', modelIds).eq('status', 'active')
-              : Promise.resolve({ data: [] }),
-            vendorIds.length > 0
-              ? supabase.from('vendors').select('id, name, description, logo_url').in('id', vendorIds)
               : Promise.resolve({ data: [] }),
             resourceIds.length > 0
               ? supabase.from('resources').select('id, title, description, type, url, emoji, author, estimated_time').in('id', resourceIds).eq('status', 'active')
@@ -217,17 +214,17 @@ export function useRecommendations(maxTopics: number = 5) {
           ]);
 
           models = (modelsRes.data || []) as RecommendedModel[];
-          vendors = (vendorsRes.data || []) as RecommendedVendor[];
+          martechCategories = (martechCatsRes.data || []) as RecommendedVendorCategory[];
           resources = (resourcesRes.data || []) as RecommendedResource[];
         }
 
         // If we have no recommendations, fetch random items as fallback
-        const needsFallback = models.length === 0 && vendors.length === 0 && resources.length === 0;
+        const needsFallback = models.length === 0 && martechCategories.length === 0 && resources.length === 0;
         
         if (needsFallback) {
-          const [randomModels, randomVendors, randomResources] = await Promise.all([
+          const [randomModels, randomMartechCats, randomResources] = await Promise.all([
             supabase.from('models').select('id, name, emoji, short_description, slug').eq('status', 'active').limit(4),
-            supabase.from('vendors').select('id, name, description, logo_url').limit(4),
+            supabase.from('martech_categories').select('id, name').limit(4),
             supabase.from('resources').select('id, title, description, type, url, emoji, author, estimated_time').eq('status', 'active').limit(4),
           ]);
 
@@ -235,14 +232,14 @@ export function useRecommendations(maxTopics: number = 5) {
           const shuffleArray = <T,>(arr: T[]): T[] => arr.sort(() => Math.random() - 0.5);
           
           models = shuffleArray(randomModels.data || []).slice(0, 3) as RecommendedModel[];
-          vendors = shuffleArray(randomVendors.data || []).slice(0, 3) as RecommendedVendor[];
+          martechCategories = shuffleArray(randomMartechCats.data || []).slice(0, 3) as RecommendedVendorCategory[];
           resources = shuffleArray(randomResources.data || []).slice(0, 3) as RecommendedResource[];
         }
 
         setRecommendations({
           topics: scoredTopics,
           models,
-          vendors,
+          martechCategories,
           resources,
           loading: false,
         });
