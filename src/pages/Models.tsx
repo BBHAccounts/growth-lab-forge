@@ -49,6 +49,16 @@ export default function Models() {
   const handleLike = async (e: React.MouseEvent, modelId: string) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    const wasLiked = isLiked(modelId);
+    
+    // Optimistically update the UI
+    setModels(prev => prev.map(model => 
+      model.id === modelId 
+        ? { ...model, likes_count: (model.likes_count || 0) + (wasLiked ? -1 : 1) }
+        : model
+    ));
+    
     await toggleReaction(modelId);
   };
 
