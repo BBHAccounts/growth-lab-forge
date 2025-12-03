@@ -180,7 +180,7 @@ export default function Models() {
                 <Card
                   key={model.id}
                   className={`group hover:shadow-elevated transition-all duration-300 flex flex-col ${
-                    activated ? "border-primary/50 bg-primary/5" : ""
+                    activated ? "border-green-500/40 bg-green-50 dark:bg-green-950/20" : ""
                   }`}
                 >
                   <CardHeader>
@@ -188,7 +188,7 @@ export default function Models() {
                       <div className="flex items-center gap-2">
                         <span className="text-4xl">{model.emoji || "📚"}</span>
                         {activated && (
-                          <Badge variant="default" className="text-xs">
+                          <Badge className="text-xs bg-green-500 hover:bg-green-600 text-white">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Active
                           </Badge>
@@ -239,8 +239,8 @@ export default function Models() {
                     <div className="mt-auto">
                       <Button 
                         asChild 
-                        variant={activated ? "default" : "outline"}
-                        className="w-full"
+                        variant="outline"
+                        className={`w-full ${activated ? "border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950/30" : ""}`}
                       >
                         <Link to={`/models/${model.id}`}>
                           {activated ? (
