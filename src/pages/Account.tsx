@@ -21,7 +21,6 @@ interface Profile {
   firm_size: string | null;
   practice_area: string | null;
   research_contributor: boolean;
-  game_of_life_access: boolean;
 }
 
 export default function Account() {
@@ -123,12 +122,6 @@ export default function Account() {
             <Badge className="bg-chart-4 text-chart-4-foreground">
               <CheckCircle className="h-3 w-3 mr-1" />
               Research Contributor
-            </Badge>
-          )}
-          {profile?.game_of_life_access && (
-            <Badge className="bg-chart-2 text-chart-2-foreground">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Game of Life Access
             </Badge>
           )}
         </div>

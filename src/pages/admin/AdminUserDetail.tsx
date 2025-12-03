@@ -319,19 +319,6 @@ export default function AdminUserDetail() {
                   }
                 />
               </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Game of Life Access</Label>
-                  <p className="text-sm text-muted-foreground">Access to Game of Life feature</p>
-                </div>
-                <Switch
-                  checked={profile.game_of_life_access || false}
-                  onCheckedChange={(checked) =>
-                    setProfile({ ...profile, game_of_life_access: checked })
-                  }
-                />
-              </div>
             </CardContent>
           </Card>
 

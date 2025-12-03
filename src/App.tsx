@@ -10,7 +10,6 @@ import ModelDetail from "./pages/ModelDetail";
 import ModelWorkspace from "./pages/ModelWorkspace";
 import Martech from "./pages/Martech";
 import Research from "./pages/Research";
-import GameOfLife from "./pages/GameOfLife";
 import About from "./pages/About";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
@@ -46,7 +45,6 @@ const App = () => (
           <Route path="/models/:id/workspace" element={<ModelWorkspace />} />
           <Route path="/martech" element={<Martech />} />
           <Route path="/research" element={<Research />} />
-          <Route path="/game-of-life" element={<GameOfLife />} />
           <Route path="/about" element={<About />} />
           <Route path="/account" element={<Account />} />
           
