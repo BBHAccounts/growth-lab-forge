@@ -199,7 +199,7 @@ export default function Models() {
                         disabled={isLoading(model.id)}
                         className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
                           isLiked(model.id)
-                            ? "bg-primary/10 text-primary"
+                            ? "bg-red-500/10 text-red-500"
                             : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
