@@ -86,7 +86,7 @@ export default function AdminResourceForm() {
 
         if (error) {
           console.error('Error fetching resource:', error);
-          toast({ title: 'Error', description: 'Failed to load resource', variant: 'destructive' });
+          toast({ title: 'Error', description: 'Failed to load insight', variant: 'destructive' });
           return;
         }
 
@@ -154,11 +154,11 @@ export default function AdminResourceForm() {
         await supabase.from('resource_category_links').insert(linkedCatIds);
       }
 
-      toast({ title: 'Success', description: isNew ? 'Resource created successfully' : 'Resource updated successfully' });
-      navigate('/admin/resources');
+      toast({ title: 'Success', description: isNew ? 'Insight created successfully' : 'Insight updated successfully' });
+      navigate('/admin/insights-hub');
     } catch (error) {
       console.error('Error saving resource:', error);
-      toast({ title: 'Error', description: 'Failed to save resource', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to save insight', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -170,11 +170,11 @@ export default function AdminResourceForm() {
     try {
       const { error } = await supabase.from('resources').delete().eq('id', resourceId);
       if (error) throw error;
-      toast({ title: 'Success', description: 'Resource deleted successfully' });
-      navigate('/admin/resources');
+      toast({ title: 'Success', description: 'Insight deleted successfully' });
+      navigate('/admin/insights-hub');
     } catch (error) {
       console.error('Error deleting resource:', error);
-      toast({ title: 'Error', description: 'Failed to delete resource', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to delete insight', variant: 'destructive' });
     }
   };
 
@@ -197,12 +197,12 @@ export default function AdminResourceForm() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/resources')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/insights-hub')}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{isNew ? 'Add Resource' : 'Edit Resource'}</h1>
-              <p className="text-muted-foreground">{isNew ? 'Create a new resource' : resource.title}</p>
+              <h1 className="text-2xl font-bold">{isNew ? 'Add Insight' : 'Edit Insight'}</h1>
+              <p className="text-muted-foreground">{isNew ? 'Create a new insight' : resource.title}</p>
             </div>
           </div>
           {!isNew && (
@@ -225,7 +225,7 @@ export default function AdminResourceForm() {
                 <Input
                   value={resource.title}
                   onChange={(e) => setResource({ ...resource, title: e.target.value })}
-                  placeholder="Resource title"
+                  placeholder="Insight title"
                 />
               </div>
 
@@ -348,7 +348,7 @@ export default function AdminResourceForm() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Featured</Label>
-                  <p className="text-sm text-muted-foreground">Highlight this resource</p>
+                  <p className="text-sm text-muted-foreground">Highlight this insight</p>
                 </div>
                 <Switch
                   checked={resource.featured}
@@ -377,7 +377,7 @@ export default function AdminResourceForm() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No resource categories defined yet.</p>
+                <p className="text-sm text-muted-foreground">No insight categories defined yet.</p>
               )}
             </CardContent>
           </Card>
@@ -385,12 +385,12 @@ export default function AdminResourceForm() {
 
         {/* Actions */}
         <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => navigate('/admin/resources')}>
+          <Button variant="outline" onClick={() => navigate('/admin/insights-hub')}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : 'Save Resource'}
+            {saving ? 'Saving...' : 'Save Insight'}
           </Button>
         </div>
       </div>
@@ -398,8 +398,8 @@ export default function AdminResourceForm() {
       <ConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title="Delete Resource"
-        description="Are you sure you want to delete this resource? This action cannot be undone."
+        title="Delete Insight"
+        description="Are you sure you want to delete this insight? This action cannot be undone."
         onConfirm={handleDelete}
         confirmLabel="Delete"
         variant="destructive"

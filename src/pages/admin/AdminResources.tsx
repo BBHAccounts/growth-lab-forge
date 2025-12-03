@@ -43,7 +43,7 @@ export default function AdminResources() {
         if (error) throw error;
         setResources(data || []);
       } catch (error) {
-        console.error('Error fetching resources:', error);
+        console.error('Error fetching insights:', error);
       } finally {
         setLoading(false);
       }
@@ -106,24 +106,24 @@ export default function AdminResources() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Resources</h1>
-            <p className="text-muted-foreground">Manage articles, webinars, guides, and other resources</p>
+            <h1 className="text-2xl font-bold">Insights Hub</h1>
+            <p className="text-muted-foreground">Manage articles, webinars, guides, and other insights</p>
           </div>
-          <Button onClick={() => navigate('/admin/resources/new')}>
+          <Button onClick={() => navigate('/admin/insights-hub/new')}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Resource
+            Add Insight
           </Button>
         </div>
 
         {loading ? (
-          <p className="text-muted-foreground">Loading resources...</p>
+          <p className="text-muted-foreground">Loading insights...</p>
         ) : (
           <DataTable
             data={resources}
             columns={columns}
-            searchPlaceholder="Search resources..."
+            searchPlaceholder="Search insights..."
             searchKeys={['title', 'description', 'author']}
-            onRowClick={(resource) => navigate(`/admin/resources/${resource.id}`)}
+            onRowClick={(resource) => navigate(`/admin/insights-hub/${resource.id}`)}
           />
         )}
       </div>
