@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save } from "lucide-react";
-import { ResearchContributorBadge } from "@/components/ResearchContributorBadge";
+import { Loader2, Save, CheckCircle } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 interface Profile {
@@ -167,11 +166,14 @@ export default function Account() {
 
       <div className="p-6 md:p-8 space-y-8 max-w-2xl">
         {/* Status Badges */}
-        {profile?.research_contributor && (
-          <div className="flex flex-wrap gap-3">
-            <ResearchContributorBadge showInfo />
-          </div>
-        )}
+        <div className="flex flex-wrap gap-3">
+          {profile?.research_contributor && (
+            <Badge className="bg-chart-4 text-chart-4-foreground">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Research Contributor
+            </Badge>
+          )}
+        </div>
 
         {/* Personal Info */}
         <Card>

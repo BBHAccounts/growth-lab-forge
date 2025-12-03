@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Gift, CheckCircle, Clock } from "lucide-react";
-import { ResearchContributorInfo } from "@/components/ResearchContributorBadge";
 
 interface Study {
   id: string;
@@ -79,10 +78,6 @@ export default function Research() {
       />
 
       <div className="p-6 md:p-8 space-y-6">
-        {/* Contributor Info */}
-        <div className="flex justify-end">
-          <ResearchContributorInfo />
-        </div>
         {/* Reward Banner */}
         <Card className="border-chart-4/30 bg-chart-4/5">
           <CardContent className="flex items-center gap-4 py-4">
