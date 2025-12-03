@@ -45,15 +45,15 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r-0">
+    <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <span className="text-sidebar-primary-foreground font-bold text-lg">G</span>
+          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shadow-sm">
+            <span className="text-secondary-foreground font-bold text-lg">G</span>
           </div>
           <div>
             <h1 className="font-bold text-sidebar-foreground text-lg">Growth Lab</h1>
-            <p className="text-xs text-sidebar-foreground/70">by Beyond Billable Hours</p>
+            <p className="text-xs text-muted-foreground">by Beyond Billable Hours</p>
           </div>
         </div>
       </SidebarHeader>
@@ -133,7 +133,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-sidebar-foreground/50 text-center">
+        <p className="text-xs text-muted-foreground text-center">
           © 2024 Beyond Billable Hours
         </p>
       </SidebarFooter>
