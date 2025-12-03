@@ -186,7 +186,6 @@ const Index = () => {
   return (
     <AppLayout>
       <HeroBanner
-        emoji="🚀"
         title={`${getGreeting()}, ${firstName}!`}
         description="Welcome to Growth Lab — your command center for law firm growth strategies."
       />
