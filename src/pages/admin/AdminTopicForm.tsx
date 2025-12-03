@@ -31,7 +31,7 @@ interface Topic {
   active: boolean;
 }
 
-interface LinkedItem {
+interface CategoryItem {
   id: string;
   name: string;
   linked: boolean;
@@ -70,17 +70,15 @@ export default function AdminTopicForm() {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const [models, setModels] = useState<LinkedItem[]>([]);
-  const [vendors, setVendors] = useState<LinkedItem[]>([]);
-  const [research, setResearch] = useState<LinkedItem[]>([]);
+  const [modelCategories, setModelCategories] = useState<CategoryItem[]>([]);
+  const [vendorCategories, setVendorCategories] = useState<CategoryItem[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all content items
-      const [modelsRes, vendorsRes, researchRes] = await Promise.all([
-        supabase.from('models').select('id, name').eq('status', 'active').order('name'),
-        supabase.from('vendors').select('id, name').order('name'),
-        supabase.from('research_studies').select('id, title').eq('active', true).order('title'),
+      // Fetch all categories
+      const [modelCatsRes, vendorCatsRes] = await Promise.all([
+        supabase.from('model_categories').select('id, name').order('name'),
+        supabase.from('martech_categories').select('id, name').order('name'),
       ]);
 
       if (!isNew && topicId) {
@@ -108,24 +106,20 @@ export default function AdminTopicForm() {
           national_or_international: topicData.national_or_international || [],
         });
 
-        // Fetch linked items
-        const [linkedModels, linkedVendors, linkedResearch] = await Promise.all([
-          supabase.from('topic_models').select('model_id').eq('topic_id', topicId),
-          supabase.from('topic_vendors').select('vendor_id').eq('topic_id', topicId),
-          supabase.from('topic_research').select('research_id').eq('topic_id', topicId),
+        // Fetch linked categories
+        const [linkedModelCats, linkedVendorCats] = await Promise.all([
+          supabase.from('topic_model_categories').select('category_id').eq('topic_id', topicId),
+          supabase.from('topic_vendor_categories').select('category_id').eq('topic_id', topicId),
         ]);
 
-        const linkedModelIds = new Set((linkedModels.data || []).map((l) => l.model_id));
-        const linkedVendorIds = new Set((linkedVendors.data || []).map((l) => l.vendor_id));
-        const linkedResearchIds = new Set((linkedResearch.data || []).map((l) => l.research_id));
+        const linkedModelCatIds = new Set((linkedModelCats.data || []).map((l) => l.category_id));
+        const linkedVendorCatIds = new Set((linkedVendorCats.data || []).map((l) => l.category_id));
 
-        setModels((modelsRes.data || []).map((m) => ({ id: m.id, name: m.name, linked: linkedModelIds.has(m.id) })));
-        setVendors((vendorsRes.data || []).map((v) => ({ id: v.id, name: v.name, linked: linkedVendorIds.has(v.id) })));
-        setResearch((researchRes.data || []).map((r) => ({ id: r.id, name: r.title, linked: linkedResearchIds.has(r.id) })));
+        setModelCategories((modelCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedModelCatIds.has(c.id) })));
+        setVendorCategories((vendorCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedVendorCatIds.has(c.id) })));
       } else {
-        setModels((modelsRes.data || []).map((m) => ({ id: m.id, name: m.name, linked: false })));
-        setVendors((vendorsRes.data || []).map((v) => ({ id: v.id, name: v.name, linked: false })));
-        setResearch((researchRes.data || []).map((r) => ({ id: r.id, name: r.title, linked: false })));
+        setModelCategories((modelCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
+        setVendorCategories((vendorCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
       }
 
       setLoading(false);
@@ -169,25 +163,18 @@ export default function AdminTopicForm() {
         if (error) throw error;
       }
 
-      // Update linked models
-      await supabase.from('topic_models').delete().eq('topic_id', savedTopicId);
-      const linkedModelIds = models.filter((m) => m.linked).map((m) => ({ topic_id: savedTopicId, model_id: m.id }));
-      if (linkedModelIds.length > 0) {
-        await supabase.from('topic_models').insert(linkedModelIds);
+      // Update linked model categories
+      await supabase.from('topic_model_categories').delete().eq('topic_id', savedTopicId);
+      const linkedModelCatIds = modelCategories.filter((c) => c.linked).map((c) => ({ topic_id: savedTopicId, category_id: c.id }));
+      if (linkedModelCatIds.length > 0) {
+        await supabase.from('topic_model_categories').insert(linkedModelCatIds);
       }
 
-      // Update linked vendors
-      await supabase.from('topic_vendors').delete().eq('topic_id', savedTopicId);
-      const linkedVendorIds = vendors.filter((v) => v.linked).map((v) => ({ topic_id: savedTopicId, vendor_id: v.id }));
-      if (linkedVendorIds.length > 0) {
-        await supabase.from('topic_vendors').insert(linkedVendorIds);
-      }
-
-      // Update linked research
-      await supabase.from('topic_research').delete().eq('topic_id', savedTopicId);
-      const linkedResearchIds = research.filter((r) => r.linked).map((r) => ({ topic_id: savedTopicId, research_id: r.id }));
-      if (linkedResearchIds.length > 0) {
-        await supabase.from('topic_research').insert(linkedResearchIds);
+      // Update linked vendor categories
+      await supabase.from('topic_vendor_categories').delete().eq('topic_id', savedTopicId);
+      const linkedVendorCatIds = vendorCategories.filter((c) => c.linked).map((c) => ({ topic_id: savedTopicId, category_id: c.id }));
+      if (linkedVendorCatIds.length > 0) {
+        await supabase.from('topic_vendor_categories').insert(linkedVendorCatIds);
       }
 
       toast({ title: 'Success', description: isNew ? 'Topic created successfully' : 'Topic updated successfully' });
@@ -225,6 +212,18 @@ export default function AdminTopicForm() {
       ...topic,
       interest_area_keywords: value.split(',').map((v) => v.trim()).filter(Boolean),
     });
+  };
+
+  const toggleCategory = (type: 'model' | 'vendor', categoryId: string) => {
+    if (type === 'model') {
+      setModelCategories((prev) =>
+        prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
+      );
+    } else {
+      setVendorCategories((prev) =>
+        prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
+      );
+    }
   };
 
   if (loading) {
@@ -419,74 +418,62 @@ export default function AdminTopicForm() {
             </CardContent>
           </Card>
 
-          {/* Linked Content */}
+          {/* Linked Categories */}
           <Card>
             <CardHeader>
-              <CardTitle>Linked Content</CardTitle>
-              <CardDescription>Select content to recommend for this topic</CardDescription>
+              <CardTitle>Linked Categories</CardTitle>
+              <CardDescription>Select categories to recommend for this topic. Models and vendors in these categories will be recommended.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label>Models ({models.filter((m) => m.linked).length} selected)</Label>
-                <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
-                  {models.map((item) => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={item.linked}
-                        onCheckedChange={(checked) =>
-                          setModels(models.map((m) => (m.id === item.id ? { ...m, linked: !!checked } : m)))
-                        }
-                      />
-                      <span className="text-sm">{item.name}</span>
-                    </label>
-                  ))}
-                </div>
+                <Label>Model Categories ({modelCategories.filter((c) => c.linked).length} selected)</Label>
+                {modelCategories.length > 0 ? (
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
+                    {modelCategories.map((cat) => (
+                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={cat.linked}
+                          onCheckedChange={() => toggleCategory('model', cat.id)}
+                        />
+                        <span className="text-sm">{cat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No model categories defined yet. Create them in the Models section.</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label>Vendors ({vendors.filter((v) => v.linked).length} selected)</Label>
-                <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
-                  {vendors.map((item) => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={item.linked}
-                        onCheckedChange={(checked) =>
-                          setVendors(vendors.map((v) => (v.id === item.id ? { ...v, linked: !!checked } : v)))
-                        }
-                      />
-                      <span className="text-sm">{item.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Research Studies ({research.filter((r) => r.linked).length} selected)</Label>
-                <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
-                  {research.map((item) => (
-                    <label key={item.id} className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={item.linked}
-                        onCheckedChange={(checked) =>
-                          setResearch(research.map((r) => (r.id === item.id ? { ...r, linked: !!checked } : r)))
-                        }
-                      />
-                      <span className="text-sm">{item.name}</span>
-                    </label>
-                  ))}
-                </div>
+                <Label>Vendor Categories ({vendorCategories.filter((c) => c.linked).length} selected)</Label>
+                {vendorCategories.length > 0 ? (
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
+                    {vendorCategories.map((cat) => (
+                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={cat.linked}
+                          onCheckedChange={() => toggleCategory('vendor', cat.id)}
+                        />
+                        <span className="text-sm">{cat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No vendor categories defined yet. Create them in the Martech section.</p>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Actions */}
         <div className="flex justify-end gap-4">
           <Button variant="outline" onClick={() => navigate('/admin/topics')}>
             Cancel
           </Button>
           <Button onClick={handleSave} disabled={saving}>
             <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : isNew ? 'Create Topic' : 'Save Changes'}
+            {saving ? 'Saving...' : 'Save Topic'}
           </Button>
         </div>
       </div>
@@ -496,8 +483,8 @@ export default function AdminTopicForm() {
         onOpenChange={setDeleteDialogOpen}
         title="Delete Topic"
         description="Are you sure you want to delete this topic? This action cannot be undone."
-        confirmLabel="Delete"
         onConfirm={handleDelete}
+        confirmLabel="Delete"
         variant="destructive"
       />
     </AdminLayout>

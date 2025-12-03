@@ -76,6 +76,57 @@ export type Database = {
         }
         Relationships: []
       }
+      model_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      model_category_links: {
+        Row: {
+          category_id: string
+          id: string
+          model_id: string
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          model_id: string
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          model_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_category_links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "model_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_category_links_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       models: {
         Row: {
           audience: string[] | null
@@ -363,35 +414,35 @@ export type Database = {
         }
         Relationships: []
       }
-      topic_models: {
+      topic_model_categories: {
         Row: {
+          category_id: string
           created_at: string
           id: string
-          model_id: string
           topic_id: string
         }
         Insert: {
+          category_id: string
           created_at?: string
           id?: string
-          model_id: string
           topic_id: string
         }
         Update: {
+          category_id?: string
           created_at?: string
           id?: string
-          model_id?: string
           topic_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "topic_models_model_id_fkey"
-            columns: ["model_id"]
+            foreignKeyName: "topic_model_categories_category_id_fkey"
+            columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "models"
+            referencedRelation: "model_categories"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "topic_models_topic_id_fkey"
+            foreignKeyName: "topic_model_categories_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topics"
@@ -399,74 +450,38 @@ export type Database = {
           },
         ]
       }
-      topic_research: {
+      topic_vendor_categories: {
         Row: {
+          category_id: string
           created_at: string
           id: string
-          research_id: string
           topic_id: string
         }
         Insert: {
+          category_id: string
           created_at?: string
           id?: string
-          research_id: string
           topic_id: string
         }
         Update: {
+          category_id?: string
           created_at?: string
           id?: string
-          research_id?: string
           topic_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "topic_research_research_id_fkey"
-            columns: ["research_id"]
+            foreignKeyName: "topic_vendor_categories_category_id_fkey"
+            columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "research_studies"
+            referencedRelation: "martech_categories"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "topic_research_topic_id_fkey"
+            foreignKeyName: "topic_vendor_categories_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      topic_vendors: {
-        Row: {
-          created_at: string
-          id: string
-          topic_id: string
-          vendor_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          topic_id: string
-          vendor_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          topic_id?: string
-          vendor_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "topic_vendors_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "topics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "topic_vendors_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
