@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ThumbsUp, ExternalLink, Filter } from "lucide-react";
+import { Heart, ExternalLink, Filter, UserPlus, UserCheck } from "lucide-react";
+import { useUserReactions } from "@/hooks/useReactions";
+import { useToast } from "@/hooks/use-toast";
 
 interface Category {
   id: string;
@@ -31,6 +33,9 @@ export default function Martech() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
+  const userLikes = useUserReactions("vendor", "like");
+  const userFollows = useUserReactions("vendor", "follow");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -68,6 +73,33 @@ export default function Martech() {
 
     fetchData();
   }, []);
+
+  const handleReaction = async (vendorId: string, reactionType: "like" | "follow", hasReacted: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ title: "Sign in required", variant: "destructive" });
+      return;
+    }
+
+    if (hasReacted) {
+      await supabase
+        .from("reactions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("target_id", vendorId)
+        .eq("target_type", "vendor")
+        .eq("reaction_type", reactionType);
+    } else {
+      await supabase.from("reactions").insert({
+        user_id: user.id,
+        target_id: vendorId,
+        target_type: "vendor",
+        reaction_type: reactionType,
+      });
+    }
+
+    window.location.reload();
+  };
 
   const filteredVendors = selectedCategory
     ? vendors.filter((v) => v.categories?.includes(selectedCategory))
@@ -139,57 +171,85 @@ export default function Martech() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredVendors.map((vendor) => (
-              <Card
-                key={vendor.id}
-                className="group hover:shadow-elevated transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedVendor(vendor)}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    {vendor.logo_url ? (
-                      <img
-                        src={vendor.logo_url}
-                        alt={vendor.name}
-                        className="w-12 h-12 object-contain rounded-lg bg-muted p-1"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <span className="text-primary font-bold text-lg">
-                          {vendor.name.charAt(0)}
-                        </span>
+            {filteredVendors.map((vendor) => {
+              const isLiked = userLikes[vendor.id] || false;
+              const isFollowing = userFollows[vendor.id] || false;
+              return (
+                <Card
+                  key={vendor.id}
+                  className="group hover:shadow-elevated transition-all duration-300 cursor-pointer"
+                  onClick={() => setSelectedVendor(vendor)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      {vendor.logo_url ? (
+                        <img
+                          src={vendor.logo_url}
+                          alt={vendor.name}
+                          className="w-12 h-12 object-contain rounded-lg bg-muted p-1"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <span className="text-primary font-bold text-lg">
+                            {vendor.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReaction(vendor.id, "follow", isFollowing);
+                          }}
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
+                            isFollowing
+                              ? "bg-secondary text-secondary-foreground"
+                              : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                          }`}
+                        >
+                          {isFollowing ? <UserCheck className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+                          {isFollowing ? "Following" : "Follow"}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReaction(vendor.id, "like", isLiked);
+                          }}
+                          className={`flex items-center gap-1 transition-colors ${
+                            isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"
+                          }`}
+                        >
+                          <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                          <span className="text-sm">{vendor.likes_count || 0}</span>
+                        </button>
                       </div>
-                    )}
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <ThumbsUp className="h-4 w-4" />
-                      <span className="text-sm">{vendor.likes_count || 0}</span>
                     </div>
-                  </div>
-                  <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                    {vendor.name}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {vendor.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {vendor.categories?.slice(0, 2).map((cat) => (
-                      <Badge key={cat} variant="secondary" className="text-xs">
-                        {cat.replace("Legal ", "").replace(" & ", "/")}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {vendor.regions?.map((region) => (
-                      <Badge key={region} variant="outline" className="text-xs">
-                        {region}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                      {vendor.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {vendor.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {vendor.categories?.slice(0, 2).map((cat) => (
+                        <Badge key={cat} variant="secondary" className="text-xs">
+                          {cat.replace("Legal ", "").replace(" & ", "/")}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {vendor.regions?.map((region) => (
+                        <Badge key={region} variant="outline" className="text-xs">
+                          {region}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
@@ -217,7 +277,7 @@ export default function Martech() {
                   <div>
                     <DialogTitle className="text-2xl">{selectedVendor.name}</DialogTitle>
                     <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                      <ThumbsUp className="h-4 w-4" />
+                      <Heart className="h-4 w-4" />
                       <span>{selectedVendor.likes_count || 0} likes</span>
                     </div>
                   </div>
