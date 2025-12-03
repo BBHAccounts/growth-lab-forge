@@ -155,6 +155,22 @@ export default function ModelWorkspace() {
     navigate(`/models/${model.id}`);
   };
 
+  const handleDeactivate = async () => {
+    if (!activatedModel) return;
+    
+    const { error } = await supabase
+      .from("activated_models")
+      .delete()
+      .eq("id", activatedModel.id);
+
+    if (error) {
+      toast({ title: "Error deactivating model", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Model deactivated" });
+      navigate(`/models/${id}`);
+    }
+  };
+
   const updateFieldValue = (fieldId: string, value: unknown) => {
     setFormData((prev) => ({
       ...prev,
@@ -326,10 +342,15 @@ export default function ModelWorkspace() {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={() => saveProgress()} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Saving..." : "Save"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => saveProgress()} disabled={saving}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button variant="destructive" size="icon" onClick={handleDeactivate} title="Deactivate model">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Progress */}
