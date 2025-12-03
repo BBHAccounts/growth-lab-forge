@@ -51,14 +51,14 @@
     --chart-4: 152 69% 48%;
     --chart-5: 51 100% 50%;
 
-    /* Sidebar - Light tech feel */
-    --sidebar-background: 220 14% 96%;
-    --sidebar-foreground: 220 13% 18%;
-    --sidebar-primary: 220 13% 18%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 13% 91%;
-    --sidebar-accent-foreground: 220 13% 18%;
-    --sidebar-border: 220 13% 88%;
+    /* Sidebar - Dark contrast */
+    --sidebar-background: 220 13% 18%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 51 100% 50%;
+    --sidebar-primary-foreground: 220 13% 18%;
+    --sidebar-accent: 220 13% 25%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 13% 25%;
     --sidebar-ring: 51 100% 50%;
   }
 
@@ -103,13 +103,13 @@
     --chart-4: 152 69% 48%;
     --chart-5: 51 100% 50%;
 
-    --sidebar-background: 220 13% 14%;
+    --sidebar-background: 220 13% 12%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 51 100% 50%;
     --sidebar-primary-foreground: 220 13% 18%;
-    --sidebar-accent: 220 13% 20%;
+    --sidebar-accent: 220 13% 18%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 13% 20%;
+    --sidebar-border: 220 13% 18%;
     --sidebar-ring: 51 100% 50%;
   }
 }
