@@ -29,6 +29,7 @@ const TYPE_COLORS: Record<string, string> = {
   guide: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
   video: "bg-red-500/20 text-red-700 dark:text-red-300",
   podcast: "bg-orange-500/20 text-orange-700 dark:text-orange-300",
+  event: "bg-pink-500/20 text-pink-700 dark:text-pink-300",
 };
 
 const TYPE_GRADIENTS: Record<string, string> = {
@@ -37,6 +38,7 @@ const TYPE_GRADIENTS: Record<string, string> = {
   guide: "from-emerald-600/90 via-emerald-700/80 to-emerald-900/90",
   video: "from-red-600/90 via-red-700/80 to-red-900/90",
   podcast: "from-orange-600/90 via-orange-700/80 to-orange-900/90",
+  event: "from-pink-600/90 via-pink-700/80 to-pink-900/90",
 };
 
 export default function InsightsHub() {
@@ -87,7 +89,7 @@ export default function InsightsHub() {
     ? resources.filter((r) => r.type === selectedType)
     : resources;
 
-  const types = ["article", "webinar", "guide", "video", "podcast"];
+  const types = ["article", "webinar", "guide", "video", "podcast", "event"];
 
   return (
     <AppLayout>
