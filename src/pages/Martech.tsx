@@ -52,13 +52,13 @@ const firmSizeLabels: Record<string, string> = {
 export default function Martech() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category"));
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedFirmSizes, setSelectedFirmSizes] = useState<string[]>([]);
   const [showFollowedOnly, setShowFollowedOnly] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
 
   const { isLiked, isLoading, toggleReaction } = useReactions({
@@ -139,11 +139,24 @@ export default function Martech() {
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
+    const params = new URLSearchParams(searchParams);
     if (value) {
-      setSearchParams({ q: value });
+      params.set("q", value);
     } else {
-      setSearchParams({});
+      params.delete("q");
     }
+    setSearchParams(params);
+  };
+
+  const handleCategoryChange = (category: string | null) => {
+    setSelectedCategory(category);
+    const params = new URLSearchParams(searchParams);
+    if (category) {
+      params.set("category", category);
+    } else {
+      params.delete("category");
+    }
+    setSearchParams(params);
   };
 
   const clearFilters = () => {
@@ -196,7 +209,7 @@ export default function Martech() {
             <DropdownMenuContent>
               <DropdownMenuCheckboxItem
                 checked={selectedCategory === null}
-                onCheckedChange={() => setSelectedCategory(null)}
+                onCheckedChange={() => handleCategoryChange(null)}
               >
                 All Categories
               </DropdownMenuCheckboxItem>
@@ -204,7 +217,7 @@ export default function Martech() {
                 <DropdownMenuCheckboxItem
                   key={cat.id}
                   checked={selectedCategory === cat.name}
-                  onCheckedChange={() => setSelectedCategory(cat.name)}
+                  onCheckedChange={() => handleCategoryChange(cat.name)}
                 >
                   {cat.name}
                 </DropdownMenuCheckboxItem>
