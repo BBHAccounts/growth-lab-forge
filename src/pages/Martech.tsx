@@ -6,9 +6,16 @@ import { HeroBanner } from "@/components/ui/hero-banner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Heart, ExternalLink, Filter } from "lucide-react";
+import { Heart, ExternalLink, Filter, Search, X, Globe, Building2, ChevronDown } from "lucide-react";
 import { useReactions } from "@/hooks/use-reactions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Category {
   id: string;
@@ -27,14 +34,32 @@ interface Vendor {
   categories?: string[];
 }
 
+const regionLabels: Record<string, string> = {
+  NA: "North America",
+  EMEA: "Europe/Middle East",
+  APAC: "Asia Pacific",
+  LAC: "Latin America",
+};
+
+const firmSizeLabels: Record<string, string> = {
+  solo: "Solo",
+  small: "Small (2-10)",
+  medium: "Medium (11-50)",
+  large: "Large (51-200)",
+  enterprise: "Enterprise (200+)",
+};
+
 export default function Martech() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedFirmSizes, setSelectedFirmSizes] = useState<string[]>([]);
+  const [showFollowedOnly, setShowFollowedOnly] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchParams] = useSearchParams();
-  const searchQuery = searchParams.get("q") || "";
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
 
   const { isLiked, isLoading, toggleReaction } = useReactions({
     targetType: "vendor",
@@ -83,21 +108,45 @@ export default function Martech() {
     fetchData();
   }, []);
 
+  // Get unique regions and firm sizes from vendors
+  const availableRegions = [...new Set(vendors.flatMap(v => v.regions || []))];
+  const availableFirmSizes = [...new Set(vendors.flatMap(v => v.firm_sizes || []))];
+
   const filteredVendors = vendors.filter((v) => {
     const matchesCategory = selectedCategory ? v.categories?.includes(selectedCategory) : true;
     const matchesSearch = searchQuery
       ? v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.description?.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
-    return matchesCategory && matchesSearch;
+    const matchesRegion = selectedRegions.length === 0 || 
+      selectedRegions.some(r => v.regions?.includes(r));
+    const matchesFirmSize = selectedFirmSizes.length === 0 || 
+      selectedFirmSizes.some(s => v.firm_sizes?.includes(s));
+    const matchesFollowed = !showFollowedOnly || isLiked(v.id);
+    
+    return matchesCategory && matchesSearch && matchesRegion && matchesFirmSize && matchesFollowed;
   });
 
-  const regionLabels: Record<string, string> = {
-    NA: "North America",
-    EMEA: "Europe/Middle East",
-    APAC: "Asia Pacific",
-    LAC: "Latin America",
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    if (value) {
+      setSearchParams({ q: value });
+    } else {
+      setSearchParams({});
+    }
   };
+
+  const clearFilters = () => {
+    setSelectedCategory(null);
+    setSelectedRegions([]);
+    setSelectedFirmSizes([]);
+    setShowFollowedOnly(false);
+    setSearchQuery("");
+    setSearchParams({});
+  };
+
+  const hasActiveFilters = selectedCategory || selectedRegions.length > 0 || 
+    selectedFirmSizes.length > 0 || showFollowedOnly || searchQuery;
 
   return (
     <AppLayout>
@@ -108,30 +157,130 @@ export default function Martech() {
       />
 
       <div className="p-6 md:p-8 space-y-6">
-        {/* Category Filters */}
-        <div className="flex items-center gap-4 flex-wrap">
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search vendors..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Filter className="h-4 w-4" />
-            <span className="text-sm font-medium">Filter:</span>
+            <span className="text-sm font-medium">Filters:</span>
           </div>
+
+          {/* Category Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={selectedCategory ? "default" : "outline"} size="sm">
+                {selectedCategory || "Category"}
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuCheckboxItem
+                checked={selectedCategory === null}
+                onCheckedChange={() => setSelectedCategory(null)}
+              >
+                All Categories
+              </DropdownMenuCheckboxItem>
+              {categories.map((cat) => (
+                <DropdownMenuCheckboxItem
+                  key={cat.id}
+                  checked={selectedCategory === cat.name}
+                  onCheckedChange={() => setSelectedCategory(cat.name)}
+                >
+                  {cat.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Region Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={selectedRegions.length > 0 ? "default" : "outline"} size="sm">
+                <Globe className="h-4 w-4 mr-1" />
+                Region {selectedRegions.length > 0 && `(${selectedRegions.length})`}
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {availableRegions.map((region) => (
+                <DropdownMenuCheckboxItem
+                  key={region}
+                  checked={selectedRegions.includes(region)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedRegions([...selectedRegions, region]);
+                    } else {
+                      setSelectedRegions(selectedRegions.filter(r => r !== region));
+                    }
+                  }}
+                >
+                  {regionLabels[region] || region}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Firm Size Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant={selectedFirmSizes.length > 0 ? "default" : "outline"} size="sm">
+                <Building2 className="h-4 w-4 mr-1" />
+                Firm Size {selectedFirmSizes.length > 0 && `(${selectedFirmSizes.length})`}
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {availableFirmSizes.map((size) => (
+                <DropdownMenuCheckboxItem
+                  key={size}
+                  checked={selectedFirmSizes.includes(size)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedFirmSizes([...selectedFirmSizes, size]);
+                    } else {
+                      setSelectedFirmSizes(selectedFirmSizes.filter(s => s !== size));
+                    }
+                  }}
+                >
+                  {firmSizeLabels[size] || size}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Followed Only */}
           <Button
-            variant={selectedCategory === null ? "default" : "outline"}
+            variant={showFollowedOnly ? "default" : "outline"}
             size="sm"
-            onClick={() => setSelectedCategory(null)}
+            onClick={() => setShowFollowedOnly(!showFollowedOnly)}
           >
-            All
+            <Heart className={`h-4 w-4 mr-1 ${showFollowedOnly ? "fill-current" : ""}`} />
+            Following
           </Button>
-          {categories.map((cat) => (
-            <Button
-              key={cat.id}
-              variant={selectedCategory === cat.name ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory(cat.name)}
-            >
-              {cat.name}
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="h-4 w-4 mr-1" />
+              Clear
             </Button>
-          ))}
+          )}
         </div>
+
+        {/* Results count */}
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredVendors.length} of {vendors.length} vendors
+        </p>
 
         {/* Vendor Grid */}
         {loading ? (
@@ -150,18 +299,25 @@ export default function Martech() {
           <Card className="text-center p-12">
             <div className="text-6xl mb-4">🗺️</div>
             <h3 className="text-xl font-semibold mb-2">No vendors found</h3>
-            <p className="text-muted-foreground">
-              {selectedCategory
-                ? `No vendors in "${selectedCategory}" category.`
+            <p className="text-muted-foreground mb-4">
+              {hasActiveFilters
+                ? "Try adjusting your filters."
                 : "Vendors are being added. Check back soon!"}
             </p>
+            {hasActiveFilters && (
+              <Button variant="outline" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            )}
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVendors.map((vendor) => (
               <Card
                 key={vendor.id}
-                className="group hover:shadow-elevated transition-all duration-300 cursor-pointer"
+                className={`group hover:shadow-elevated transition-all duration-300 cursor-pointer ${
+                  isLiked(vendor.id) ? "border-pink-500/40 bg-pink-50 dark:bg-pink-950/20" : ""
+                }`}
                 onClick={() => setSelectedVendor(vendor)}
               >
                 <CardHeader>
@@ -184,7 +340,7 @@ export default function Martech() {
                       disabled={isLoading(vendor.id)}
                       className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
                         isLiked(vendor.id)
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-pink-500/10 text-pink-500"
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
@@ -248,7 +404,7 @@ export default function Martech() {
                       disabled={isLoading(selectedVendor.id)}
                       className={`flex items-center gap-2 mt-1 px-3 py-1 rounded-full transition-colors ${
                         isLiked(selectedVendor.id)
-                          ? "bg-primary/10 text-primary"
+                          ? "bg-pink-500/10 text-pink-500"
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
@@ -294,7 +450,7 @@ export default function Martech() {
                     <div className="flex flex-wrap gap-2">
                       {selectedVendor.firm_sizes.map((size) => (
                         <Badge key={size} variant="outline" className="capitalize">
-                          {size}
+                          {firmSizeLabels[size] || size}
                         </Badge>
                       ))}
                     </div>
