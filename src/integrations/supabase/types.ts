@@ -414,6 +414,108 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      resource_category_links: {
+        Row: {
+          category_id: string
+          id: string
+          resource_id: string
+        }
+        Insert: {
+          category_id: string
+          id?: string
+          resource_id: string
+        }
+        Update: {
+          category_id?: string
+          id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_category_links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "resource_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_category_links_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          author: string | null
+          created_at: string
+          description: string | null
+          emoji: string | null
+          estimated_time: number | null
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          published_date: string | null
+          status: string | null
+          title: string
+          type: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          estimated_time?: number | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          published_date?: string | null
+          status?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          description?: string | null
+          emoji?: string | null
+          estimated_time?: number | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          published_date?: string | null
+          status?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       topic_model_categories: {
         Row: {
           category_id: string
@@ -443,6 +545,42 @@ export type Database = {
           },
           {
             foreignKeyName: "topic_model_categories_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_resource_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          topic_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          topic_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_resource_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "resource_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_resource_categories_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
             referencedRelation: "topics"

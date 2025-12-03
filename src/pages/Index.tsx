@@ -56,34 +56,14 @@ interface TodoItem {
   modelId: string;
 }
 
-const suggestedArticles = [
-  {
-    title: "5 Growth Strategies for Modern Law Firms",
-    source: "Legal Marketing Journal",
-    url: "#",
-    emoji: "📈",
-  },
-  {
-    title: "Client Acquisition in 2025: What's Working",
-    source: "Law Practice Today",
-    url: "#",
-    emoji: "🎯",
-  },
-  {
-    title: "Building Your Firm's Digital Presence",
-    source: "ABA Journal",
-    url: "#",
-    emoji: "💻",
-  },
-];
-
 const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
-  const [recommendedModels, setRecommendedModels] = useState<Model[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [followedVendors, setFollowedVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const recommendations = useRecommendations(5);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -138,22 +118,6 @@ const Index = () => {
             }
           });
           setTodos(todoItems);
-
-          // Get recommended models (ones not activated yet)
-          const { data: recommendedData } = await supabase
-            .from("models")
-            .select("id, name, emoji, short_description, time_estimate")
-            .not("id", "in", `(${modelIds.join(",")})`)
-            .limit(3);
-
-          setRecommendedModels(recommendedData || []);
-        } else {
-          const { data: allModels } = await supabase
-            .from("models")
-            .select("id, name, emoji, short_description, time_estimate")
-            .limit(3);
-
-          setRecommendedModels(allModels || []);
         }
 
         // Fetch followed vendors (liked by user)
@@ -223,6 +187,8 @@ const Index = () => {
     { label: "Explore the Martech Map", done: false, href: "/martech" },
   ];
 
+  const hasRecommendations = recommendations.models.length > 0 || recommendations.vendors.length > 0 || recommendations.resources.length > 0;
+
   return (
     <AppLayout>
       <HeroBanner
@@ -236,6 +202,96 @@ const Index = () => {
         <section>
           <NavigatorChat />
         </section>
+
+        {/* Personalized Recommendations */}
+        {!recommendations.loading && hasRecommendations && (
+          <section className="bg-gradient-to-br from-primary/5 via-primary/10 to-transparent rounded-2xl p-6 border border-primary/20">
+            <div className="flex items-center gap-2 mb-6">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Recommended For You</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Recommended Models */}
+              {recommendations.models.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Models</h3>
+                  <div className="space-y-2">
+                    {recommendations.models.slice(0, 3).map((model) => (
+                      <Link key={model.id} to={`/models/${model.id}`}>
+                        <Card className="hover:shadow-md transition-all hover:border-primary/50">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <span className="text-2xl">{model.emoji || "📚"}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{model.name}</p>
+                              <p className="text-sm text-muted-foreground truncate">{model.short_description}</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Vendors */}
+              {recommendations.vendors.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Martech</h3>
+                  <div className="space-y-2">
+                    {recommendations.vendors.slice(0, 3).map((vendor) => (
+                      <Link key={vendor.id} to="/martech">
+                        <Card className="hover:shadow-md transition-all hover:border-primary/50">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            {vendor.logo_url ? (
+                              <img src={vendor.logo_url} alt={vendor.name} className="h-8 w-8 rounded object-contain" />
+                            ) : (
+                              <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                                <span className="text-xs font-bold">{vendor.name.charAt(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{vendor.name}</p>
+                              <p className="text-sm text-muted-foreground truncate">{vendor.description}</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Resources */}
+              {recommendations.resources.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Resources</h3>
+                  <div className="space-y-2">
+                    {recommendations.resources.slice(0, 3).map((resource) => (
+                      <a key={resource.id} href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
+                        <Card className="hover:shadow-md transition-all hover:border-primary/50">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <span className="text-2xl">{resource.emoji || "📄"}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{resource.title}</p>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Badge variant="secondary" className="text-xs">{resource.type}</Badge>
+                                {resource.author && <span className="truncate">{resource.author}</span>}
+                              </div>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                          </CardContent>
+                        </Card>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Quick Access Cards */}
         <section>
@@ -261,83 +317,55 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Two Column Layout: Todos + Articles */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* My To-Dos */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">My To-Dos</h2>
-            {loading ? (
-              <Card>
-                <CardContent className="p-4 space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-14 w-full" />
-                  ))}
-                </CardContent>
-              </Card>
-            ) : todos.length > 0 ? (
-              <Card>
-                <CardContent className="p-4 space-y-2">
-                  {todos.map((todo) => (
-                    <Link
-                      key={todo.id}
-                      to={`/models/${todo.modelId}/workspace`}
-                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
-                    >
-                      <Circle className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate group-hover:text-primary transition-colors">
-                          {todo.stepTitle}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {todo.modelEmoji} {todo.modelName} · Step {todo.stepNumber}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  ))}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-muted/50">
-                <CardContent className="p-6 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    No active tasks. Start a model to see your to-dos here!
-                  </p>
-                  <Link to="/models">
-                    <Button variant="outline" size="sm">
-                      Browse Models
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            )}
-          </section>
-
-          {/* Suggested Articles */}
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Suggested Reading</h2>
+        {/* My To-Dos */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4">My To-Dos</h2>
+          {loading ? (
             <Card>
-              <CardContent className="p-4 space-y-2">
-                {suggestedArticles.map((article, index) => (
-                  <a
-                    key={index}
-                    href={article.url}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <span className="text-2xl">{article.emoji}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate group-hover:text-primary transition-colors">
-                        {article.title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{article.source}</p>
-                    </div>
-                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </a>
+              <CardContent className="p-4 space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full" />
                 ))}
               </CardContent>
             </Card>
-          </section>
-        </div>
+          ) : todos.length > 0 ? (
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                {todos.map((todo) => (
+                  <Link
+                    key={todo.id}
+                    to={`/models/${todo.modelId}/workspace`}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                  >
+                    <Circle className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate group-hover:text-primary transition-colors">
+                        {todo.stepTitle}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {todo.modelEmoji} {todo.modelName} · Step {todo.stepNumber}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-muted/50">
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground mb-4">
+                  No active tasks. Start a model to see your to-dos here!
+                </p>
+                <Link to="/models">
+                  <Button variant="outline" size="sm">
+                    Browse Models
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </section>
 
         {/* My Activated Models */}
         <section>
@@ -452,38 +480,6 @@ const Index = () => {
                           Visit
                         </a>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Recommended For You */}
-        {recommendedModels.length > 0 && (
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Recommended For You</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {recommendedModels.map((model) => (
-                <Card key={model.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{model.emoji || "📚"}</span>
-                      <CardTitle className="text-base">{model.name}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="mb-3 line-clamp-2">
-                      {model.short_description}
-                    </CardDescription>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{model.time_estimate}</span>
-                      <Link to={`/models/${model.id}`}>
-                        <Button size="sm" variant="outline">
-                          Start
-                        </Button>
-                      </Link>
                     </div>
                   </CardContent>
                 </Card>

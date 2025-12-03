@@ -31,6 +31,8 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminTopics from "./pages/admin/AdminTopics";
 import AdminTopicForm from "./pages/admin/AdminTopicForm";
+import AdminResources from "./pages/admin/AdminResources";
+import AdminResourceForm from "./pages/admin/AdminResourceForm";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,8 @@ const App = () => (
           <Route path="/admin/settings" element={<AdminRouteGuard><AdminSettings /></AdminRouteGuard>} />
           <Route path="/admin/topics" element={<AdminRouteGuard><AdminTopics /></AdminRouteGuard>} />
           <Route path="/admin/topics/:topicId" element={<AdminRouteGuard><AdminTopicForm /></AdminRouteGuard>} />
+          <Route path="/admin/resources" element={<AdminRouteGuard><AdminResources /></AdminRouteGuard>} />
+          <Route path="/admin/resources/:resourceId" element={<AdminRouteGuard><AdminResourceForm /></AdminRouteGuard>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
