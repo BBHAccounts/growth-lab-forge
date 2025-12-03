@@ -172,16 +172,24 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          country: string | null
           created_at: string
+          data_maturity_level: number | null
           email: string | null
           firm_name: string | null
           firm_region: string | null
           firm_size: string | null
+          firm_type: string | null
           full_name: string | null
           game_of_life_access: boolean | null
+          growth_maturity_level: number | null
           growth_priorities: string[] | null
           id: string
+          interest_areas: string[] | null
+          international_scope: boolean | null
           is_client: boolean | null
+          job_title: string | null
+          location_region: string | null
           onboarding_completed: boolean | null
           practice_area: string | null
           research_contributor: boolean | null
@@ -192,16 +200,24 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
+          data_maturity_level?: number | null
           email?: string | null
           firm_name?: string | null
           firm_region?: string | null
           firm_size?: string | null
+          firm_type?: string | null
           full_name?: string | null
           game_of_life_access?: boolean | null
+          growth_maturity_level?: number | null
           growth_priorities?: string[] | null
           id?: string
+          interest_areas?: string[] | null
+          international_scope?: boolean | null
           is_client?: boolean | null
+          job_title?: string | null
+          location_region?: string | null
           onboarding_completed?: boolean | null
           practice_area?: string | null
           research_contributor?: boolean | null
@@ -212,16 +228,24 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
+          data_maturity_level?: number | null
           email?: string | null
           firm_name?: string | null
           firm_region?: string | null
           firm_size?: string | null
+          firm_type?: string | null
           full_name?: string | null
           game_of_life_access?: boolean | null
+          growth_maturity_level?: number | null
           growth_priorities?: string[] | null
           id?: string
+          interest_areas?: string[] | null
+          international_scope?: boolean | null
           is_client?: boolean | null
+          job_title?: string | null
+          location_region?: string | null
           onboarding_completed?: boolean | null
           practice_area?: string | null
           research_contributor?: boolean | null
@@ -336,6 +360,171 @@ export type Database = {
           status?: string | null
           target_audience_tags?: string[] | null
           title?: string
+        }
+        Relationships: []
+      }
+      topic_models: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_models_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_research: {
+        Row: {
+          created_at: string
+          id: string
+          research_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          research_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          research_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_research_research_id_fkey"
+            columns: ["research_id"]
+            isOneToOne: false
+            referencedRelation: "research_studies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_research_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_vendors: {
+        Row: {
+          created_at: string
+          id: string
+          topic_id: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          topic_id: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          topic_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_vendors_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_vendors_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topics: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          interest_area_keywords: string[] | null
+          max_data_maturity: number | null
+          max_growth_maturity: number | null
+          min_data_maturity: number | null
+          min_growth_maturity: number | null
+          name: string
+          national_or_international: string[] | null
+          recommended_firm_sizes: string[] | null
+          recommended_firm_types: string[] | null
+          recommended_roles: string[] | null
+          recommended_seniority: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          interest_area_keywords?: string[] | null
+          max_data_maturity?: number | null
+          max_growth_maturity?: number | null
+          min_data_maturity?: number | null
+          min_growth_maturity?: number | null
+          name: string
+          national_or_international?: string[] | null
+          recommended_firm_sizes?: string[] | null
+          recommended_firm_types?: string[] | null
+          recommended_roles?: string[] | null
+          recommended_seniority?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          interest_area_keywords?: string[] | null
+          max_data_maturity?: number | null
+          max_growth_maturity?: number | null
+          min_data_maturity?: number | null
+          min_growth_maturity?: number | null
+          name?: string
+          national_or_international?: string[] | null
+          recommended_firm_sizes?: string[] | null
+          recommended_firm_types?: string[] | null
+          recommended_roles?: string[] | null
+          recommended_seniority?: string[] | null
+          updated_at?: string
         }
         Relationships: []
       }

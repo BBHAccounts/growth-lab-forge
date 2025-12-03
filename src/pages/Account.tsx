@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, CheckCircle } from "lucide-react";
 import { User } from "@supabase/supabase-js";
@@ -21,7 +23,29 @@ interface Profile {
   firm_size: string | null;
   practice_area: string | null;
   research_contributor: boolean;
+  // New fields
+  country: string | null;
+  location_region: string | null;
+  job_title: string | null;
+  interest_areas: string[];
+  international_scope: boolean;
+  growth_maturity_level: number;
+  data_maturity_level: number;
+  firm_type: string | null;
 }
+
+const INTEREST_OPTIONS = [
+  'Growth Strategy',
+  'Business Development',
+  'Marketing',
+  'Technology',
+  'Client Relations',
+  'Thought Leadership',
+  'Data & Analytics',
+  'Innovation',
+  'Operations',
+  'Talent & Culture',
+];
 
 export default function Account() {
   const { toast } = useToast();
@@ -38,6 +62,14 @@ export default function Account() {
     firm_region: "",
     firm_size: "",
     practice_area: "",
+    country: "",
+    location_region: "",
+    job_title: "",
+    interest_areas: [] as string[],
+    international_scope: false,
+    growth_maturity_level: 1,
+    data_maturity_level: 1,
+    firm_type: "",
   });
 
   useEffect(() => {
@@ -62,6 +94,14 @@ export default function Account() {
             firm_region: data.firm_region || "",
             firm_size: data.firm_size || "",
             practice_area: data.practice_area || "",
+            country: data.country || "",
+            location_region: data.location_region || "",
+            job_title: data.job_title || "",
+            interest_areas: data.interest_areas || [],
+            international_scope: data.international_scope || false,
+            growth_maturity_level: data.growth_maturity_level || 1,
+            data_maturity_level: data.data_maturity_level || 1,
+            firm_type: data.firm_type || "",
           });
         }
       }
@@ -94,6 +134,15 @@ export default function Account() {
     }
 
     setSaving(false);
+  };
+
+  const toggleInterest = (interest: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      interest_areas: prev.interest_areas.includes(interest)
+        ? prev.interest_areas.filter((i) => i !== interest)
+        : [...prev.interest_areas, interest],
+    }));
   };
 
   if (loading) {
@@ -146,6 +195,15 @@ export default function Account() {
                 placeholder="Jane Smith"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="job_title">Job Title</Label>
+              <Input
+                id="job_title"
+                value={formData.job_title}
+                onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
+                placeholder="Senior Marketing Manager"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role_title">Role</Label>
@@ -183,6 +241,48 @@ export default function Account() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="country">Country</Label>
+                <Input
+                  id="country"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  placeholder="United States"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location_region">Location/Region</Label>
+                <Input
+                  id="location_region"
+                  value={formData.location_region}
+                  onChange={(e) => setFormData({ ...formData, location_region: e.target.value })}
+                  placeholder="New York"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Interest Areas */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Interest Areas</CardTitle>
+            <CardDescription>Select topics you're interested in for personalized recommendations</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {INTEREST_OPTIONS.map((interest) => (
+                <Badge
+                  key={interest}
+                  variant={formData.interest_areas.includes(interest) ? "default" : "outline"}
+                  className="cursor-pointer hover:bg-primary/80 transition-colors"
+                  onClick={() => toggleInterest(interest)}
+                >
+                  {interest}
+                </Badge>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -239,14 +339,87 @@ export default function Account() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="practice_area">Primary Practice Area</Label>
-              <Input
-                id="practice_area"
-                value={formData.practice_area}
-                onChange={(e) => setFormData({ ...formData, practice_area: e.target.value })}
-                placeholder="Corporate M&A, Litigation, IP..."
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firm_type">Firm Type</Label>
+                <Select
+                  value={formData.firm_type}
+                  onValueChange={(v) => setFormData({ ...formData, firm_type: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="law_firm">Law Firm</SelectItem>
+                    <SelectItem value="in_house">In-House Legal</SelectItem>
+                    <SelectItem value="consulting">Consulting</SelectItem>
+                    <SelectItem value="government">Government</SelectItem>
+                    <SelectItem value="academia">Academia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="practice_area">Primary Practice Area</Label>
+                <Input
+                  id="practice_area"
+                  value={formData.practice_area}
+                  onChange={(e) => setFormData({ ...formData, practice_area: e.target.value })}
+                  placeholder="Corporate M&A, Litigation..."
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2">
+              <div>
+                <Label>International Scope</Label>
+                <p className="text-sm text-muted-foreground">Does your work span multiple countries?</p>
+              </div>
+              <Switch
+                checked={formData.international_scope}
+                onCheckedChange={(checked) => setFormData({ ...formData, international_scope: checked })}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Maturity Levels */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Maturity Assessment</CardTitle>
+            <CardDescription>Help us personalize recommendations based on your growth stage</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>Growth Maturity Level</Label>
+                <span className="text-sm font-medium text-primary">{formData.growth_maturity_level}/5</span>
+              </div>
+              <Slider
+                min={1}
+                max={5}
+                step={1}
+                value={[formData.growth_maturity_level]}
+                onValueChange={([value]) => setFormData({ ...formData, growth_maturity_level: value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                1 = Just starting growth initiatives • 5 = Mature, optimized growth strategy
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label>Data Maturity Level</Label>
+                <span className="text-sm font-medium text-primary">{formData.data_maturity_level}/5</span>
+              </div>
+              <Slider
+                min={1}
+                max={5}
+                step={1}
+                value={[formData.data_maturity_level]}
+                onValueChange={([value]) => setFormData({ ...formData, data_maturity_level: value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                1 = Limited data usage • 5 = Data-driven decision making
+              </p>
             </div>
           </CardContent>
         </Card>

@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, FlaskConical, Map, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart } from "lucide-react";
+import { BookOpen, FlaskConical, Map, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
+import { useRecommendations } from "@/hooks/use-recommendations";
 
 interface Profile {
   full_name: string | null;
