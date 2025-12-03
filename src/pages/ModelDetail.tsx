@@ -299,7 +299,7 @@ export default function ModelDetail() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
-                          variant="destructive"
+                          variant="outline"
                           size="lg"
                           title="Deactivate and delete progress"
                         >
