@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ThumbsUp, Clock, Users, ArrowRight, Play, Search, CheckCircle } from "lucide-react";
+import { Heart, Clock, Users, ArrowRight, Play, Search, CheckCircle } from "lucide-react";
 import { useReactions } from "@/hooks/use-reactions";
 
 interface Model {
@@ -203,7 +203,7 @@ export default function Models() {
                             : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
-                        <ThumbsUp className={`h-4 w-4 ${isLiked(model.id) ? "fill-current" : ""}`} />
+                        <Heart className={`h-4 w-4 ${isLiked(model.id) ? "fill-current" : ""}`} />
                         <span className="text-sm">{model.likes_count || 0}</span>
                       </button>
                     </div>
