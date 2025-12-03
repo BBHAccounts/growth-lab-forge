@@ -16,9 +16,8 @@ interface Topic {
   active: boolean;
   created_at: string;
   updated_at: string;
-  model_count?: number;
-  vendor_count?: number;
-  research_count?: number;
+  model_cat_count?: number;
+  vendor_cat_count?: number;
 }
 
 export default function AdminTopics() {
@@ -39,17 +38,15 @@ export default function AdminTopics() {
         // Get counts for each topic
         const topicsWithCounts = await Promise.all(
           (topicsData || []).map(async (topic) => {
-            const [models, vendors, research] = await Promise.all([
-              supabase.from('topic_models').select('id', { count: 'exact' }).eq('topic_id', topic.id),
-              supabase.from('topic_vendors').select('id', { count: 'exact' }).eq('topic_id', topic.id),
-              supabase.from('topic_research').select('id', { count: 'exact' }).eq('topic_id', topic.id),
+            const [modelCats, vendorCats] = await Promise.all([
+              supabase.from('topic_model_categories').select('id', { count: 'exact' }).eq('topic_id', topic.id),
+              supabase.from('topic_vendor_categories').select('id', { count: 'exact' }).eq('topic_id', topic.id),
             ]);
 
             return {
               ...topic,
-              model_count: models.count || 0,
-              vendor_count: vendors.count || 0,
-              research_count: research.count || 0,
+              model_cat_count: modelCats.count || 0,
+              vendor_cat_count: vendorCats.count || 0,
             };
           })
         );
@@ -90,22 +87,16 @@ export default function AdminTopics() {
       ),
     },
     {
-      key: 'model_count',
-      header: 'Models',
+      key: 'model_cat_count',
+      header: 'Model Categories',
       sortable: true,
-      render: (topic) => topic.model_count || 0,
+      render: (topic) => topic.model_cat_count || 0,
     },
     {
-      key: 'vendor_count',
-      header: 'Vendors',
+      key: 'vendor_cat_count',
+      header: 'Vendor Categories',
       sortable: true,
-      render: (topic) => topic.vendor_count || 0,
-    },
-    {
-      key: 'research_count',
-      header: 'Research',
-      sortable: true,
-      render: (topic) => topic.research_count || 0,
+      render: (topic) => topic.vendor_cat_count || 0,
     },
     {
       key: 'active',
@@ -131,7 +122,7 @@ export default function AdminTopics() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Topics</h1>
-            <p className="text-muted-foreground">Manage recommendation topics that connect users to content</p>
+            <p className="text-muted-foreground">Manage recommendation topics that connect users to content via categories</p>
           </div>
           <Button onClick={() => navigate('/admin/topics/new')}>
             <Plus className="w-4 h-4 mr-2" />

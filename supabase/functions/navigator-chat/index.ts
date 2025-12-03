@@ -137,19 +137,17 @@ async function getUserContext(supabase: any, userId: string) {
 
     const topTopics = await Promise.all(
       scoredTopics.map(async (topic) => {
-        const [models, vendors, research] = await Promise.all([
-          supabase.from('topic_models').select('model_id, models(name)').eq('topic_id', topic.id),
-          supabase.from('topic_vendors').select('vendor_id, vendors(name)').eq('topic_id', topic.id),
-          supabase.from('topic_research').select('research_id, research_studies(title)').eq('topic_id', topic.id),
+        const [modelCats, vendorCats] = await Promise.all([
+          supabase.from('topic_model_categories').select('category_id, model_categories(name)').eq('topic_id', topic.id),
+          supabase.from('topic_vendor_categories').select('category_id, martech_categories(name)').eq('topic_id', topic.id),
         ]);
 
         return {
           name: topic.name,
           description: topic.description,
           keywords: topic.interest_area_keywords,
-          models: (models.data || []).map((m: any) => m.models?.name).filter(Boolean),
-          vendors: (vendors.data || []).map((v: any) => v.vendors?.name).filter(Boolean),
-          research: (research.data || []).map((r: any) => r.research_studies?.title).filter(Boolean),
+          modelCategories: (modelCats.data || []).map((c: any) => c.model_categories?.name).filter(Boolean),
+          vendorCategories: (vendorCats.data || []).map((c: any) => c.martech_categories?.name).filter(Boolean),
         };
       })
     );
@@ -212,11 +210,10 @@ User Profile:
 Top Recommended Topics for this user:
 ${userContext.topTopics.map((t, i) => `${i + 1}. **${t.name}**${t.description ? ` - ${t.description}` : ''}
    Keywords: ${t.keywords?.join(', ') || 'None'}
-   Related Models: ${t.models.join(', ') || 'None'}
-   Related Vendors: ${t.vendors.join(', ') || 'None'}
-   Related Research: ${t.research.join(', ') || 'None'}`).join('\n')}
+   Model Categories: ${t.modelCategories.join(', ') || 'None'}
+   Vendor Categories: ${t.vendorCategories.join(', ') || 'None'}`).join('\n')}
 
-When the user asks "where to start" or for recommendations, use these topics and their linked content to suggest relevant models, vendors, or research. Personalize based on their profile.`;
+When the user asks "where to start" or for recommendations, use these topics and their linked categories to suggest relevant model types or vendor categories. Personalize based on their profile.`;
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
