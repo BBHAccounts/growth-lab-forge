@@ -365,8 +365,11 @@ const Index = () => {
                         <Link key={category.id} to={`/martech?category=${encodeURIComponent(category.name)}`}>
                           <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
                             <CardContent className="p-4 flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-secondary/80 flex items-center justify-center shrink-0">
-                                <MapPin className="h-5 w-5 text-muted-foreground" />
+                              <div 
+                                className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 text-white font-semibold"
+                                style={{ backgroundColor: `hsl(${category.name.charCodeAt(0) * 7 % 360}, 60%, 50%)` }}
+                              >
+                                {category.name.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium truncate group-hover:text-primary transition-colors">{category.name}</p>
