@@ -98,17 +98,17 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 gradient-hero items-center justify-center p-12">
-        <div className="max-w-md text-primary-foreground">
-          <div className="w-16 h-16 rounded-xl bg-secondary flex items-center justify-center mb-8">
-            <span className="text-secondary-foreground font-bold text-2xl">G</span>
+      {/* Left side - Branding with tech grid pattern */}
+      <div className="hidden lg:flex lg:w-1/2 hero-tech items-center justify-center p-12">
+        <div className="max-w-md relative z-10">
+          <div className="w-16 h-16 rounded-xl bg-foreground flex items-center justify-center mb-8">
+            <span className="text-background font-bold text-2xl">G</span>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Growth Lab</h1>
-          <p className="text-xl text-primary-foreground/80 mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-foreground">Growth Lab</h1>
+          <p className="text-xl text-foreground/80 mb-8">
             Strategic frameworks and tools to accelerate your legal business development.
           </p>
-          <div className="space-y-4 text-primary-foreground/70">
+          <div className="space-y-4 text-foreground/70">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📚</span>
               <span>Interactive business models</span>
@@ -129,8 +129,8 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <Card className="w-full max-w-md border-border shadow-elevated">
           <CardHeader className="text-center">
-            <div className="lg:hidden w-12 h-12 rounded-lg bg-primary flex items-center justify-center mx-auto mb-4">
-              <span className="text-primary-foreground font-bold text-lg">G</span>
+            <div className="lg:hidden w-12 h-12 rounded-lg bg-accent flex items-center justify-center mx-auto mb-4">
+              <span className="text-accent-foreground font-bold text-lg">G</span>
             </div>
             <CardTitle className="text-2xl">Welcome to Growth Lab</CardTitle>
             <CardDescription>
