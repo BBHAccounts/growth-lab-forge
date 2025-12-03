@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2 } from 'lucide-react';
 
 interface Resource {
   id?: string;
@@ -66,8 +66,43 @@ export default function AdminResourceForm() {
   const [resource, setResource] = useState<Resource>(defaultResource);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
+
+  const handleExtractMetadata = async () => {
+    if (!resource.url) {
+      toast({ title: 'Error', description: 'Please enter a URL first', variant: 'destructive' });
+      return;
+    }
+
+    setExtracting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-url-metadata', {
+        body: { url: resource.url },
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        setResource((prev) => ({
+          ...prev,
+          title: data.title || prev.title,
+          description: data.description || prev.description,
+          author: data.author || prev.author,
+          type: data.type || prev.type,
+          emoji: RESOURCE_TYPES.find((t) => t.value === data.type)?.emoji || prev.emoji,
+          estimated_time: data.estimated_time || prev.estimated_time,
+        }));
+        toast({ title: 'Success', description: 'Metadata extracted successfully' });
+      }
+    } catch (error) {
+      console.error('Error extracting metadata:', error);
+      toast({ title: 'Error', description: 'Failed to extract metadata', variant: 'destructive' });
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -274,11 +309,27 @@ export default function AdminResourceForm() {
 
               <div className="space-y-2">
                 <Label>URL</Label>
-                <Input
-                  value={resource.url}
-                  onChange={(e) => setResource({ ...resource, url: e.target.value })}
-                  placeholder="https://..."
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={resource.url}
+                    onChange={(e) => setResource({ ...resource, url: e.target.value })}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleExtractMetadata}
+                    disabled={extracting || !resource.url}
+                  >
+                    {extracting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-4 h-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Auto-fill</span>
+                  </Button>
+                </div>
               </div>
 
               <div className="space-y-2">

@@ -13,6 +13,7 @@ import Research from "./pages/Research";
 import ResearchSurvey from "./pages/ResearchSurvey";
 import About from "./pages/About";
 import Account from "./pages/Account";
+import InsightsHub from "./pages/InsightsHub";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -53,6 +54,7 @@ const App = () => (
           <Route path="/research/:studyId" element={<ResearchSurvey />} />
           <Route path="/about" element={<About />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/insights-hub" element={<InsightsHub />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />

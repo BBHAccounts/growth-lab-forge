@@ -1,1 +1,7 @@
 project_id = "pavcfkubatwuwgrtwqlr"
+
+[functions.navigator-chat]
+verify_jwt = true
+
+[functions.extract-url-metadata]
+verify_jwt = true
