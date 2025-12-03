@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, FlaskConical, Map, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart } from "lucide-react";
+import { NavigatorChat } from "@/components/NavigatorChat";
 
 interface Profile {
   full_name: string | null;
@@ -515,6 +516,7 @@ const Index = () => {
           </section>
         )}
       </div>
+      <NavigatorChat />
     </AppLayout>
   );
 };
