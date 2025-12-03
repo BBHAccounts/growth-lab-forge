@@ -143,17 +143,17 @@ export default function AdminModelForm() {
         featured: model.featured,
         video_url: model.video_url,
         suggested_actions: model.suggested_actions,
-        steps: model.steps as unknown as Record<string, unknown>[],
+        steps: JSON.parse(JSON.stringify(model.steps)),
       };
 
       if (isNew) {
-        const { error } = await supabase.from('models').insert([modelData]);
+        const { error } = await supabase.from('models').insert([modelData] as never);
         if (error) throw error;
         toast({ title: 'Success', description: 'Model created successfully' });
       } else {
         const { error } = await supabase
           .from('models')
-          .update(modelData)
+          .update(modelData as never)
           .eq('id', modelId);
         if (error) throw error;
         toast({ title: 'Success', description: 'Model updated successfully' });

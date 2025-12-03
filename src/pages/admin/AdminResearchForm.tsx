@@ -118,17 +118,17 @@ export default function AdminResearchForm() {
         estimated_time: study.estimated_time,
         reward_description: study.reward_description,
         target_audience_tags: study.target_audience_tags,
-        questions: study.questions as unknown as Record<string, unknown>[],
+        questions: JSON.parse(JSON.stringify(study.questions)),
       };
 
       if (isNew) {
-        const { error } = await supabase.from('research_studies').insert([studyData]);
+        const { error } = await supabase.from('research_studies').insert([studyData] as never);
         if (error) throw error;
         toast({ title: 'Success', description: 'Study created successfully' });
       } else {
         const { error } = await supabase
           .from('research_studies')
-          .update(studyData)
+          .update(studyData as never)
           .eq('id', studyId);
         if (error) throw error;
         toast({ title: 'Success', description: 'Study updated successfully' });
