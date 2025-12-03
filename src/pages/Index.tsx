@@ -7,11 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, FlaskConical, Map, ArrowRight, CheckCircle2, Circle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, FlaskConical, Map, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
   onboarding_completed: boolean | null;
+}
+
+interface ModelStep {
+  title: string;
+  description?: string;
 }
 
 interface Model {
@@ -20,6 +26,7 @@ interface Model {
   emoji: string | null;
   short_description: string | null;
   time_estimate: string | null;
+  steps?: ModelStep[] | null;
 }
 
 interface ActivatedModel {
@@ -30,10 +37,50 @@ interface ActivatedModel {
   model: Model;
 }
 
+interface Vendor {
+  id: string;
+  name: string;
+  description: string | null;
+  logo_url: string | null;
+  website_url: string | null;
+}
+
+interface TodoItem {
+  id: string;
+  modelName: string;
+  modelEmoji: string;
+  stepTitle: string;
+  stepNumber: number;
+  modelId: string;
+}
+
+const suggestedArticles = [
+  {
+    title: "5 Growth Strategies for Modern Law Firms",
+    source: "Legal Marketing Journal",
+    url: "#",
+    emoji: "📈",
+  },
+  {
+    title: "Client Acquisition in 2025: What's Working",
+    source: "Law Practice Today",
+    url: "#",
+    emoji: "🎯",
+  },
+  {
+    title: "Building Your Firm's Digital Presence",
+    source: "ABA Journal",
+    url: "#",
+    emoji: "💻",
+  },
+];
+
 const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
   const [recommendedModels, setRecommendedModels] = useState<Model[]>([]);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [followedVendors, setFollowedVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,7 +105,6 @@ const Index = () => {
           .eq("user_id", user.id);
 
         if (activatedData && activatedData.length > 0) {
-          // Fetch model details for activated models
           const modelIds = activatedData.map(am => am.model_id);
           const { data: modelsData } = await supabase
             .from("models")
@@ -71,6 +117,26 @@ const Index = () => {
           }));
           setActivatedModels(activatedWithModels as ActivatedModel[]);
 
+          // Generate todos from model steps
+          const todoItems: TodoItem[] = [];
+          activatedWithModels.forEach((am: any) => {
+            if (!am.completed && am.model?.steps) {
+              const steps = am.model.steps as ModelStep[];
+              const currentStep = steps[am.current_step];
+              if (currentStep) {
+                todoItems.push({
+                  id: `${am.id}-${am.current_step}`,
+                  modelName: am.model.name,
+                  modelEmoji: am.model.emoji || "📚",
+                  stepTitle: currentStep.title,
+                  stepNumber: am.current_step + 1,
+                  modelId: am.model_id,
+                });
+              }
+            }
+          });
+          setTodos(todoItems);
+
           // Get recommended models (ones not activated yet)
           const { data: recommendedData } = await supabase
             .from("models")
@@ -80,13 +146,30 @@ const Index = () => {
 
           setRecommendedModels(recommendedData || []);
         } else {
-          // No activated models, show all as recommendations
           const { data: allModels } = await supabase
             .from("models")
             .select("id, name, emoji, short_description, time_estimate")
             .limit(3);
 
           setRecommendedModels(allModels || []);
+        }
+
+        // Fetch followed vendors (liked by user)
+        const { data: reactionsData } = await supabase
+          .from("reactions")
+          .select("target_id")
+          .eq("user_id", user.id)
+          .eq("target_type", "vendor");
+
+        if (reactionsData && reactionsData.length > 0) {
+          const vendorIds = reactionsData.map(r => r.target_id);
+          const { data: vendorsData } = await supabase
+            .from("vendors")
+            .select("id, name, description, logo_url, website_url")
+            .in("id", vendorIds)
+            .limit(4);
+
+          setFollowedVendors(vendorsData || []);
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -170,6 +253,138 @@ const Index = () => {
             ))}
           </div>
         </section>
+
+        {/* Two Column Layout: Todos + Articles */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* My To-Dos */}
+          <section>
+            <h2 className="text-xl font-semibold mb-4">My To-Dos</h2>
+            {loading ? (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
+                </CardContent>
+              </Card>
+            ) : todos.length > 0 ? (
+              <Card>
+                <CardContent className="p-4 space-y-2">
+                  {todos.map((todo) => (
+                    <Link
+                      key={todo.id}
+                      to={`/models/${todo.modelId}/workspace`}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
+                      <Circle className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate group-hover:text-primary transition-colors">
+                          {todo.stepTitle}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {todo.modelEmoji} {todo.modelName} · Step {todo.stepNumber}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-muted/50">
+                <CardContent className="p-6 text-center">
+                  <p className="text-muted-foreground mb-4">
+                    No active tasks. Start a model to see your to-dos here!
+                  </p>
+                  <Link to="/models">
+                    <Button variant="outline" size="sm">
+                      Browse Models
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+
+          {/* Suggested Articles */}
+          <section>
+            <h2 className="text-xl font-semibold mb-4">Suggested Reading</h2>
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                {suggestedArticles.map((article, index) => (
+                  <a
+                    key={index}
+                    href={article.url}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
+                  >
+                    <span className="text-2xl">{article.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate group-hover:text-primary transition-colors">
+                        {article.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{article.source}</p>
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+        </div>
+
+        {/* Followed Vendors */}
+        {followedVendors.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Your Followed Vendors</h2>
+              <Link to="/martech">
+                <Button variant="ghost" size="sm">
+                  View All <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {followedVendors.map((vendor) => (
+                <Card key={vendor.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      {vendor.logo_url ? (
+                        <img
+                          src={vendor.logo_url}
+                          alt={vendor.name}
+                          className="h-8 w-8 rounded object-contain"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
+                          <span className="text-xs font-bold">{vendor.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <h3 className="font-medium truncate">{vendor.name}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {vendor.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <Badge variant="secondary" className="text-xs">
+                        <Heart className="h-3 w-3 mr-1 fill-current" /> Following
+                      </Badge>
+                      {vendor.website_url && (
+                        <a
+                          href={vendor.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Visit
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* My Activated Models */}
         <section>
