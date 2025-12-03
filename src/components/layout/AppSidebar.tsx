@@ -1,55 +1,67 @@
 import { Home, BookOpen, FlaskConical, Map, Info, User, LogOut, Users, Settings, Lightbulb } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/use-admin";
-
-const mainNavItems = [
-  { title: "Home", url: "/", icon: Home },
-  { title: "Toolbox", url: "/models", icon: BookOpen },
-  { title: "Research Lab", url: "/research", icon: FlaskConical },
-  { title: "Martech Map", url: "/martech", icon: Map },
-  { title: "Insights Hub", url: "/insights-hub", icon: Lightbulb },
-  { title: "Expert Network", url: "/expert-network", icon: Users, comingSoon: true },
-];
-
-const secondaryNavItems = [
-  { title: "About BBH", url: "/about", icon: Info },
-  { title: "My Account", url: "/account", icon: User },
-];
-
+const mainNavItems = [{
+  title: "Home",
+  url: "/",
+  icon: Home
+}, {
+  title: "Toolbox",
+  url: "/models",
+  icon: BookOpen
+}, {
+  title: "Research Lab",
+  url: "/research",
+  icon: FlaskConical
+}, {
+  title: "Martech Map",
+  url: "/martech",
+  icon: Map
+}, {
+  title: "Insights Hub",
+  url: "/insights-hub",
+  icon: Lightbulb
+}, {
+  title: "Expert Network",
+  url: "/expert-network",
+  icon: Users,
+  comingSoon: true
+}];
+const secondaryNavItems = [{
+  title: "About BBH",
+  url: "/about",
+  icon: Info
+}, {
+  title: "My Account",
+  url: "/account",
+  icon: User
+}];
 export function AppSidebar() {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
-  const { isAdmin } = useAdmin();
-
+  const {
+    isAdmin
+  } = useAdmin();
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const {
+      error
+    } = await supabase.auth.signOut();
     if (error) {
       toast({
         title: "Error signing out",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       navigate("/auth");
     }
   };
-
-  return (
-    <Sidebar className="border-r border-sidebar-border">
+  return <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shadow-sm">
@@ -66,36 +78,20 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    className={item.comingSoon ? "opacity-50 cursor-not-allowed" : ""}
-                  >
-                    {item.comingSoon ? (
-                      <div className="flex items-center gap-3 px-3 py-2">
+              {mainNavItems.map(item => <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild className={item.comingSoon ? "opacity-50 cursor-not-allowed" : ""}>
+                    {item.comingSoon ? <div className="flex items-center gap-3 px-3 py-2">
                         <item.icon className="h-5 w-5" />
                         <span>{item.title}</span>
                         <span className="ml-auto text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full font-medium">Soon</span>
-                      </div>
-                    ) : (
-                      <NavLink
-                        to={item.url}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                            isActive
-                              ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                              : "text-sidebar-foreground hover:bg-sidebar-accent"
-                          }`
-                        }
-                      >
+                      </div> : <NavLink to={item.url} className={({
+                  isActive
+                }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
                         <item.icon className="h-5 w-5" />
                         <span>{item.title}</span>
-                      </NavLink>
-                    )}
+                      </NavLink>}
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -103,49 +99,28 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
-              {isAdmin && (
-                <SidebarMenuItem>
+              {isAdmin && <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/admin"
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                          isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent"
-                        }`
-                      }
-                    >
+                    <NavLink to="/admin" className={({
+                  isActive
+                }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
                       <Settings className="h-5 w-5" />
                       <span>Admin</span>
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-              {secondaryNavItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                </SidebarMenuItem>}
+              {secondaryNavItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                          isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-foreground hover:bg-sidebar-accent"
-                        }`
-                      }
-                    >
+                    <NavLink to={item.url} className={({
+                  isActive
+                }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleLogout}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent cursor-pointer"
-                >
+                <SidebarMenuButton onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent cursor-pointer">
                   <LogOut className="h-5 w-5" />
                   <span>Sign Out</span>
                 </SidebarMenuButton>
@@ -156,10 +131,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <p className="text-xs text-muted-foreground text-center">
-          © 2024 Beyond Billable Hours
-        </p>
+        <p className="text-xs text-muted-foreground text-center">© 2025 Beyond Billable Hours</p>
       </SidebarFooter>
-    </Sidebar>
-  );
+    </Sidebar>;
 }
