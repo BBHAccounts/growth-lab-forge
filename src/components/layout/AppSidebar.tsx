@@ -1,4 +1,4 @@
-import { Home, BookOpen, FlaskConical, Map, Info, User, LogOut, Users, Calendar, Settings, Lightbulb } from "lucide-react";
+import { Home, BookOpen, FlaskConical, Map, Info, User, LogOut, Users, Settings, Lightbulb } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -23,7 +23,6 @@ const mainNavItems = [
   { title: "Martech Map", url: "/martech", icon: Map },
   { title: "Insights Hub", url: "/insights-hub", icon: Lightbulb },
   { title: "Expert Network", url: "/expert-network", icon: Users, comingSoon: true },
-  { title: "Event Overview", url: "/events", icon: Calendar, comingSoon: true },
 ];
 
 const secondaryNavItems = [

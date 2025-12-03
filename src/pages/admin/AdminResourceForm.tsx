@@ -55,6 +55,7 @@ const RESOURCE_TYPES = [
   { value: 'guide', label: 'Guide', emoji: '📘' },
   { value: 'video', label: 'Video', emoji: '▶️' },
   { value: 'podcast', label: 'Podcast', emoji: '🎙️' },
+  { value: 'event', label: 'Event', emoji: '📅' },
 ];
 
 export default function AdminResourceForm() {
