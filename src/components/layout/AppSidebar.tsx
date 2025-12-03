@@ -103,7 +103,7 @@ export function AppSidebar() {
             {profile && (
               <div className="px-3 py-2 mb-2">
                 {profile.research_contributor ? (
-                  <Badge className="w-full justify-center gap-1.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black border-0">
+                  <Badge className="w-full justify-center gap-1.5 py-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground border-0">
                     <Award className="h-3 w-3" />
                     Research Contributor
                   </Badge>
