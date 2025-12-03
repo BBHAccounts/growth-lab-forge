@@ -1,10 +1,11 @@
-import { Home, BookOpen, FlaskConical, Map, Dice5, Info, User, LogOut, Users, Calendar } from "lucide-react";
+import { Home, BookOpen, FlaskConical, Map, Dice5, Info, User, LogOut, Users, Calendar, Settings } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/hooks/use-admin";
 
 const mainNavItems = [
   { title: "Home", url: "/", icon: Home },
@@ -32,6 +34,7 @@ const secondaryNavItems = [
 export function AppSidebar() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -107,6 +110,25 @@ export function AppSidebar() {
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to="/admin"
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                          isActive
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        }`
+                      }
+                    >
+                      <Settings className="h-5 w-5" />
+                      <span>Admin</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
               {secondaryNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

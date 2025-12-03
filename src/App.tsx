@@ -15,6 +15,21 @@ import About from "./pages/About";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
+// Admin pages
+import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
+import AdminModels from "./pages/admin/AdminModels";
+import AdminModelForm from "./pages/admin/AdminModelForm";
+import AdminResearch from "./pages/admin/AdminResearch";
+import AdminResearchForm from "./pages/admin/AdminResearchForm";
+import AdminResearchResponses from "./pages/admin/AdminResearchResponses";
+import AdminMartech from "./pages/admin/AdminMartech";
+import AdminVendorForm from "./pages/admin/AdminVendorForm";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminSettings from "./pages/admin/AdminSettings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,6 +49,21 @@ const App = () => (
           <Route path="/game-of-life" element={<GameOfLife />} />
           <Route path="/about" element={<About />} />
           <Route path="/account" element={<Account />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
+          <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
+          <Route path="/admin/users/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
+          <Route path="/admin/models" element={<AdminRouteGuard><AdminModels /></AdminRouteGuard>} />
+          <Route path="/admin/models/:modelId" element={<AdminRouteGuard><AdminModelForm /></AdminRouteGuard>} />
+          <Route path="/admin/research" element={<AdminRouteGuard><AdminResearch /></AdminRouteGuard>} />
+          <Route path="/admin/research/:studyId" element={<AdminRouteGuard><AdminResearchForm /></AdminRouteGuard>} />
+          <Route path="/admin/research/:studyId/responses" element={<AdminRouteGuard><AdminResearchResponses /></AdminRouteGuard>} />
+          <Route path="/admin/martech" element={<AdminRouteGuard><AdminMartech /></AdminRouteGuard>} />
+          <Route path="/admin/martech/vendors/:vendorId" element={<AdminRouteGuard><AdminVendorForm /></AdminRouteGuard>} />
+          <Route path="/admin/analytics" element={<AdminRouteGuard><AdminAnalytics /></AdminRouteGuard>} />
+          <Route path="/admin/settings" element={<AdminRouteGuard><AdminSettings /></AdminRouteGuard>} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
