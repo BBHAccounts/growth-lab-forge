@@ -199,83 +199,99 @@ const Index = () => {
             <NavigatorChat />
           </section>
 
-          {/* Post-it Style To-Dos */}
+          {/* Your To-Dos */}
           <section className="lg:col-span-1">
-            <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800/50 rounded-lg p-5 shadow-md rotate-[0.5deg] hover:rotate-0 transition-transform">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-lg">📌</span>
-                <h3 className="font-semibold text-amber-900 dark:text-amber-100">Your To-Dos</h3>
+            <div className="rounded-2xl border border-border/60 bg-card overflow-hidden h-full">
+              <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-5 py-4 border-b border-border/40">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Your To-Dos</h3>
+                    <p className="text-sm text-muted-foreground">Next steps to complete</p>
+                  </div>
+                </div>
               </div>
               
-              {loading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-8 w-full bg-amber-100 dark:bg-amber-900/30" />
-                  ))}
-                </div>
-              ) : (
-                <ul className="space-y-2">
-                  {/* Active model tasks */}
-                  {todos.slice(0, 2).map((todo) => (
-                    <li key={todo.id}>
-                      <Link
-                        to={`/models/${todo.modelId}/workspace`}
-                        className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors group"
-                      >
-                        <Circle className="h-4 w-4 shrink-0" />
-                        <span className="truncate group-hover:underline">{todo.stepTitle}</span>
-                      </Link>
-                    </li>
-                  ))}
-                  
-                  {/* Getting started items if no todos */}
-                  {todos.length === 0 && (
-                    <>
-                      <li>
+              <div className="p-5">
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <ul className="space-y-3">
+                    {/* Active model tasks */}
+                    {todos.slice(0, 3).map((todo) => (
+                      <li key={todo.id}>
                         <Link
-                          to="/account"
-                          className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors"
+                          to={`/models/${todo.modelId}/workspace`}
+                          className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                         >
-                          {profile?.onboarding_completed ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                          ) : (
-                            <Circle className="h-4 w-4 shrink-0" />
-                          )}
-                          <span className={profile?.onboarding_completed ? "line-through opacity-60" : ""}>Complete your profile</span>
+                          <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">{todo.stepTitle}</p>
+                            <p className="text-xs text-muted-foreground">{todo.modelEmoji} {todo.modelName}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                         </Link>
                       </li>
-                      <li>
-                        <Link
-                          to="/models"
-                          className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors"
-                        >
-                          {activatedModels.length > 0 ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
-                          ) : (
-                            <Circle className="h-4 w-4 shrink-0" />
-                          )}
-                          <span className={activatedModels.length > 0 ? "line-through opacity-60" : ""}>Start your first model</span>
-                        </Link>
+                    ))}
+                    
+                    {/* Getting started items if no todos */}
+                    {todos.length === 0 && (
+                      <>
+                        <li>
+                          <Link
+                            to="/account"
+                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                          >
+                            {profile?.onboarding_completed ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <span className={`text-sm font-medium flex-1 ${profile?.onboarding_completed ? "line-through opacity-60" : "group-hover:text-primary transition-colors"}`}>Complete your profile</span>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/models"
+                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                          >
+                            {activatedModels.length > 0 ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <span className={`text-sm font-medium flex-1 ${activatedModels.length > 0 ? "line-through opacity-60" : "group-hover:text-primary transition-colors"}`}>Start your first model</span>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="/martech"
+                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                          >
+                            <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <span className="text-sm font-medium flex-1 group-hover:text-primary transition-colors">Explore the Martech Map</span>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </Link>
+                        </li>
+                      </>
+                    )}
+                    
+                    {todos.length > 3 && (
+                      <li className="text-center">
+                        <span className="text-xs text-muted-foreground">+{todos.length - 3} more tasks</span>
                       </li>
-                      <li>
-                        <Link
-                          to="/martech"
-                          className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors"
-                        >
-                          <Circle className="h-4 w-4 shrink-0" />
-                          <span>Explore the Martech Map</span>
-                        </Link>
-                      </li>
-                    </>
-                  )}
-                  
-                  {todos.length > 2 && (
-                    <li>
-                      <span className="text-xs text-amber-600 dark:text-amber-400">+{todos.length - 2} more tasks</span>
-                    </li>
-                  )}
-                </ul>
-              )}
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
           </section>
         </div>
