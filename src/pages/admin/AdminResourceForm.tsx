@@ -27,6 +27,7 @@ interface Resource {
   estimated_time: number | null;
   status: string;
   featured: boolean;
+  access_level: string;
 }
 
 interface CategoryItem {
@@ -47,6 +48,7 @@ const defaultResource: Resource = {
   estimated_time: null,
   status: 'active',
   featured: false,
+  access_level: 'all',
 };
 
 const RESOURCE_TYPES = [
@@ -131,6 +133,7 @@ export default function AdminResourceForm() {
           ...defaultResource,
           ...resourceData,
           published_date: resourceData.published_date || '',
+          access_level: resourceData.access_level || 'all',
         });
 
         // Fetch linked categories
@@ -173,6 +176,7 @@ export default function AdminResourceForm() {
         estimated_time: resource.estimated_time,
         status: resource.status,
         featured: resource.featured,
+        access_level: resource.access_level,
       };
 
       if (isNew) {
@@ -394,6 +398,23 @@ export default function AdminResourceForm() {
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Access Level</Label>
+                <Select
+                  value={resource.access_level}
+                  onValueChange={(value) => setResource({ ...resource, access_level: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Members</SelectItem>
+                    <SelectItem value="research_contributor">Research Contributors Only</SelectItem>
+                    <SelectItem value="request_only">On Request Only</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
