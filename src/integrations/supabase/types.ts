@@ -479,6 +479,7 @@ export type Database = {
           featured: boolean | null
           id: string
           image_url: string | null
+          likes_count: number | null
           published_date: string | null
           status: string | null
           title: string
@@ -496,6 +497,7 @@ export type Database = {
           featured?: boolean | null
           id?: string
           image_url?: string | null
+          likes_count?: number | null
           published_date?: string | null
           status?: string | null
           title: string
@@ -513,6 +515,7 @@ export type Database = {
           featured?: boolean | null
           id?: string
           image_url?: string | null
+          likes_count?: number | null
           published_date?: string | null
           status?: string | null
           title?: string

@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, Clock, User, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ExternalLink, Clock, User, ChevronLeft, ChevronRight, Sparkles, Heart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { AccessBadge } from "@/components/AccessBadge";
+import { useReactions } from "@/hooks/use-reactions";
 
 interface Resource {
   id: string;
@@ -23,6 +24,7 @@ interface Resource {
   published_date: string | null;
   featured: boolean | null;
   access_level: string | null;
+  likes_count: number | null;
 }
 const TYPE_COLORS: Record<string, string> = {
   article: "bg-blue-500/20 text-blue-700 dark:text-blue-300",
@@ -50,6 +52,27 @@ export default function InsightsHub() {
   });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const { isLiked, isLoading, toggleReaction } = useReactions({
+    targetType: "resource",
+    targetIds: resources.map(r => r.id),
+  });
+
+  const handleLike = async (e: React.MouseEvent, resourceId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const wasLiked = isLiked(resourceId);
+    
+    // Optimistically update the UI
+    setResources(prev => prev.map(resource => 
+      resource.id === resourceId 
+        ? { ...resource, likes_count: (resource.likes_count || 0) + (wasLiked ? -1 : 1) }
+        : resource
+    ));
+    
+    await toggleReaction(resourceId);
+  };
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
@@ -145,6 +168,18 @@ export default function InsightsHub() {
                                   <Clock className="h-3.5 w-3.5" />
                                   {resource.estimated_time} min
                                 </span>}
+                              <button
+                                onClick={(e) => handleLike(e, resource.id)}
+                                disabled={isLoading(resource.id)}
+                                className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+                                  isLiked(resource.id)
+                                    ? "bg-red-500/30 text-red-300"
+                                    : "text-white/70 hover:bg-white/10"
+                                }`}
+                              >
+                                <Heart className={`h-3.5 w-3.5 ${isLiked(resource.id) ? "fill-current" : ""}`} />
+                                <span>{resource.likes_count || 0}</span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -189,7 +224,21 @@ export default function InsightsHub() {
                           </Badge>
                           <AccessBadge accessLevel={resource.access_level} size="sm" />
                         </div>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={(e) => handleLike(e, resource.id)}
+                            disabled={isLoading(resource.id)}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+                              isLiked(resource.id)
+                                ? "bg-red-500/10 text-red-500"
+                                : "text-muted-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <Heart className={`h-3.5 w-3.5 ${isLiked(resource.id) ? "fill-current" : ""}`} />
+                            <span className="text-xs">{resource.likes_count || 0}</span>
+                          </button>
+                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        </div>
                       </div>
 
                       <h3 className="font-semibold mb-2 line-clamp-2 group-hover:text-primary transition-colors">

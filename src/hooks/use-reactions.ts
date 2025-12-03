@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface UseReactionsOptions {
-  targetType: "vendor" | "model";
+  targetType: "vendor" | "model" | "resource";
   targetIds: string[];
 }
 
@@ -66,9 +66,10 @@ export function useReactions({ targetType, targetIds }: UseReactionsOptions) {
           .eq("target_type", targetType);
 
         setUserReactions(prev => ({ ...prev, [targetId]: false }));
+        const label = targetType === "vendor" ? "unfollowed" : "unliked";
         toast({
           title: targetType === "vendor" ? "Unfollowed" : "Unliked",
-          description: `You've ${targetType === "vendor" ? "unfollowed" : "unliked"} this ${targetType}.`,
+          description: `You've ${label} this ${targetType}.`,
         });
       } else {
         // Add reaction
@@ -82,9 +83,10 @@ export function useReactions({ targetType, targetIds }: UseReactionsOptions) {
           });
 
         setUserReactions(prev => ({ ...prev, [targetId]: true }));
+        const label = targetType === "vendor" ? "following" : "liked";
         toast({
           title: targetType === "vendor" ? "Following!" : "Liked!",
-          description: `You're now ${targetType === "vendor" ? "following" : "liking"} this ${targetType}.`,
+          description: `You're now ${label} this ${targetType}.`,
         });
       }
     } catch (error) {
