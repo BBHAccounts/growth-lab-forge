@@ -4,21 +4,17 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Bell, Search } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 interface AppLayoutProps {
   children: ReactNode;
 }
-
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({
+  children
+}: AppLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,57 +26,50 @@ export function AppLayout({ children }: AppLayoutProps) {
     const q = searchParams.get("q");
     if (q) setSearchQuery(q);
   }, [searchParams]);
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/martech?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
-
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-        
-        if (!session?.user) {
-          navigate("/auth");
-        }
+    const {
+      data: {
+        subscription
       }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
-      
       if (!session?.user) {
         navigate("/auth");
       }
     });
-
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+      if (!session?.user) {
+        navigate("/auth");
+      }
+    });
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-primary/20" />
           <p className="text-muted-foreground">Loading...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!user) {
     return null;
   }
-
   const initials = user.email?.slice(0, 2).toUpperCase() || "U";
-
-  return (
-    <SidebarProvider>
+  return <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
@@ -89,13 +78,8 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex items-center gap-4 flex-1">
               <SidebarTrigger className="lg:hidden" />
               <form onSubmit={handleSearch} className="relative hidden md:block flex-1 max-w-xl">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search vendors..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-full bg-muted/50"
-                />
+                
+                
               </form>
             </div>
             <div className="flex items-center gap-4">
@@ -132,6 +116,5 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 }
