@@ -360,7 +360,7 @@ export default function ModelWorkspace() {
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="icon" title="Deactivate model">
+                <Button variant="outline" size="icon" title="Deactivate model">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
