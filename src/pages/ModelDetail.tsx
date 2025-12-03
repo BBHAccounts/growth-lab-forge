@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Users, ThumbsUp, CheckCircle, ArrowLeft, Play } from "lucide-react";
+import { Clock, Users, ThumbsUp, CheckCircle, ArrowLeft, Play, Trash2 } from "lucide-react";
 
 interface ModelStep {
   id: string;
@@ -137,6 +137,30 @@ export default function ModelDetail() {
     setActivating(false);
   };
 
+  const handleDeactivate = async () => {
+    if (!model) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("activated_models")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("model_id", model.id);
+
+    if (error) {
+      toast({
+        title: "Error deactivating model",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Model deactivated" });
+      setIsActivated(false);
+    }
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -241,24 +265,36 @@ export default function ModelDetail() {
             {/* Activate CTA */}
             <Card className="border-secondary/50 bg-secondary/5">
               <CardContent className="pt-6">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={isActivated ? () => navigate(`/models/${model.id}/workspace`) : handleActivate}
-                  disabled={activating}
-                >
-                  {isActivated ? (
-                    <>
-                      Continue Working
-                      <Play className="h-4 w-4 ml-2" />
-                    </>
-                  ) : (
-                    <>
-                      Activate Model
-                      <Play className="h-4 w-4 ml-2" />
-                    </>
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    size="lg"
+                    onClick={isActivated ? () => navigate(`/models/${model.id}/workspace`) : handleActivate}
+                    disabled={activating}
+                  >
+                    {isActivated ? (
+                      <>
+                        Continue Working
+                        <Play className="h-4 w-4 ml-2" />
+                      </>
+                    ) : (
+                      <>
+                        Activate Model
+                        <Play className="h-4 w-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                  {isActivated && (
+                    <Button
+                      variant="destructive"
+                      size="lg"
+                      onClick={handleDeactivate}
+                      title="Deactivate and delete progress"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
-                </Button>
+                </div>
                 <p className="text-xs text-center text-muted-foreground mt-3">
                   {isActivated
                     ? "You've already activated this model"
