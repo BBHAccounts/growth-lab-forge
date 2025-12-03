@@ -6,7 +6,8 @@ import {
   MapPin, 
   BarChart3, 
   Settings,
-  ArrowLeft
+  ArrowLeft,
+  Tags
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -25,6 +26,7 @@ import {
 const adminNavItems = [
   { title: 'Overview', url: '/admin', icon: LayoutDashboard },
   { title: 'Users', url: '/admin/users', icon: Users },
+  { title: 'Topics', url: '/admin/topics', icon: Tags },
   { title: 'Models', url: '/admin/models', icon: Box },
   { title: 'Research Lab', url: '/admin/research', icon: FlaskConical },
   { title: 'Martech Map', url: '/admin/martech', icon: MapPin },
