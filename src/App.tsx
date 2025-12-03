@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
+import ModelWorkspace from "./pages/ModelWorkspace";
 import Martech from "./pages/Martech";
 import Research from "./pages/Research";
 import GameOfLife from "./pages/GameOfLife";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/models" element={<Models />} />
           <Route path="/models/:id" element={<ModelDetail />} />
+          <Route path="/models/:id/workspace" element={<ModelWorkspace />} />
           <Route path="/martech" element={<Martech />} />
           <Route path="/research" element={<Research />} />
           <Route path="/game-of-life" element={<GameOfLife />} />
