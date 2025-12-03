@@ -174,22 +174,18 @@ export function useRecommendations(maxTopics: number = 5) {
 
         const topTopicIds = scoredTopics.map((t) => t.id);
 
-        // If we have matching topics, fetch linked items via categories
+        // If we have matching topics, fetch linked items
         if (topTopicIds.length > 0) {
-          const [linkedModelCats, linkedVendorCats, linkedResourceCats] = await Promise.all([
-            supabase.from('topic_model_categories').select('category_id').in('topic_id', topTopicIds),
+          // Fetch models directly via topic_models
+          const [linkedModels, linkedVendorCats, linkedResourceCats] = await Promise.all([
+            supabase.from('topic_models').select('model_id').in('topic_id', topTopicIds),
             supabase.from('topic_vendor_categories').select('category_id').in('topic_id', topTopicIds),
             supabase.from('topic_resource_categories').select('category_id').in('topic_id', topTopicIds),
           ]);
 
-          const modelCategoryIds = [...new Set((linkedModelCats.data || []).map((l) => l.category_id))];
+          const modelIds = [...new Set((linkedModels.data || []).map((l) => l.model_id))];
           const vendorCategoryIds = [...new Set((linkedVendorCats.data || []).map((l) => l.category_id))];
           const resourceCategoryIds = [...new Set((linkedResourceCats.data || []).map((l) => l.category_id))];
-
-          // Fetch models via category links
-          const modelLinks = modelCategoryIds.length > 0
-            ? await supabase.from('model_category_links').select('model_id').in('category_id', modelCategoryIds)
-            : { data: [] };
 
           // Fetch martech categories directly (not vendors)
           const martechCatsRes = vendorCategoryIds.length > 0
@@ -201,7 +197,6 @@ export function useRecommendations(maxTopics: number = 5) {
             ? await supabase.from('resource_category_links').select('resource_id').in('category_id', resourceCategoryIds)
             : { data: [] };
 
-          const modelIds = [...new Set((modelLinks.data || []).map((l) => l.model_id))];
           const resourceIds = [...new Set((resourceLinks.data || []).map((l) => l.resource_id))];
 
           const [modelsRes, resourcesRes] = await Promise.all([
@@ -258,7 +253,7 @@ export function useRecommendations(maxTopics: number = 5) {
 // Helper function to get user profile and top topics for chatbot
 export async function getUserRecommendationContext(userId: string): Promise<{
   profile: UserProfile | null;
-  topTopics: { name: string; description: string | null; linkedCategories: { modelCategories: string[]; vendorCategories: string[]; resourceCategories: string[] } }[];
+  topTopics: { name: string; description: string | null; linkedModels: string[]; linkedCategories: { vendorCategories: string[]; resourceCategories: string[] } }[];
 }> {
   try {
     const { data: profileData } = await supabase
@@ -292,8 +287,8 @@ export async function getUserRecommendationContext(userId: string): Promise<{
 
     const topTopics = await Promise.all(
       scoredTopics.map(async (topic) => {
-        const [modelCats, vendorCats, resourceCats] = await Promise.all([
-          supabase.from('topic_model_categories').select('model_categories(name)').eq('topic_id', topic.id),
+        const [linkedModels, vendorCats, resourceCats] = await Promise.all([
+          supabase.from('topic_models').select('models(name)').eq('topic_id', topic.id),
           supabase.from('topic_vendor_categories').select('martech_categories(name)').eq('topic_id', topic.id),
           supabase.from('topic_resource_categories').select('resource_categories(name)').eq('topic_id', topic.id),
         ]);
@@ -301,8 +296,8 @@ export async function getUserRecommendationContext(userId: string): Promise<{
         return {
           name: topic.name,
           description: topic.description,
+          linkedModels: (linkedModels.data || []).map((m: any) => m.models?.name).filter(Boolean),
           linkedCategories: {
-            modelCategories: (modelCats.data || []).map((c: any) => c.model_categories?.name).filter(Boolean),
             vendorCategories: (vendorCats.data || []).map((c: any) => c.martech_categories?.name).filter(Boolean),
             resourceCategories: (resourceCats.data || []).map((c: any) => c.resource_categories?.name).filter(Boolean),
           },

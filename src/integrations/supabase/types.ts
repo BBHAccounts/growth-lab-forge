@@ -558,6 +558,42 @@ export type Database = {
           },
         ]
       }
+      topic_models: {
+        Row: {
+          created_at: string | null
+          id: string
+          model_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          model_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          model_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "topic_models_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       topic_resource_categories: {
         Row: {
           category_id: string

@@ -11,6 +11,11 @@ import { Heart, Clock, Users, ArrowRight, Play, Search, CheckCircle } from "luci
 import { useReactions } from "@/hooks/use-reactions";
 import { AccessBadge } from "@/components/AccessBadge";
 
+interface Topic {
+  id: string;
+  name: string;
+}
+
 interface Model {
   id: string;
   name: string;
@@ -21,6 +26,7 @@ interface Model {
   tags: string[] | null;
   likes_count: number | null;
   unlock_level: string | null;
+  topics?: Topic[];
 }
 
 type FilterType = "all" | "activated" | "not-activated";
@@ -46,7 +52,22 @@ export default function Models() {
         .order("created_at", { ascending: true });
 
       if (!modelsError && modelsData) {
-        setModels(modelsData);
+        // Fetch topic links for all models
+        const { data: topicLinks } = await supabase
+          .from("topic_models")
+          .select("model_id, topic_id, topics(id, name)")
+          .in("model_id", modelsData.map(m => m.id));
+
+        // Map topics to models
+        const modelsWithTopics = modelsData.map(model => ({
+          ...model,
+          topics: (topicLinks || [])
+            .filter(link => link.model_id === model.id)
+            .map(link => link.topics as unknown as Topic)
+            .filter(Boolean),
+        }));
+
+        setModels(modelsWithTopics);
       }
 
       // Fetch activated models for current user
@@ -218,9 +239,9 @@ export default function Models() {
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col">
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {model.tags?.slice(0, 3).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
+                      {model.topics?.slice(0, 3).map((topic) => (
+                        <Badge key={topic.id} variant="secondary" className="text-xs">
+                          {topic.name}
                         </Badge>
                       ))}
                     </div>
