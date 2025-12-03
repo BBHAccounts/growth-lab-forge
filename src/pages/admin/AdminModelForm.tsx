@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -78,28 +79,39 @@ export default function AdminModelForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [topics, setTopics] = useState<{ id: string; name: string; linked: boolean }[]>([]);
 
   useEffect(() => {
-    if (!isNew && modelId) {
-      const fetchModel = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('models')
-            .select('*')
-            .eq('id', modelId)
-            .single();
+    const fetchData = async () => {
+      // Fetch all active topics
+      const { data: topicsData } = await supabase
+        .from('topics')
+        .select('id, name')
+        .eq('active', true)
+        .order('name');
 
-          if (error) throw error;
+      if (!isNew && modelId) {
+        try {
+          const [modelRes, linkedTopicsRes] = await Promise.all([
+            supabase.from('models').select('*').eq('id', modelId).single(),
+            supabase.from('topic_models').select('topic_id').eq('model_id', modelId),
+          ]);
+
+          if (modelRes.error) throw modelRes.error;
+          
+          const linkedTopicIds = new Set((linkedTopicsRes.data || []).map((l) => l.topic_id));
           
           setModel({
             ...defaultModel,
-            ...data,
-            steps: (data.steps as unknown as Step[]) || [],
-            audience: data.audience || [],
-            tags: data.tags || [],
-            outcomes: data.outcomes || [],
-            suggested_actions: data.suggested_actions || [],
+            ...modelRes.data,
+            steps: (modelRes.data.steps as unknown as Step[]) || [],
+            audience: modelRes.data.audience || [],
+            tags: modelRes.data.tags || [],
+            outcomes: modelRes.data.outcomes || [],
+            suggested_actions: modelRes.data.suggested_actions || [],
           });
+          
+          setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, linked: linkedTopicIds.has(t.id) })));
         } catch (error) {
           console.error('Error fetching model:', error);
           toast({
@@ -110,10 +122,13 @@ export default function AdminModelForm() {
         } finally {
           setLoading(false);
         }
-      };
+      } else {
+        setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, linked: false })));
+        setLoading(false);
+      }
+    };
 
-      fetchModel();
-    }
+    fetchData();
   }, [modelId, isNew, toast]);
 
   const handleSave = async () => {
@@ -146,9 +161,12 @@ export default function AdminModelForm() {
         steps: JSON.parse(JSON.stringify(model.steps)),
       };
 
+      let savedModelId = modelId;
+      
       if (isNew) {
-        const { error } = await supabase.from('models').insert([modelData] as never);
+        const { data, error } = await supabase.from('models').insert([modelData] as never).select('id').single();
         if (error) throw error;
+        savedModelId = data.id;
         toast({ title: 'Success', description: 'Model created successfully' });
       } else {
         const { error } = await supabase
@@ -157,6 +175,13 @@ export default function AdminModelForm() {
           .eq('id', modelId);
         if (error) throw error;
         toast({ title: 'Success', description: 'Model updated successfully' });
+      }
+
+      // Update linked topics
+      await supabase.from('topic_models').delete().eq('model_id', savedModelId);
+      const linkedTopicIds = topics.filter((t) => t.linked).map((t) => ({ topic_id: t.id, model_id: savedModelId }));
+      if (linkedTopicIds.length > 0) {
+        await supabase.from('topic_models').insert(linkedTopicIds);
       }
 
       navigate('/admin/models');
@@ -216,6 +241,12 @@ export default function AdminModelForm() {
       ...model,
       [field]: value.split(',').map((v) => v.trim()).filter(Boolean),
     });
+  };
+
+  const toggleTopic = (topicId: string) => {
+    setTopics((prev) =>
+      prev.map((t) => (t.id === topicId ? { ...t, linked: !t.linked } : t))
+    );
   };
 
   if (loading) {
@@ -376,7 +407,26 @@ export default function AdminModelForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Tags (comma-separated)</Label>
+                <Label>Topics ({topics.filter((t) => t.linked).length} linked)</Label>
+                {topics.length > 0 ? (
+                  <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-2">
+                    {topics.map((topic) => (
+                      <label key={topic.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={topic.linked}
+                          onCheckedChange={() => toggleTopic(topic.id)}
+                        />
+                        <span className="text-sm">{topic.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No active topics found. Create topics first.</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Search Tags (comma-separated)</Label>
                 <Input
                   value={model.tags.join(', ')}
                   onChange={(e) => updateArrayField('tags', e.target.value)}
