@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HeroBanner } from "@/components/ui/hero-banner";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Gift, CheckCircle, Lock } from "lucide-react";
+import { Gift, CheckCircle } from "lucide-react";
 
 interface Study {
   id: string;
@@ -23,6 +24,7 @@ interface Study {
 }
 
 export default function Research() {
+  const navigate = useNavigate();
   const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudy, setSelectedStudy] = useState<Study | null>(null);
   const [completedStudies, setCompletedStudies] = useState<string[]>([]);
@@ -203,7 +205,13 @@ export default function Research() {
                     Already Completed
                   </Button>
                 ) : (
-                  <Button className="w-full">
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedStudy(null);
+                      navigate(`/research/${selectedStudy.id}`);
+                    }}
+                  >
                     Start Survey
                   </Button>
                 )}
