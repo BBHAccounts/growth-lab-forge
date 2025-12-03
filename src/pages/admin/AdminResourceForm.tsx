@@ -94,6 +94,7 @@ export default function AdminResourceForm() {
           type: data.type || prev.type,
           emoji: RESOURCE_TYPES.find((t) => t.value === data.type)?.emoji || prev.emoji,
           estimated_time: data.estimated_time || prev.estimated_time,
+          image_url: data.image_url || prev.image_url,
         }));
         toast({ title: 'Success', description: 'Metadata extracted successfully' });
       }
