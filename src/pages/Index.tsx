@@ -264,10 +264,10 @@ const Index = () => {
                 </div>
               )}
 
-              {/* Recommended Resources */}
+              {/* Recommended Insights */}
               {recommendations.resources.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Resources</h3>
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Insights Hub</h3>
                   <div className="space-y-2">
                     {recommendations.resources.slice(0, 3).map((resource) => (
                       <a key={resource.id} href={resource.url || '#'} target="_blank" rel="noopener noreferrer">

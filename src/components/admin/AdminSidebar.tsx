@@ -29,7 +29,7 @@ const adminNavItems = [
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Topics', url: '/admin/topics', icon: Tags },
   { title: 'Models', url: '/admin/models', icon: Box },
-  { title: 'Resources', url: '/admin/resources', icon: FileText },
+  { title: 'Insights Hub', url: '/admin/insights-hub', icon: FileText },
   { title: 'Research Lab', url: '/admin/research', icon: FlaskConical },
   { title: 'Martech Map', url: '/admin/martech', icon: MapPin },
   { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
