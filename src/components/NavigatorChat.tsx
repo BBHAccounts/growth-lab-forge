@@ -14,13 +14,6 @@ interface Message {
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/navigator-chat`;
 
-const suggestedQuestions = [
-  "What can I do here?",
-  "Show me the Toolbox",
-  "How do I find marketing tools?",
-  "What's coming soon?",
-];
-
 export const NavigatorChat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -115,11 +108,6 @@ export const NavigatorChat = () => {
     streamChat(input.trim());
   };
 
-  const handleSuggestion = (question: string) => {
-    if (isLoading) return;
-    streamChat(question);
-  };
-
   const renderMessageContent = (content: string) => {
     const parts = content.split(/(\([\/\w-]+\))/g);
     return parts.map((part, i) => {
@@ -150,25 +138,9 @@ export const NavigatorChat = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         {messages.length === 0 ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Hi! I can help you navigate Growth Lab. What would you like to explore?
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {suggestedQuestions.map((q) => (
-                <Button
-                  key={q}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs bg-background/50"
-                  onClick={() => handleSuggestion(q)}
-                  disabled={isLoading}
-                >
-                  {q}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Hi! I can help you navigate Growth Lab. What would you like to explore?
+          </p>
         ) : (
           <ScrollArea className="h-[200px] pr-4" ref={scrollRef}>
             <div className="space-y-3">
