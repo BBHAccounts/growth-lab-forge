@@ -4,6 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Models from "./pages/Models";
+import ModelDetail from "./pages/ModelDetail";
+import Martech from "./pages/Martech";
+import Research from "./pages/Research";
+import GameOfLife from "./pages/GameOfLife";
+import About from "./pages/About";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -16,7 +24,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/models" element={<Models />} />
+          <Route path="/models/:id" element={<ModelDetail />} />
+          <Route path="/martech" element={<Martech />} />
+          <Route path="/research" element={<Research />} />
+          <Route path="/game-of-life" element={<GameOfLife />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/account" element={<Account />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
