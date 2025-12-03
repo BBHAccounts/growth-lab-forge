@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, FlaskConical, Map, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { BookOpen, FlaskConical, Map, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
 
@@ -180,13 +181,6 @@ const Index = () => {
     },
   ];
 
-  const gettingStartedSteps = [
-    { label: "Complete your profile", done: profile?.onboarding_completed || false, href: "/account" },
-    { label: "Browse available models", done: true, href: "/models" },
-    { label: "Start your first model", done: activatedModels.length > 0, href: "/models" },
-    { label: "Explore the Martech Map", done: false, href: "/martech" },
-  ];
-
   const hasRecommendations = recommendations.models.length > 0 || recommendations.martechCategories.length > 0 || recommendations.resources.length > 0;
 
   return (
@@ -198,23 +192,118 @@ const Index = () => {
       />
 
       <div className="p-6 md:p-8 space-y-8">
-        {/* AI Assistant */}
-        <section>
-          <NavigatorChat />
-        </section>
+        {/* AI Assistant + To-Dos Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* AI Assistant */}
+          <section className="lg:col-span-2">
+            <NavigatorChat />
+          </section>
+
+          {/* Post-it Style To-Dos */}
+          <section className="lg:col-span-1">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800/50 rounded-lg p-5 shadow-md rotate-[0.5deg] hover:rotate-0 transition-transform">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">📌</span>
+                <h3 className="font-semibold text-amber-900 dark:text-amber-100">Your To-Dos</h3>
+              </div>
+              
+              {loading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-8 w-full bg-amber-100 dark:bg-amber-900/30" />
+                  ))}
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {/* Active model tasks */}
+                  {todos.slice(0, 2).map((todo) => (
+                    <li key={todo.id}>
+                      <Link
+                        to={`/models/${todo.modelId}/workspace`}
+                        className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors group"
+                      >
+                        <Circle className="h-4 w-4 shrink-0" />
+                        <span className="truncate group-hover:underline">{todo.stepTitle}</span>
+                      </Link>
+                    </li>
+                  ))}
+                  
+                  {/* Getting started items if no todos */}
+                  {todos.length === 0 && (
+                    <>
+                      <li>
+                        <Link
+                          to="/account"
+                          className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors"
+                        >
+                          {profile?.onboarding_completed ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                          ) : (
+                            <Circle className="h-4 w-4 shrink-0" />
+                          )}
+                          <span className={profile?.onboarding_completed ? "line-through opacity-60" : ""}>Complete your profile</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/models"
+                          className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors"
+                        >
+                          {activatedModels.length > 0 ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                          ) : (
+                            <Circle className="h-4 w-4 shrink-0" />
+                          )}
+                          <span className={activatedModels.length > 0 ? "line-through opacity-60" : ""}>Start your first model</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="/martech"
+                          className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200 hover:text-amber-950 dark:hover:text-amber-50 transition-colors"
+                        >
+                          <Circle className="h-4 w-4 shrink-0" />
+                          <span>Explore the Martech Map</span>
+                        </Link>
+                      </li>
+                    </>
+                  )}
+                  
+                  {todos.length > 2 && (
+                    <li>
+                      <span className="text-xs text-amber-600 dark:text-amber-400">+{todos.length - 2} more tasks</span>
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
 
         {/* Personalized Recommendations */}
         {!recommendations.loading && hasRecommendations && (
           <section className="rounded-2xl border border-border/60 bg-card overflow-hidden">
             <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/40">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-primary" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold">Recommended For You</h2>
+                    <p className="text-sm text-muted-foreground">Curated based on your profile and interests</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Recommended For You</h2>
-                  <p className="text-sm text-muted-foreground">Curated based on your profile and interests</p>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="p-2 rounded-full hover:bg-muted/50 transition-colors">
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="max-w-xs">
+                    <p className="text-sm">These recommendations are personalized based on your role, firm type, interests, and maturity levels. Update your profile to refine them.</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
             
@@ -333,56 +422,6 @@ const Index = () => {
               </Link>
             ))}
           </div>
-        </section>
-
-        {/* My To-Dos */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">My To-Dos</h2>
-          {loading ? (
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </CardContent>
-            </Card>
-          ) : todos.length > 0 ? (
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                {todos.map((todo) => (
-                  <Link
-                    key={todo.id}
-                    to={`/models/${todo.modelId}/workspace`}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group"
-                  >
-                    <Circle className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate group-hover:text-primary transition-colors">
-                        {todo.stepTitle}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {todo.modelEmoji} {todo.modelName} · Step {todo.stepNumber}
-                      </p>
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </Link>
-                ))}
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-muted/50">
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground mb-4">
-                  No active tasks. Start a model to see your to-dos here!
-                </p>
-                <Link to="/models">
-                  <Button variant="outline" size="sm">
-                    Browse Models
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
         </section>
 
         {/* My Activated Models */}
@@ -506,35 +545,6 @@ const Index = () => {
           </section>
         )}
 
-        {/* Getting Started Guide */}
-        {activatedModels.length === 0 && !loading && (
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
-            <Card>
-              <CardContent className="p-6">
-                <ul className="space-y-3">
-                  {gettingStartedSteps.map((step, index) => (
-                    <li key={index}>
-                      <Link
-                        to={step.href}
-                        className="flex items-center gap-3 text-sm hover:text-primary transition-colors"
-                      >
-                        {step.done ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground" />
-                        )}
-                        <span className={step.done ? "line-through text-muted-foreground" : ""}>
-                          {step.label}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          </section>
-        )}
       </div>
     </AppLayout>
   );
