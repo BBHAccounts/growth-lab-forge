@@ -74,7 +74,7 @@ export function AppLayout({
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}
-          <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-background">
+          <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-brand-yellow bg-grid-pattern-yellow">
             <div className="flex items-center gap-4 flex-1">
               <SidebarTrigger className="lg:hidden" />
               <form onSubmit={handleSearch} className="relative hidden md:block flex-1 max-w-xl">
