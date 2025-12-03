@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink, Clock, User, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import { AccessBadge } from "@/components/AccessBadge";
+
 interface Resource {
   id: string;
   title: string;
@@ -20,6 +22,7 @@ interface Resource {
   estimated_time: number | null;
   published_date: string | null;
   featured: boolean | null;
+  access_level: string | null;
 }
 const TYPE_COLORS: Record<string, string> = {
   article: "bg-blue-500/20 text-blue-700 dark:text-blue-300",
@@ -117,9 +120,12 @@ export default function InsightsHub() {
                 } : undefined}>
                         <div className="absolute inset-0 p-6 flex flex-col justify-between">
                           <div className="flex items-start justify-between">
-                            <Badge className={TYPE_COLORS[resource.type] || TYPE_COLORS.article}>
-                              {resource.emoji} {resource.type}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge className={TYPE_COLORS[resource.type] || TYPE_COLORS.article}>
+                                {resource.emoji} {resource.type}
+                              </Badge>
+                              <AccessBadge accessLevel={resource.access_level} size="sm" />
+                            </div>
                             <ExternalLink className="h-5 w-5 text-white/70 group-hover:text-white transition-colors" />
                           </div>
 
@@ -177,9 +183,12 @@ export default function InsightsHub() {
               }} />}
                     <CardContent className={resource.image_url ? "p-4" : "p-5"}>
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <Badge variant="secondary" className={`${TYPE_COLORS[resource.type] || ""} text-xs capitalize`}>
-                          {resource.emoji} {resource.type}
-                        </Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className={`${TYPE_COLORS[resource.type] || ""} text-xs capitalize`}>
+                            {resource.emoji} {resource.type}
+                          </Badge>
+                          <AccessBadge accessLevel={resource.access_level} size="sm" />
+                        </div>
                         <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
                       </div>
 

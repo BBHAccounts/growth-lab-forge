@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Heart, Clock, Users, ArrowRight, Play, Search, CheckCircle } from "lucide-react";
 import { useReactions } from "@/hooks/use-reactions";
+import { AccessBadge } from "@/components/AccessBadge";
 
 interface Model {
   id: string;
@@ -193,6 +194,7 @@ export default function Models() {
                             Active
                           </Badge>
                         )}
+                        <AccessBadge accessLevel={model.unlock_level} size="sm" />
                       </div>
                       <button
                         onClick={(e) => handleLike(e, model.id)}

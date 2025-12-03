@@ -359,7 +359,8 @@ export default function AdminModelForm() {
                   <SelectContent>
                     <SelectItem value="public">Public</SelectItem>
                     <SelectItem value="registered">Registered</SelectItem>
-                    <SelectItem value="research_contributor">Research Contributor</SelectItem>
+                    <SelectItem value="research_contributor">Research Contributor Only</SelectItem>
+                    <SelectItem value="request_only">On Request Only</SelectItem>
                     <SelectItem value="client">Client</SelectItem>
                   </SelectContent>
                 </Select>

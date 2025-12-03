@@ -129,6 +129,7 @@ export type Database = {
       }
       models: {
         Row: {
+          access_level: string | null
           audience: string[] | null
           created_at: string
           emoji: string | null
@@ -151,6 +152,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          access_level?: string | null
           audience?: string[] | null
           created_at?: string
           emoji?: string | null
@@ -173,6 +175,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          access_level?: string | null
           audience?: string[] | null
           created_at?: string
           emoji?: string | null
@@ -467,6 +470,7 @@ export type Database = {
       }
       resources: {
         Row: {
+          access_level: string | null
           author: string | null
           created_at: string
           description: string | null
@@ -483,6 +487,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          access_level?: string | null
           author?: string | null
           created_at?: string
           description?: string | null
@@ -499,6 +504,7 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          access_level?: string | null
           author?: string | null
           created_at?: string
           description?: string | null
