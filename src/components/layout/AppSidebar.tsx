@@ -100,18 +100,20 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
-            <div className="px-3 py-2 mb-2">
-              {profile?.research_contributor ? (
-                <Badge variant="default" className="w-full justify-center gap-1.5 py-1">
-                  <Award className="h-3 w-3" />
-                  Research Contributor
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="w-full justify-center py-1">
-                  Member
-                </Badge>
-              )}
-            </div>
+            {profile && (
+              <div className="px-3 py-2 mb-2">
+                {profile.research_contributor ? (
+                  <Badge className="w-full justify-center gap-1.5 py-1 bg-yellow-500 hover:bg-yellow-600 text-black border-0">
+                    <Award className="h-3 w-3" />
+                    Research Contributor
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="w-full justify-center py-1 bg-muted text-muted-foreground border-border">
+                    Member
+                  </Badge>
+                )}
+              </div>
+            )}
             <SidebarMenu>
               {isAdmin && <SidebarMenuItem>
                   <SidebarMenuButton asChild>
