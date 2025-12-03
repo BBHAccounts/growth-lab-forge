@@ -72,13 +72,15 @@ export default function AdminTopicForm() {
 
   const [modelCategories, setModelCategories] = useState<CategoryItem[]>([]);
   const [vendorCategories, setVendorCategories] = useState<CategoryItem[]>([]);
+  const [resourceCategories, setResourceCategories] = useState<CategoryItem[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       // Fetch all categories
-      const [modelCatsRes, vendorCatsRes] = await Promise.all([
+      const [modelCatsRes, vendorCatsRes, resourceCatsRes] = await Promise.all([
         supabase.from('model_categories').select('id, name').order('name'),
         supabase.from('martech_categories').select('id, name').order('name'),
+        supabase.from('resource_categories').select('id, name').order('name'),
       ]);
 
       if (!isNew && topicId) {
@@ -107,19 +109,23 @@ export default function AdminTopicForm() {
         });
 
         // Fetch linked categories
-        const [linkedModelCats, linkedVendorCats] = await Promise.all([
+        const [linkedModelCats, linkedVendorCats, linkedResourceCats] = await Promise.all([
           supabase.from('topic_model_categories').select('category_id').eq('topic_id', topicId),
           supabase.from('topic_vendor_categories').select('category_id').eq('topic_id', topicId),
+          supabase.from('topic_resource_categories').select('category_id').eq('topic_id', topicId),
         ]);
 
         const linkedModelCatIds = new Set((linkedModelCats.data || []).map((l) => l.category_id));
         const linkedVendorCatIds = new Set((linkedVendorCats.data || []).map((l) => l.category_id));
+        const linkedResourceCatIds = new Set((linkedResourceCats.data || []).map((l) => l.category_id));
 
         setModelCategories((modelCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedModelCatIds.has(c.id) })));
         setVendorCategories((vendorCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedVendorCatIds.has(c.id) })));
+        setResourceCategories((resourceCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedResourceCatIds.has(c.id) })));
       } else {
         setModelCategories((modelCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
         setVendorCategories((vendorCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
+        setResourceCategories((resourceCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
       }
 
       setLoading(false);
@@ -177,6 +183,13 @@ export default function AdminTopicForm() {
         await supabase.from('topic_vendor_categories').insert(linkedVendorCatIds);
       }
 
+      // Update linked resource categories
+      await supabase.from('topic_resource_categories').delete().eq('topic_id', savedTopicId);
+      const linkedResourceCatIds = resourceCategories.filter((c) => c.linked).map((c) => ({ topic_id: savedTopicId, category_id: c.id }));
+      if (linkedResourceCatIds.length > 0) {
+        await supabase.from('topic_resource_categories').insert(linkedResourceCatIds);
+      }
+
       toast({ title: 'Success', description: isNew ? 'Topic created successfully' : 'Topic updated successfully' });
       navigate('/admin/topics');
     } catch (error) {
@@ -214,13 +227,17 @@ export default function AdminTopicForm() {
     });
   };
 
-  const toggleCategory = (type: 'model' | 'vendor', categoryId: string) => {
+  const toggleCategory = (type: 'model' | 'vendor' | 'resource', categoryId: string) => {
     if (type === 'model') {
       setModelCategories((prev) =>
         prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
       );
-    } else {
+    } else if (type === 'vendor') {
       setVendorCategories((prev) =>
+        prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
+      );
+    } else {
+      setResourceCategories((prev) =>
         prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
       );
     }
@@ -460,6 +477,25 @@ export default function AdminTopicForm() {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No vendor categories defined yet. Create them in the Martech section.</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Resource Categories ({resourceCategories.filter((c) => c.linked).length} selected)</Label>
+                {resourceCategories.length > 0 ? (
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
+                    {resourceCategories.map((cat) => (
+                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={cat.linked}
+                          onCheckedChange={() => toggleCategory('resource', cat.id)}
+                        />
+                        <span className="text-sm">{cat.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No resource categories defined yet. Create them in the Resources section.</p>
                 )}
               </div>
             </CardContent>

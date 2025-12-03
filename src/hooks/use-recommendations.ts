@@ -47,10 +47,22 @@ export interface RecommendedVendor {
   logo_url: string | null;
 }
 
+export interface RecommendedResource {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  url: string | null;
+  emoji: string | null;
+  author: string | null;
+  estimated_time: number | null;
+}
+
 export interface Recommendations {
   topics: ScoredTopic[];
   models: RecommendedModel[];
   vendors: RecommendedVendor[];
+  resources: RecommendedResource[];
   loading: boolean;
 }
 
@@ -112,6 +124,7 @@ export function useRecommendations(maxTopics: number = 5) {
     topics: [],
     models: [],
     vendors: [],
+    resources: [],
     loading: true,
   });
 
@@ -158,41 +171,50 @@ export function useRecommendations(maxTopics: number = 5) {
           .slice(0, maxTopics);
 
         if (scoredTopics.length === 0) {
-          setRecommendations({ topics: [], models: [], vendors: [], loading: false });
+          setRecommendations({ topics: [], models: [], vendors: [], resources: [], loading: false });
           return;
         }
 
         const topTopicIds = scoredTopics.map((t) => t.id);
 
         // Fetch linked category IDs for top topics
-        const [linkedModelCats, linkedVendorCats] = await Promise.all([
+        const [linkedModelCats, linkedVendorCats, linkedResourceCats] = await Promise.all([
           supabase.from('topic_model_categories').select('category_id').in('topic_id', topTopicIds),
           supabase.from('topic_vendor_categories').select('category_id').in('topic_id', topTopicIds),
+          supabase.from('topic_resource_categories').select('category_id').in('topic_id', topTopicIds),
         ]);
 
         const modelCategoryIds = [...new Set((linkedModelCats.data || []).map((l) => l.category_id))];
         const vendorCategoryIds = [...new Set((linkedVendorCats.data || []).map((l) => l.category_id))];
+        const resourceCategoryIds = [...new Set((linkedResourceCats.data || []).map((l) => l.category_id))];
 
-        // Fetch models and vendors via category links
-        const [modelLinks, vendorLinks] = await Promise.all([
+        // Fetch items via category links
+        const [modelLinks, vendorLinks, resourceLinks] = await Promise.all([
           modelCategoryIds.length > 0
             ? supabase.from('model_category_links').select('model_id').in('category_id', modelCategoryIds)
             : Promise.resolve({ data: [] }),
           vendorCategoryIds.length > 0
             ? supabase.from('vendor_categories').select('vendor_id').in('category_id', vendorCategoryIds)
             : Promise.resolve({ data: [] }),
+          resourceCategoryIds.length > 0
+            ? supabase.from('resource_category_links').select('resource_id').in('category_id', resourceCategoryIds)
+            : Promise.resolve({ data: [] }),
         ]);
 
         const modelIds = [...new Set((modelLinks.data || []).map((l) => l.model_id))];
         const vendorIds = [...new Set((vendorLinks.data || []).map((l) => l.vendor_id))];
+        const resourceIds = [...new Set((resourceLinks.data || []).map((l) => l.resource_id))];
 
         // Fetch actual content
-        const [modelsRes, vendorsRes] = await Promise.all([
+        const [modelsRes, vendorsRes, resourcesRes] = await Promise.all([
           modelIds.length > 0
             ? supabase.from('models').select('id, name, emoji, short_description, slug').in('id', modelIds).eq('status', 'active')
             : Promise.resolve({ data: [] }),
           vendorIds.length > 0
             ? supabase.from('vendors').select('id, name, description, logo_url').in('id', vendorIds)
+            : Promise.resolve({ data: [] }),
+          resourceIds.length > 0
+            ? supabase.from('resources').select('id, title, description, type, url, emoji, author, estimated_time').in('id', resourceIds).eq('status', 'active')
             : Promise.resolve({ data: [] }),
         ]);
 
@@ -200,6 +222,7 @@ export function useRecommendations(maxTopics: number = 5) {
           topics: scoredTopics,
           models: (modelsRes.data || []) as RecommendedModel[],
           vendors: (vendorsRes.data || []) as RecommendedVendor[],
+          resources: (resourcesRes.data || []) as RecommendedResource[],
           loading: false,
         });
       } catch (error) {
@@ -217,7 +240,7 @@ export function useRecommendations(maxTopics: number = 5) {
 // Helper function to get user profile and top topics for chatbot
 export async function getUserRecommendationContext(userId: string): Promise<{
   profile: UserProfile | null;
-  topTopics: { name: string; description: string | null; linkedCategories: { modelCategories: string[]; vendorCategories: string[] } }[];
+  topTopics: { name: string; description: string | null; linkedCategories: { modelCategories: string[]; vendorCategories: string[]; resourceCategories: string[] } }[];
 }> {
   try {
     const { data: profileData } = await supabase
@@ -251,9 +274,10 @@ export async function getUserRecommendationContext(userId: string): Promise<{
 
     const topTopics = await Promise.all(
       scoredTopics.map(async (topic) => {
-        const [modelCats, vendorCats] = await Promise.all([
+        const [modelCats, vendorCats, resourceCats] = await Promise.all([
           supabase.from('topic_model_categories').select('model_categories(name)').eq('topic_id', topic.id),
           supabase.from('topic_vendor_categories').select('martech_categories(name)').eq('topic_id', topic.id),
+          supabase.from('topic_resource_categories').select('resource_categories(name)').eq('topic_id', topic.id),
         ]);
 
         return {
@@ -262,6 +286,7 @@ export async function getUserRecommendationContext(userId: string): Promise<{
           linkedCategories: {
             modelCategories: (modelCats.data || []).map((c: any) => c.model_categories?.name).filter(Boolean),
             vendorCategories: (vendorCats.data || []).map((c: any) => c.martech_categories?.name).filter(Boolean),
+            resourceCategories: (resourceCats.data || []).map((c: any) => c.resource_categories?.name).filter(Boolean),
           },
         };
       })
