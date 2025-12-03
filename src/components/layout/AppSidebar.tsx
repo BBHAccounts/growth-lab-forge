@@ -1,4 +1,4 @@
-import { Home, BookOpen, FlaskConical, Map, Dice5, Info, User, LogOut } from "lucide-react";
+import { Home, BookOpen, FlaskConical, Map, Dice5, Info, User, LogOut, Calendar, Briefcase } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -19,6 +19,8 @@ const mainNavItems = [
   { title: "Models", url: "/models", icon: BookOpen },
   { title: "Research Lab", url: "/research", icon: FlaskConical },
   { title: "Martech Map", url: "/martech", icon: Map },
+  { title: "Events", url: "/events", icon: Calendar, comingSoon: true },
+  { title: "Consultants", url: "/consultants", icon: Briefcase, comingSoon: true },
   { title: "Game of Life", url: "/game-of-life", icon: Dice5, locked: true },
 ];
 
@@ -66,13 +68,19 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    className={item.locked ? "opacity-50 cursor-not-allowed" : ""}
+                    className={item.locked || item.comingSoon ? "opacity-60 cursor-not-allowed" : ""}
                   >
                     {item.locked ? (
                       <div className="flex items-center gap-3 px-3 py-2">
                         <item.icon className="h-5 w-5" />
                         <span>{item.title}</span>
                         <span className="ml-auto text-xs bg-sidebar-accent px-2 py-0.5 rounded">🔒</span>
+                      </div>
+                    ) : item.comingSoon ? (
+                      <div className="flex items-center gap-3 px-3 py-2">
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.title}</span>
+                        <span className="ml-auto text-[10px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded font-medium">Soon</span>
                       </div>
                     ) : (
                       <NavLink
