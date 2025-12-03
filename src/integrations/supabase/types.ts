@@ -81,52 +81,91 @@ export type Database = {
           audience: string[] | null
           created_at: string
           emoji: string | null
+          featured: boolean | null
           id: string
           likes_count: number | null
           long_description: string | null
           name: string
           outcomes: string[] | null
           short_description: string | null
+          slug: string | null
+          status: string | null
           steps: Json | null
           suggested_actions: string[] | null
           tags: string[] | null
+          template_urls: Json | null
           time_estimate: string | null
           unlock_level: string | null
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           audience?: string[] | null
           created_at?: string
           emoji?: string | null
+          featured?: boolean | null
           id?: string
           likes_count?: number | null
           long_description?: string | null
           name: string
           outcomes?: string[] | null
           short_description?: string | null
+          slug?: string | null
+          status?: string | null
           steps?: Json | null
           suggested_actions?: string[] | null
           tags?: string[] | null
+          template_urls?: Json | null
           time_estimate?: string | null
           unlock_level?: string | null
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           audience?: string[] | null
           created_at?: string
           emoji?: string | null
+          featured?: boolean | null
           id?: string
           likes_count?: number | null
           long_description?: string | null
           name?: string
           outcomes?: string[] | null
           short_description?: string | null
+          slug?: string | null
+          status?: string | null
           steps?: Json | null
           suggested_actions?: string[] | null
           tags?: string[] | null
+          template_urls?: Json | null
           time_estimate?: string | null
           unlock_level?: string | null
           updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
         }
         Relationships: []
       }
@@ -142,6 +181,7 @@ export type Database = {
           game_of_life_access: boolean | null
           growth_priorities: string[] | null
           id: string
+          is_client: boolean | null
           onboarding_completed: boolean | null
           practice_area: string | null
           research_contributor: boolean | null
@@ -161,6 +201,7 @@ export type Database = {
           game_of_life_access?: boolean | null
           growth_priorities?: string[] | null
           id?: string
+          is_client?: boolean | null
           onboarding_completed?: boolean | null
           practice_area?: string | null
           research_contributor?: boolean | null
@@ -180,6 +221,7 @@ export type Database = {
           game_of_life_access?: boolean | null
           growth_priorities?: string[] | null
           id?: string
+          is_client?: boolean | null
           onboarding_completed?: boolean | null
           practice_area?: string | null
           research_contributor?: boolean | null
@@ -258,9 +300,13 @@ export type Database = {
           created_at: string
           description: string | null
           emoji: string | null
+          estimated_time: number | null
           id: string
           questions: Json | null
           reward_description: string | null
+          slug: string | null
+          status: string | null
+          target_audience_tags: string[] | null
           title: string
         }
         Insert: {
@@ -268,9 +314,13 @@ export type Database = {
           created_at?: string
           description?: string | null
           emoji?: string | null
+          estimated_time?: number | null
           id?: string
           questions?: Json | null
           reward_description?: string | null
+          slug?: string | null
+          status?: string | null
+          target_audience_tags?: string[] | null
           title: string
         }
         Update: {
@@ -278,12 +328,48 @@ export type Database = {
           created_at?: string
           description?: string | null
           emoji?: string | null
+          estimated_time?: number | null
           id?: string
           questions?: Json | null
           reward_description?: string | null
+          slug?: string | null
+          status?: string | null
+          target_audience_tags?: string[] | null
           title?: string
         }
         Relationships: []
+      }
+      user_model_access: {
+        Row: {
+          access_type: string
+          created_at: string | null
+          id: string
+          model_id: string
+          user_id: string
+        }
+        Insert: {
+          access_type?: string
+          created_at?: string | null
+          id?: string
+          model_id: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          created_at?: string | null
+          id?: string
+          model_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_model_access_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
