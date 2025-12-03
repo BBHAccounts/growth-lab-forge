@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ThumbsUp, ExternalLink, Filter } from "lucide-react";
+import { Heart, ExternalLink, Filter } from "lucide-react";
+import { useReactions } from "@/hooks/use-reactions";
 
 interface Category {
   id: string;
@@ -34,6 +35,16 @@ export default function Martech() {
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
+
+  const { isLiked, isLoading, toggleReaction } = useReactions({
+    targetType: "vendor",
+    targetIds: vendors.map(v => v.id),
+  });
+
+  const handleFollow = async (e: React.MouseEvent, vendorId: string) => {
+    e.stopPropagation();
+    await toggleReaction(vendorId);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -168,10 +179,18 @@ export default function Martech() {
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <ThumbsUp className="h-4 w-4" />
+                    <button
+                      onClick={(e) => handleFollow(e, vendor.id)}
+                      disabled={isLoading(vendor.id)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+                        isLiked(vendor.id)
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 ${isLiked(vendor.id) ? "fill-current" : ""}`} />
                       <span className="text-sm">{vendor.likes_count || 0}</span>
-                    </div>
+                    </button>
                   </div>
                   <CardTitle className="text-lg group-hover:text-primary transition-colors">
                     {vendor.name}
@@ -224,10 +243,18 @@ export default function Martech() {
                   )}
                   <div>
                     <DialogTitle className="text-2xl">{selectedVendor.name}</DialogTitle>
-                    <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                      <ThumbsUp className="h-4 w-4" />
-                      <span>{selectedVendor.likes_count || 0} likes</span>
-                    </div>
+                    <button
+                      onClick={(e) => handleFollow(e, selectedVendor.id)}
+                      disabled={isLoading(selectedVendor.id)}
+                      className={`flex items-center gap-2 mt-1 px-3 py-1 rounded-full transition-colors ${
+                        isLiked(selectedVendor.id)
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <Heart className={`h-4 w-4 ${isLiked(selectedVendor.id) ? "fill-current" : ""}`} />
+                      <span>{isLiked(selectedVendor.id) ? "Following" : "Follow"}</span>
+                    </button>
                   </div>
                 </div>
               </DialogHeader>
