@@ -68,6 +68,16 @@ export default function Martech() {
 
   const handleFollow = async (e: React.MouseEvent, vendorId: string) => {
     e.stopPropagation();
+    
+    const wasLiked = isLiked(vendorId);
+    
+    // Optimistically update the UI
+    setVendors(prev => prev.map(vendor => 
+      vendor.id === vendorId 
+        ? { ...vendor, likes_count: (vendor.likes_count || 0) + (wasLiked ? -1 : 1) }
+        : vendor
+    ));
+    
     await toggleReaction(vendorId);
   };
 
@@ -315,9 +325,7 @@ export default function Martech() {
             {filteredVendors.map((vendor) => (
               <Card
                 key={vendor.id}
-                className={`group hover:shadow-elevated transition-all duration-300 cursor-pointer ${
-                  isLiked(vendor.id) ? "border-pink-500/40 bg-pink-50 dark:bg-pink-950/20" : ""
-                }`}
+                className="group hover:shadow-elevated transition-all duration-300 cursor-pointer"
                 onClick={() => setSelectedVendor(vendor)}
               >
                 <CardHeader>
@@ -340,7 +348,7 @@ export default function Martech() {
                       disabled={isLoading(vendor.id)}
                       className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
                         isLiked(vendor.id)
-                          ? "bg-pink-500/10 text-pink-500"
+                          ? "bg-red-500/10 text-red-500"
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
@@ -404,7 +412,7 @@ export default function Martech() {
                       disabled={isLoading(selectedVendor.id)}
                       className={`flex items-center gap-2 mt-1 px-3 py-1 rounded-full transition-colors ${
                         isLiked(selectedVendor.id)
-                          ? "bg-pink-500/10 text-pink-500"
+                          ? "bg-red-500/10 text-red-500"
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
