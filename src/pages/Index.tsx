@@ -231,6 +231,11 @@ const Index = () => {
       />
 
       <div className="p-6 md:p-8 space-y-8">
+        {/* AI Assistant */}
+        <section>
+          <NavigatorChat />
+        </section>
+
         {/* Quick Access Cards */}
         <section>
           <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
@@ -516,7 +521,6 @@ const Index = () => {
           </section>
         )}
       </div>
-      <NavigatorChat />
     </AppLayout>
   );
 };
