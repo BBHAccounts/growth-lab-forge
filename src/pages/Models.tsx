@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, Clock, Users, ArrowRight } from "lucide-react";
+import { useReactions } from "@/hooks/use-reactions";
 
 interface Model {
   id: string;
@@ -24,6 +25,11 @@ export default function Models() {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { isLiked, isLoading, toggleReaction } = useReactions({
+    targetType: "model",
+    targetIds: models.map(m => m.id),
+  });
+
   useEffect(() => {
     const fetchModels = async () => {
       const { data, error } = await supabase
@@ -39,6 +45,12 @@ export default function Models() {
 
     fetchModels();
   }, []);
+
+  const handleLike = async (e: React.MouseEvent, modelId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await toggleReaction(modelId);
+  };
 
   return (
     <AppLayout>
@@ -79,10 +91,18 @@ export default function Models() {
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
                     <span className="text-4xl">{model.emoji || "📚"}</span>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <ThumbsUp className="h-4 w-4" />
+                    <button
+                      onClick={(e) => handleLike(e, model.id)}
+                      disabled={isLoading(model.id)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-full transition-colors ${
+                        isLiked(model.id)
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <ThumbsUp className={`h-4 w-4 ${isLiked(model.id) ? "fill-current" : ""}`} />
                       <span className="text-sm">{model.likes_count || 0}</span>
-                    </div>
+                    </button>
                   </div>
                   <CardTitle className="text-xl group-hover:text-primary transition-colors">
                     {model.name}
