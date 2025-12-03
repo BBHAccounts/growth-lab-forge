@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const mainNavItems = [
   { title: "Home", url: "/", icon: Home },
-  { title: "Models", url: "/models", icon: BookOpen },
+  { title: "Toolbox", url: "/models", icon: BookOpen },
   { title: "Research Lab", url: "/research", icon: FlaskConical },
   { title: "Martech Map", url: "/martech", icon: Map },
   { title: "Expert Network", url: "/expert-network", icon: Users, comingSoon: true },
