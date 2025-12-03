@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +16,22 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Initialize search from URL params
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/martech?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -66,15 +81,17 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="flex-1 flex flex-col">
           {/* Top Bar */}
           <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-background">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
               <SidebarTrigger className="lg:hidden" />
-              <div className="relative hidden md:block">
+              <form onSubmit={handleSearch} className="relative hidden md:block flex-1 max-w-xl">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search models, vendors..."
-                  className="pl-10 w-64 bg-muted/50"
+                  placeholder="Search vendors..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full bg-muted/50"
                 />
-              </div>
+              </form>
             </div>
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon" className="relative">

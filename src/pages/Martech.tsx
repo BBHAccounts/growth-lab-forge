@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { HeroBanner } from "@/components/ui/hero-banner";
@@ -31,6 +32,8 @@ export default function Martech() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,9 +72,14 @@ export default function Martech() {
     fetchData();
   }, []);
 
-  const filteredVendors = selectedCategory
-    ? vendors.filter((v) => v.categories?.includes(selectedCategory))
-    : vendors;
+  const filteredVendors = vendors.filter((v) => {
+    const matchesCategory = selectedCategory ? v.categories?.includes(selectedCategory) : true;
+    const matchesSearch = searchQuery
+      ? v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
 
   const regionLabels: Record<string, string> = {
     NA: "North America",
