@@ -1,9 +1,10 @@
-import { Home, BookOpen, FlaskConical, Map, Info, User, LogOut, Users, Settings, Lightbulb } from "lucide-react";
+import { Home, BookOpen, FlaskConical, Map, User, LogOut, Users, Settings, Lightbulb } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/use-admin";
+import bbhLogo from "@/assets/bbh-logo.jpg";
 const mainNavItems = [{
   title: "Home",
   url: "/",
@@ -31,10 +32,6 @@ const mainNavItems = [{
   comingSoon: true
 }];
 const secondaryNavItems = [{
-  title: "About BBH",
-  url: "/about",
-  icon: Info
-}, {
   title: "My Account",
   url: "/account",
   icon: User
@@ -109,6 +106,16 @@ export function AppSidebar() {
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/about" className={({
+                isActive
+              }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+                    <img src={bbhLogo} alt="BBH" className="h-5 w-5 rounded-sm object-cover" />
+                    <span>About BBH</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {secondaryNavItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={({
