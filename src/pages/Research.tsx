@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Gift, CheckCircle } from "lucide-react";
+import { Gift, CheckCircle, Clock } from "lucide-react";
 
 interface Study {
   id: string;
@@ -15,6 +15,7 @@ interface Study {
   description: string | null;
   emoji: string | null;
   reward_description: string | null;
+  estimated_time: number | null;
   questions: Array<{
     id: string;
     question: string;
@@ -141,8 +142,17 @@ export default function Research() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                     <span>{study.questions.length} questions</span>
+                    {study.estimated_time && (
+                      <>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          ~{study.estimated_time} min
+                        </span>
+                      </>
+                    )}
                     {study.reward_description && (
                       <>
                         <span>•</span>
@@ -195,8 +205,15 @@ export default function Research() {
                   </p>
                 </div>
 
-                <div className="text-sm text-muted-foreground">
-                  {selectedStudy.questions.length} questions • ~5 min
+                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                  <span>{selectedStudy.questions.length} questions</span>
+                  {selectedStudy.estimated_time && (
+                    <>
+                      <span>•</span>
+                      <Clock className="h-3 w-3" />
+                      <span>~{selectedStudy.estimated_time} min</span>
+                    </>
+                  )}
                 </div>
 
                 {isCompleted(selectedStudy.id) ? (
