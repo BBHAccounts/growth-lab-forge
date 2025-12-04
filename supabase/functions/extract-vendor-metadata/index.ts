@@ -24,42 +24,98 @@ function toAbsoluteUrl(url: string | null, baseUrl: string): string | null {
   }
 }
 
-function extractLogo(html: string, baseUrl: string): string | null {
-  // Priority order for company logos:
-  // 1. Apple touch icon (usually high quality square logo)
-  // 2. High-res favicon (192x192, 180x180, etc.)
-  // 3. og:image as fallback
-  // 4. Default favicon
+function extractAllLogoCandidates(html: string, baseUrl: string): { url: string; priority: number }[] {
+  const candidates: { url: string; priority: number }[] = [];
   
-  const patterns = [
-    // Apple touch icon (usually highest quality)
-    /<link[^>]*rel=["']apple-touch-icon(?:-precomposed)?["'][^>]*href=["']([^"']+)["']/i,
-    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["']apple-touch-icon(?:-precomposed)?["']/i,
-    // High-res favicons
-    /<link[^>]*rel=["']icon["'][^>]*sizes=["'](?:192x192|180x180|152x152|144x144|128x128|120x120|96x96)["'][^>]*href=["']([^"']+)["']/i,
-    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["']icon["'][^>]*sizes=["'](?:192x192|180x180|152x152|144x144|128x128|120x120|96x96)["']/i,
-    // SVG favicon (scalable, good quality)
-    /<link[^>]*rel=["']icon["'][^>]*type=["']image\/svg\+xml["'][^>]*href=["']([^"']+)["']/i,
-    // Regular favicon
-    /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i,
-    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["'](?:shortcut )?icon["']/i,
-    // og:image as fallback for logo
-    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
-    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+  // Priority 1: Apple touch icons (usually 180x180 or higher, square, perfect for logos)
+  const appleTouchPatterns = [
+    /<link[^>]*rel=["']apple-touch-icon(?:-precomposed)?["'][^>]*href=["']([^"']+)["']/gi,
+    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["']apple-touch-icon(?:-precomposed)?["']/gi,
   ];
-
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match && match[1]) {
+  for (const pattern of appleTouchPatterns) {
+    let match;
+    while ((match = pattern.exec(html)) !== null) {
       const url = toAbsoluteUrl(match[1], baseUrl);
-      if (url) {
-        console.log("Found logo:", url);
-        return url;
-      }
+      if (url) candidates.push({ url, priority: 1 });
     }
   }
 
-  // Default favicon location
+  // Priority 2: High-res PNG favicons (look for sizes in the tag)
+  const highResFaviconPattern = /<link[^>]*rel=["']icon["'][^>]*href=["']([^"']+\.png[^"']*)["'][^>]*sizes=["'](\d+)x\d+["']/gi;
+  let match;
+  while ((match = highResFaviconPattern.exec(html)) !== null) {
+    const size = parseInt(match[2], 10);
+    const url = toAbsoluteUrl(match[1], baseUrl);
+    if (url && size >= 64) {
+      candidates.push({ url, priority: size >= 128 ? 2 : 3 });
+    }
+  }
+
+  // Also check reverse attribute order
+  const highResFaviconPattern2 = /<link[^>]*sizes=["'](\d+)x\d+["'][^>]*href=["']([^"']+\.png[^"']*)["']/gi;
+  while ((match = highResFaviconPattern2.exec(html)) !== null) {
+    const size = parseInt(match[1], 10);
+    const url = toAbsoluteUrl(match[2], baseUrl);
+    if (url && size >= 64) {
+      candidates.push({ url, priority: size >= 128 ? 2 : 3 });
+    }
+  }
+
+  // Priority 3: SVG favicon (scalable, always sharp)
+  const svgPattern = /<link[^>]*rel=["']icon["'][^>]*type=["']image\/svg\+xml["'][^>]*href=["']([^"']+)["']/gi;
+  while ((match = svgPattern.exec(html)) !== null) {
+    const url = toAbsoluteUrl(match[1], baseUrl);
+    if (url) candidates.push({ url, priority: 2 });
+  }
+
+  // Priority 4: og:image (usually high quality, but might be a banner not a logo)
+  const ogImagePatterns = [
+    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+  ];
+  for (const pattern of ogImagePatterns) {
+    const ogMatch = html.match(pattern);
+    if (ogMatch && ogMatch[1]) {
+      const url = toAbsoluteUrl(ogMatch[1], baseUrl);
+      if (url) candidates.push({ url, priority: 4 });
+    }
+  }
+
+  // Priority 5: Any PNG icon without size specified
+  const pngIconPattern = /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+\.png[^"']*)["']/gi;
+  while ((match = pngIconPattern.exec(html)) !== null) {
+    const url = toAbsoluteUrl(match[1], baseUrl);
+    if (url && !candidates.some(c => c.url === url)) {
+      candidates.push({ url, priority: 5 });
+    }
+  }
+
+  // Priority 6: Regular favicon link tag
+  const regularFaviconPattern = /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/gi;
+  while ((match = regularFaviconPattern.exec(html)) !== null) {
+    const url = toAbsoluteUrl(match[1], baseUrl);
+    if (url && !url.endsWith('.ico') && !candidates.some(c => c.url === url)) {
+      candidates.push({ url, priority: 6 });
+    }
+  }
+
+  return candidates.sort((a, b) => a.priority - b.priority);
+}
+
+function extractLogo(html: string, baseUrl: string): string | null {
+  const candidates = extractAllLogoCandidates(html, baseUrl);
+  
+  console.log("Logo candidates found:", candidates.length);
+  candidates.slice(0, 5).forEach((c, i) => {
+    console.log(`  ${i + 1}. [priority ${c.priority}] ${c.url}`);
+  });
+
+  // Return best candidate, or fallback to favicon.ico
+  if (candidates.length > 0) {
+    return candidates[0].url;
+  }
+
+  // Last resort: default favicon.ico
   try {
     const base = new URL(baseUrl);
     return `${base.origin}/favicon.ico`;
@@ -159,7 +215,7 @@ serve(async (req) => {
     const companyName = extractCompanyName(html);
     const description = extractDescription(html);
 
-    console.log("Extracted logo:", logoUrl);
+    console.log("Selected logo:", logoUrl);
     console.log("Extracted name:", companyName);
     console.log("Extracted description:", description);
 
