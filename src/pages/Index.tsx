@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { BookOpen, FlaskConical, Map, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
+import { ReadingReminderCard } from "@/components/ReadingReminderCard";
 
 interface Profile {
   full_name: string | null;
@@ -214,6 +215,9 @@ const Index = () => {
               </div>
               
               <div className="p-5">
+                {/* Reading Reminder */}
+                <ReadingReminderCard />
+                
                 {loading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
