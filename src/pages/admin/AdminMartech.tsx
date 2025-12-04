@@ -266,14 +266,11 @@ export default function AdminMartech() {
     );
   };
 
-  // Filter topics by selected topic categories
-  const selectedTopicCategoryKeys = topicCategories
-    .filter(tc => linkedTopicCategories.includes(tc.id))
-    .map(tc => tc.key);
-  
-  const filteredTopics = selectedTopicCategoryKeys.length > 0 
-    ? topics.filter(t => t.category_key && selectedTopicCategoryKeys.includes(t.category_key))
-    : topics;
+  // Group topics by their topic category for better organization
+  const topicsByCategory = topicCategories.map(tc => ({
+    ...tc,
+    topics: topics.filter(t => t.category_key === tc.key),
+  }));
 
   const vendorColumns: Column<Vendor>[] = [
     {
@@ -471,29 +468,28 @@ export default function AdminMartech() {
 
             {/* Topics */}
             <div className="space-y-3">
-              <Label>
-                Topics ({linkedTopics.length} selected)
-                {selectedTopicCategoryKeys.length > 0 && (
-                  <span className="text-muted-foreground ml-2 text-xs">(filtered)</span>
-                )}
-              </Label>
-              <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                {filteredTopics.length > 0 ? (
-                  filteredTopics.map((t) => (
-                    <label key={t.id} className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={linkedTopics.includes(t.id)}
-                        onCheckedChange={() => toggleTopic(t.id)}
-                      />
-                      <span className="text-sm">{t.name}</span>
-                    </label>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {selectedTopicCategoryKeys.length > 0 
-                      ? 'No topics in selected categories.' 
-                      : 'No active topics found.'}
-                  </p>
+              <Label>Topics ({linkedTopics.length} selected)</Label>
+              <div className="max-h-64 overflow-y-auto border rounded-md p-2 space-y-3">
+                {topicsByCategory.map((tc) => (
+                  tc.topics.length > 0 && (
+                    <div key={tc.id}>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">{tc.name}</p>
+                      <div className="space-y-1 ml-2">
+                        {tc.topics.map((t) => (
+                          <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={linkedTopics.includes(t.id)}
+                              onCheckedChange={() => toggleTopic(t.id)}
+                            />
+                            <span className="text-sm">{t.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ))}
+                {topics.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No active topics found.</p>
                 )}
               </div>
             </div>
