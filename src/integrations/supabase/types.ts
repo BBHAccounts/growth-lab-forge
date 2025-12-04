@@ -507,6 +507,78 @@ export type Database = {
           },
         ]
       }
+      resource_topic_categories: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          topic_category_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          topic_category_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          topic_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_topic_categories_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_topic_categories_topic_category_id_fkey"
+            columns: ["topic_category_id"]
+            isOneToOne: false
+            referencedRelation: "topic_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_topics: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_topics_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
           access_level: string | null
@@ -894,6 +966,78 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_categories_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_topic_categories: {
+        Row: {
+          created_at: string
+          id: string
+          topic_category_id: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          topic_category_id: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          topic_category_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_topic_categories_topic_category_id_fkey"
+            columns: ["topic_category_id"]
+            isOneToOne: false
+            referencedRelation: "topic_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_topic_categories_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_topics: {
+        Row: {
+          created_at: string
+          id: string
+          topic_id: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          topic_id: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          topic_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_topics_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
