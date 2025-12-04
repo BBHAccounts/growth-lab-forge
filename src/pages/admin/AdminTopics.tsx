@@ -58,17 +58,19 @@ export default function AdminTopics() {
 
         if (error) throw error;
 
-        // Get counts for each topic
+        // Get counts for each topic - count links FROM models and vendor categories TO this topic
         const topicsWithCounts = await Promise.all(
           (topicsData || []).map(async (topic) => {
-            const [modelCats, vendorCats] = await Promise.all([
-              supabase.from('topic_model_categories').select('*', { count: 'exact', head: true }).eq('topic_id', topic.id),
-              supabase.from('topic_vendor_categories').select('*', { count: 'exact', head: true }).eq('topic_id', topic.id),
+            const [models, vendorCats] = await Promise.all([
+              // Count models linked to this topic via topic_models
+              supabase.from('topic_models').select('*', { count: 'exact', head: true }).eq('topic_id', topic.id),
+              // Count vendor categories linked to this topic via martech_category_topics
+              supabase.from('martech_category_topics').select('*', { count: 'exact', head: true }).eq('topic_id', topic.id),
             ]);
 
             return {
               ...topic,
-              model_cat_count: modelCats.count ?? 0,
+              model_cat_count: models.count ?? 0,
               vendor_cat_count: vendorCats.count ?? 0,
             };
           })
@@ -133,7 +135,7 @@ export default function AdminTopics() {
     },
     {
       key: 'model_cat_count',
-      header: 'Model Cats',
+      header: 'Models',
       sortable: true,
       render: (topic) => topic.model_cat_count || 0,
     },
