@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload, User, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload, User, Sparkles, Bell } from 'lucide-react';
 
 interface Resource {
   id?: string;
@@ -75,6 +75,7 @@ export default function AdminResourceForm() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [creatorInfo, setCreatorInfo] = useState<{ name: string; email: string; createdAt: string } | null>(null);
+  const [notifyUsers, setNotifyUsers] = useState(false);
 
   const handleExtractMetadata = async () => {
     if (!resource.url) {
@@ -293,6 +294,17 @@ export default function AdminResourceForm() {
       const linkedCatIds = categories.filter((c) => c.linked).map((c) => ({ resource_id: savedResourceId, category_id: c.id }));
       if (linkedCatIds.length > 0) {
         await supabase.from('resource_category_links').insert(linkedCatIds);
+      }
+
+      // Send notification if toggle is on
+      if (notifyUsers && resource.status === 'active') {
+        await supabase.rpc('notify_all_users', {
+          p_type: 'new_resource',
+          p_title: `New Insight: ${resource.title}`,
+          p_message: resource.description || 'Check out our latest insight!',
+          p_link: '/insights-hub',
+          p_reference_id: savedResourceId,
+        });
       }
 
       toast({ title: 'Success', description: isNew ? 'Insight created successfully' : 'Insight updated successfully' });
@@ -608,6 +620,20 @@ export default function AdminResourceForm() {
                 <Switch
                   checked={resource.featured}
                   onCheckedChange={(checked) => setResource({ ...resource, featured: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between border-t pt-4">
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Bell className="w-4 h-4" />
+                    Notify Users
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Send notification to all users on save</p>
+                </div>
+                <Switch
+                  checked={notifyUsers}
+                  onCheckedChange={setNotifyUsers}
                 />
               </div>
             </CardContent>
