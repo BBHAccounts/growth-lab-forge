@@ -179,15 +179,10 @@ export function useRecommendations(maxTopics: number = 5) {
         // If we have matching topics, fetch linked items
         if (topTopicIds.length > 0) {
           // Fetch models directly via topic_models
-          const [linkedModels, linkedResourceCats] = await Promise.all([
-            supabase.from('topic_models').select('model_id').in('topic_id', topTopicIds),
-            supabase.from('topic_resource_categories').select('category_id').in('topic_id', topTopicIds),
-          ]);
-
+          const linkedModels = await supabase.from('topic_models').select('model_id').in('topic_id', topTopicIds);
           const modelIds = [...new Set((linkedModels.data || []).map((l) => l.model_id))];
-          const resourceCategoryIds = [...new Set((linkedResourceCats.data || []).map((l) => l.category_id))];
 
-          // Fetch martech categories via the NEW linking tables
+          // Fetch martech categories via the linking tables
           // 1. Get martech categories linked directly to topics
           const martechCatsByTopic = await supabase
             .from('martech_category_topics')
@@ -196,14 +191,14 @@ export function useRecommendations(maxTopics: number = 5) {
 
           // 2. Get martech categories linked via topic categories
           let martechCatsByTopicCategory: { data: { martech_category_id: string }[] | null } = { data: [] };
+          let topicCategoryIds: string[] = [];
           if (topTopicCategoryKeys.length > 0) {
-            // First get topic category IDs from keys
             const { data: topicCatData } = await supabase
               .from('topic_categories')
               .select('id')
               .in('key', topTopicCategoryKeys);
             
-            const topicCategoryIds = (topicCatData || []).map(tc => tc.id);
+            topicCategoryIds = (topicCatData || []).map(tc => tc.id);
             
             if (topicCategoryIds.length > 0) {
               martechCatsByTopicCategory = await supabase
@@ -225,12 +220,20 @@ export function useRecommendations(maxTopics: number = 5) {
             ? await supabase.from('martech_categories').select('id, name').in('id', martechCategoryIds)
             : { data: [] };
 
-          // Fetch resources via category links
-          const resourceLinks = resourceCategoryIds.length > 0
-            ? await supabase.from('resource_category_links').select('resource_id').in('category_id', resourceCategoryIds)
-            : { data: [] };
+          // Fetch resources via BOTH resource_topics (direct topic links) AND resource_topic_categories (topic category links)
+          const [resourcesByTopic, resourcesByTopicCategory] = await Promise.all([
+            supabase.from('resource_topics').select('resource_id').in('topic_id', topTopicIds),
+            topicCategoryIds.length > 0
+              ? supabase.from('resource_topic_categories').select('resource_id').in('topic_category_id', topicCategoryIds)
+              : Promise.resolve({ data: [] }),
+          ]);
 
-          const resourceIds = [...new Set((resourceLinks.data || []).map((l) => l.resource_id))];
+          const resourceIds = [
+            ...new Set([
+              ...(resourcesByTopic.data || []).map((l) => l.resource_id),
+              ...(resourcesByTopicCategory.data || []).map((l) => l.resource_id),
+            ])
+          ];
 
           const [modelsRes, resourcesRes] = await Promise.all([
             modelIds.length > 0
