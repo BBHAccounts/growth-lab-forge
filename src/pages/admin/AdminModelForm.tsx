@@ -18,7 +18,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Plus, X, GripVertical } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User } from 'lucide-react';
 
 interface Step {
   title: string;
@@ -80,15 +80,35 @@ export default function AdminModelForm() {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [topics, setTopics] = useState<{ id: string; name: string; linked: boolean }[]>([]);
+  const [adminUsers, setAdminUsers] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all active topics
-      const { data: topicsData } = await supabase
-        .from('topics')
-        .select('id, name')
-        .eq('active', true)
-        .order('name');
+      // Fetch all active topics and admin users in parallel
+      const [topicsRes, adminRolesRes] = await Promise.all([
+        supabase.from('topics').select('id, name').eq('active', true).order('name'),
+        supabase.from('user_roles').select('user_id').eq('role', 'admin'),
+      ]);
+
+      const topicsData = topicsRes.data;
+      const adminUserIds = (adminRolesRes.data || []).map((r) => r.user_id);
+
+      // Fetch profiles for admin users
+      let adminUsersData: { id: string; name: string; email: string }[] = [];
+      if (adminUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, email')
+          .in('user_id', adminUserIds);
+        
+        adminUsersData = (profiles || []).map((p) => ({
+          id: p.user_id,
+          name: p.full_name || 'Unknown',
+          email: p.email || '',
+        }));
+      }
+      setAdminUsers(adminUsersData);
 
       if (!isNew && modelId) {
         try {
@@ -111,6 +131,9 @@ export default function AdminModelForm() {
             suggested_actions: modelRes.data.suggested_actions || [],
           });
           
+          // Set owner
+          setOwnerId(modelRes.data.owner_id || null);
+          
           setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, linked: linkedTopicIds.has(t.id) })));
         } catch (error) {
           console.error('Error fetching model:', error);
@@ -123,6 +146,11 @@ export default function AdminModelForm() {
           setLoading(false);
         }
       } else {
+        // For new models, set current user as owner
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setOwnerId(user.id);
+        }
         setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, linked: false })));
         setLoading(false);
       }
@@ -159,6 +187,7 @@ export default function AdminModelForm() {
         video_url: model.video_url,
         suggested_actions: model.suggested_actions,
         steps: JSON.parse(JSON.stringify(model.steps)),
+        owner_id: ownerId,
       };
 
       let savedModelId = modelId;
@@ -361,6 +390,29 @@ export default function AdminModelForm() {
               <CardTitle>Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Model Owner
+                </Label>
+                <Select
+                  value={ownerId || ''}
+                  onValueChange={(value) => setOwnerId(value || null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select owner..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {adminUsers.map((admin) => (
+                      <SelectItem key={admin.id} value={admin.id}>
+                        {admin.name} {admin.email && `(${admin.email})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Only admin users can be model owners</p>
+              </div>
+
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
