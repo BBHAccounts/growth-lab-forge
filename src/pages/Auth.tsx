@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, Mail, CheckCircle } from "lucide-react";
 import bbhLogo from "@/assets/bbh-logo.jpg";
@@ -19,6 +21,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -305,7 +308,15 @@ export default function Auth() {
                         htmlFor="consent" 
                         className="text-sm leading-relaxed cursor-pointer text-muted-foreground"
                       >
-                        I agree to receive marketing communications from Beyond Billable Hours and consent to my data being used anonymously for benchmarking and market research.
+                        By creating an account, I agree to the Growth Lab{" "}
+                        <button
+                          type="button"
+                          onClick={() => setShowTerms(true)}
+                          className="text-primary underline hover:no-underline"
+                        >
+                          Terms of Use and Privacy Notice
+                        </button>
+                        . I understand that Growth Lab is part of BeyondBillableHours, that anonymised data may be used for industry insights, and that I may receive platform and marketing communications.
                       </Label>
                     </div>
                     <Button type="submit" className="w-full" disabled={!consentAccepted || loading}>
@@ -319,6 +330,192 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Terms of Use & Privacy Notice Dialog */}
+      <Dialog open={showTerms} onOpenChange={setShowTerms}>
+        <DialogContent className="max-w-2xl max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Growth Lab – Terms of Use & Privacy Notice</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] pr-4">
+            <div className="space-y-6 text-sm text-muted-foreground">
+              <p className="text-xs">
+                <strong>Effective date:</strong> December 4, 2025<br />
+                Growth Lab is part of BeyondBillableHours, a tradename of BKG Consulting, a company registered in Dubai.
+              </p>
+              <p>
+                By creating an account on Growth Lab ("the Platform"), you agree to the following Terms of Use and Privacy Notice.
+              </p>
+              <p className="font-medium text-foreground">
+                If you do not agree, you should not use the Platform.
+              </p>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">1. Purpose of the Platform</h3>
+                <p>
+                  Growth Lab is a free community tool designed to support marketing, business development, and growth practices within law firms.
+                  It provides models, tools, insights, vendor information, research activities, and—potentially in the future—community features such as discussions and shared content.
+                </p>
+                <p>The Platform is provided "as is", without guarantees and may evolve over time.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">2. Account Registration</h3>
+                <p>
+                  By registering, you confirm that the information you provide is accurate and that you will keep your login details secure.
+                </p>
+                <p>We may suspend or remove accounts that violate these Terms or disrupt the community.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">3. Data Use & Privacy</h3>
+                <p>We collect profile and usage data to:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>personalise your experience</li>
+                  <li>improve platform functionality</li>
+                  <li>produce anonymised industry insights</li>
+                  <li>maintain platform security and performance</li>
+                </ul>
+                <p className="mt-2">We do not share any personally identifiable information with third parties.</p>
+                <p>We may use anonymised and aggregated data for:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>industry reports and benchmarks</li>
+                  <li>presentations or thought leadership</li>
+                  <li>platform analytics</li>
+                  <li>community insights</li>
+                </ul>
+                <p className="mt-2">No person or firm will ever be individually identifiable in these outputs.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">4. Communications & Marketing</h3>
+                <p>By creating an account, you agree that we may contact you with:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>platform updates</li>
+                  <li>new feature announcements</li>
+                  <li>research invitations</li>
+                  <li>community-related content</li>
+                  <li>marketing communications from Growth Lab / BeyondBillableHours</li>
+                </ul>
+                <p className="mt-2">You can opt out of marketing emails at any time.</p>
+                <p>We do not sell or distribute your email address.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">5. Content Ownership & Rights</h3>
+                <p>The Platform includes:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>original content by Growth Lab / BeyondBillableHours</li>
+                  <li>third-party content (vendor information, articles, videos)</li>
+                  <li>future community contributions</li>
+                  <li>materials provided or uploaded by users</li>
+                </ul>
+                <p className="mt-2">External content remains the property of its owners. Users retain ownership of their contributions. We claim no rights over third-party or user-generated content.</p>
+                <p>You are responsible for ensuring you have permission to share anything you upload.</p>
+                <p>We are not responsible for the accuracy, legality, or reliability of external or user-generated content.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">6. Vendor Information & External Tools</h3>
+                <p>Vendor listings and third-party tools included in Growth Lab:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>may contain incomplete or outdated information</li>
+                  <li>do not constitute endorsements</li>
+                  <li>are used at your own risk</li>
+                  <li>must be independently verified by users</li>
+                </ul>
+                <p className="mt-2">We are not liable for issues related to external vendors or tools.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">7. Community & Forum Behaviour (present or future features)</h3>
+                <p>If Growth Lab includes community features (forums, discussions, comments, posts), the following rules apply:</p>
+                
+                <h4 className="font-medium text-foreground mt-3">7.1 Respectful Conduct</h4>
+                <p>Users must behave professionally and respectfully at all times. Prohibited behaviours include:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>harassment, discrimination, or offensive language</li>
+                  <li>personal attacks or bullying</li>
+                  <li>sharing confidential or sensitive client/firm information</li>
+                  <li>posting misleading, illegal, or harmful content</li>
+                  <li>spam, promotions, or solicitation without permission</li>
+                  <li>impersonation of individuals or organisations</li>
+                </ul>
+
+                <h4 className="font-medium text-foreground mt-3">7.2 Content Responsibility</h4>
+                <p>You are fully responsible for anything you post. By contributing, you confirm that:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>you have the right to share the content</li>
+                  <li>it does not infringe on intellectual property or confidentiality</li>
+                  <li>it does not violate law or contractual obligations</li>
+                </ul>
+
+                <h4 className="font-medium text-foreground mt-3">7.3 Moderation Rights</h4>
+                <p>Growth Lab / BeyondBillableHours may:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>edit, hide, or delete posts</li>
+                  <li>remove or restrict accounts</li>
+                  <li>disable community features</li>
+                  <li>moderate discussions in any manner deemed necessary</li>
+                </ul>
+                <p className="mt-2">This may be done without notice if content violates these rules or risks harm to the community.</p>
+
+                <h4 className="font-medium text-foreground mt-3">7.4 No Liability for Community Content</h4>
+                <p>User-generated content reflects individual opinions only. Growth Lab / BeyondBillableHours:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>does not endorse community posts</li>
+                  <li>is not liable for accuracy or harm resulting from them</li>
+                </ul>
+                <p className="mt-2">Use community content at your own discretion.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">8. Anonymised Industry Insights</h3>
+                <p>
+                  By using Growth Lab, you agree that your activity may be used in anonymised, aggregated form to generate industry insights, reports, or research.
+                </p>
+                <p>We will never publish or share identifiable personal or firm-level data.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">9. Platform Availability & Liability</h3>
+                <p>Growth Lab is provided without warranties, including:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>uninterrupted availability</li>
+                  <li>accuracy, completeness, or reliability of content</li>
+                  <li>error-free performance</li>
+                </ul>
+                <p className="mt-2">We are not responsible for:</p>
+                <ul className="list-disc list-inside ml-2 space-y-1">
+                  <li>data loss</li>
+                  <li>downtime or technical issues</li>
+                  <li>errors or outdated information</li>
+                  <li>decisions made based on platform content</li>
+                  <li>the availability or behaviour of third-party services</li>
+                  <li>any direct or indirect damages from use of the Platform</li>
+                </ul>
+                <p className="mt-2">Use of the Platform is at your own risk.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">10. Changes to Terms</h3>
+                <p>We may modify or update these Terms at any time. Continued use of the Platform after changes constitutes acceptance.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="font-semibold text-foreground">11. Contact</h3>
+                <p>
+                  Growth Lab is part of BeyondBillableHours, a tradename of BKG Consulting, registered in Dubai.
+                </p>
+                <p>
+                  For questions or data requests, contact:<br />
+                  📧 info@beyondbillablehours.io
+                </p>
+              </section>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
