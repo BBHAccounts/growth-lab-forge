@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Loader2, Mail, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, CheckCircle, ArrowLeft } from "lucide-react";
 import bbhLogo from "@/assets/bbh-logo.jpg";
 
 export default function Auth() {
@@ -22,26 +22,39 @@ export default function Auth() {
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check for password reset flow from URL
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    if (type === 'recovery') {
+      setIsResettingPassword(true);
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (session?.user) {
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsResettingPassword(true);
+        } else if (session?.user && !isResettingPassword) {
           navigate("/");
         }
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      if (session?.user && !isResettingPassword) {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isResettingPassword]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +126,56 @@ export default function Auth() {
     setConsentAccepted(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+
+    if (error) {
+      toast({
+        title: "Request failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setResetEmailSent(true);
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
+    }
+
+    setLoading(false);
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      toast({
+        title: "Password update failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully reset.",
+      });
+      setIsResettingPassword(false);
+      setNewPassword("");
+      navigate("/");
+    }
+
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding with tech grid pattern */}
@@ -164,12 +227,112 @@ export default function Auth() {
             <div className="lg:hidden w-12 h-12 rounded-lg bg-accent flex items-center justify-center mx-auto mb-4">
               <span className="text-accent-foreground font-bold text-lg">G</span>
             </div>
-            <CardTitle className="text-2xl">Welcome to Growth Lab</CardTitle>
+            <CardTitle className="text-2xl">
+              {isResettingPassword ? "Reset Your Password" : forgotPassword ? "Forgot Password" : "Welcome to Growth Lab"}
+            </CardTitle>
             <CardDescription>
-              Sign in to access your strategic toolkit
+              {isResettingPassword 
+                ? "Enter your new password below" 
+                : forgotPassword 
+                  ? "Enter your email to receive a reset link" 
+                  : "Sign in to access your strategic toolkit"}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isResettingPassword ? (
+              <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      minLength={6}
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Update Password
+                </Button>
+              </form>
+            ) : forgotPassword ? (
+              resetEmailSent ? (
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                    <Mail className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      Check your email
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      We've sent a password reset link to <strong>{email}</strong>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Click the link in the email to reset your password.
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => {
+                      setForgotPassword(false);
+                      setResetEmailSent(false);
+                      setEmail("");
+                    }}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to sign in
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="you@lawfirm.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Send Reset Link
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    className="w-full"
+                    onClick={() => {
+                      setForgotPassword(false);
+                      setEmail("");
+                    }}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to sign in
+                  </Button>
+                </form>
+              )
+            ) : (
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
@@ -190,7 +353,16 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Password</Label>
+                      <button
+                        type="button"
+                        onClick={() => setForgotPassword(true)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                     <div className="relative">
                       <Input
                         id="login-password"
@@ -327,6 +499,7 @@ export default function Auth() {
                 )}
               </TabsContent>
             </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>
