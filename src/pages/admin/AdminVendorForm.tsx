@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,20 +27,6 @@ interface Vendor {
   logo_url: string;
   regions: string[];
   firm_sizes: string[];
-}
-
-interface TopicItem {
-  id: string;
-  name: string;
-  category_key: string | null;
-  linked: boolean;
-}
-
-interface TopicCategoryItem {
-  id: string;
-  key: string;
-  name: string;
-  linked: boolean;
 }
 
 const REGIONS = ['Europe', 'North America', 'Asia Pacific', 'Middle East', 'Latin America', 'Global'];
@@ -64,36 +50,30 @@ export default function AdminVendorForm() {
   const [vendor, setVendor] = useState<Vendor>(defaultVendor);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [topicCategories, setTopicCategories] = useState<TopicCategoryItem[]>([]);
-  const [topics, setTopics] = useState<TopicItem[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
-  const [suggestedTopicCategories, setSuggestedTopicCategories] = useState<string[]>([]);
-  const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
   const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch categories, topic categories, and topics in parallel
-        const [categoriesRes, topicCatsRes, topicsRes] = await Promise.all([
-          supabase.from('martech_categories').select('*').order('name'),
-          supabase.from('topic_categories').select('id, key, name').order('order_index'),
-          supabase.from('topics').select('id, name, category_key').eq('active', true).order('order_index'),
-        ]);
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('martech_categories')
+          .select('*')
+          .order('name');
         
-        setCategories(categoriesRes.data || []);
+        if (categoriesError) throw categoriesError;
+        setCategories(categoriesData || []);
 
         if (!isNew && vendorId) {
-          // Fetch vendor and linked data
-          const [vendorRes, vendorCatsRes, vendorTopicCatsRes, vendorTopicsRes] = await Promise.all([
+          // Fetch vendor and linked categories
+          const [vendorRes, vendorCatsRes] = await Promise.all([
             supabase.from('vendors').select('*').eq('id', vendorId).single(),
             supabase.from('vendor_categories').select('category_id').eq('vendor_id', vendorId),
-            supabase.from('vendor_topic_categories').select('topic_category_id').eq('vendor_id', vendorId),
-            supabase.from('vendor_topics').select('topic_id').eq('vendor_id', vendorId),
           ]);
 
           if (vendorRes.error) throw vendorRes.error;
@@ -106,15 +86,6 @@ export default function AdminVendorForm() {
           });
           
           setSelectedCategories((vendorCatsRes.data || []).map(vc => vc.category_id));
-          
-          const linkedTopicCatIds = new Set((vendorTopicCatsRes.data || []).map((l) => l.topic_category_id));
-          const linkedTopicIds = new Set((vendorTopicsRes.data || []).map((l) => l.topic_id));
-          
-          setTopicCategories((topicCatsRes.data || []).map((tc) => ({ id: tc.id, key: tc.key, name: tc.name, linked: linkedTopicCatIds.has(tc.id) })));
-          setTopics((topicsRes.data || []).map((t) => ({ id: t.id, name: t.name, category_key: t.category_key, linked: linkedTopicIds.has(t.id) })));
-        } else {
-          setTopicCategories((topicCatsRes.data || []).map((tc) => ({ id: tc.id, key: tc.key, name: tc.name, linked: false })));
-          setTopics((topicsRes.data || []).map((t) => ({ id: t.id, name: t.name, category_key: t.category_key, linked: false })));
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -143,16 +114,12 @@ export default function AdminVendorForm() {
 
     setExtracting(true);
     setSuggestedCategories([]);
-    setSuggestedTopicCategories([]);
-    setSuggestedTopics([]);
 
     try {
       const { data, error } = await supabase.functions.invoke('extract-vendor-metadata', {
         body: { 
           url: vendor.website_url,
           categories: categories,
-          topicCategories: topicCategories.map(tc => ({ id: tc.id, key: tc.key, name: tc.name })),
-          topics: topics.map(t => ({ id: t.id, name: t.name, category_key: t.category_key })),
         },
       });
 
@@ -169,12 +136,6 @@ export default function AdminVendorForm() {
       // Store suggested categories for display
       if (data.suggested_categories && data.suggested_categories.length > 0) {
         setSuggestedCategories(data.suggested_categories);
-      }
-      if (data.suggested_topic_categories?.length > 0) {
-        setSuggestedTopicCategories(data.suggested_topic_categories);
-      }
-      if (data.suggested_topics?.length > 0) {
-        setSuggestedTopics(data.suggested_topics);
       }
 
       toast({
@@ -203,24 +164,6 @@ export default function AdminVendorForm() {
       title: 'Applied',
       description: 'Suggested categories have been added',
     });
-  };
-
-  const applySuggestedTopicCategories = () => {
-    setTopicCategories(prev => prev.map(tc => ({
-      ...tc,
-      linked: tc.linked || suggestedTopicCategories.includes(tc.id)
-    })));
-    setSuggestedTopicCategories([]);
-    toast({ title: 'Applied', description: 'Suggested topic categories have been added' });
-  };
-
-  const applySuggestedTopics = () => {
-    setTopics(prev => prev.map(t => ({
-      ...t,
-      linked: t.linked || suggestedTopics.includes(t.id)
-    })));
-    setSuggestedTopics([]);
-    toast({ title: 'Applied', description: 'Suggested topics have been added' });
   };
 
   const handleSave = async () => {
@@ -272,20 +215,6 @@ export default function AdminVendorForm() {
               category_id: categoryId,
             }))
           );
-        }
-
-        // Update linked topic categories
-        await supabase.from('vendor_topic_categories').delete().eq('vendor_id', vendorIdToUse);
-        const linkedTopicCatIds = topicCategories.filter((tc) => tc.linked).map((tc) => ({ vendor_id: vendorIdToUse, topic_category_id: tc.id }));
-        if (linkedTopicCatIds.length > 0) {
-          await supabase.from('vendor_topic_categories').insert(linkedTopicCatIds);
-        }
-
-        // Update linked topics
-        await supabase.from('vendor_topics').delete().eq('vendor_id', vendorIdToUse);
-        const linkedTopicIds = topics.filter((t) => t.linked).map((t) => ({ vendor_id: vendorIdToUse, topic_id: t.id }));
-        if (linkedTopicIds.length > 0) {
-          await supabase.from('vendor_topics').insert(linkedTopicIds);
         }
       }
 
@@ -360,24 +289,6 @@ export default function AdminVendorForm() {
         : [...selectedCategories, categoryId]
     );
   };
-
-  const toggleTopicCategory = (topicCategoryId: string) => {
-    setTopicCategories((prev) =>
-      prev.map((tc) => (tc.id === topicCategoryId ? { ...tc, linked: !tc.linked } : tc))
-    );
-  };
-
-  const toggleTopic = (topicId: string) => {
-    setTopics((prev) =>
-      prev.map((t) => (t.id === topicId ? { ...t, linked: !t.linked } : t))
-    );
-  };
-
-  // Filter topics by selected topic categories
-  const selectedTopicCategoryKeys = topicCategories.filter(tc => tc.linked).map(tc => tc.key);
-  const filteredTopics = selectedTopicCategoryKeys.length > 0 
-    ? topics.filter(t => t.category_key && selectedTopicCategoryKeys.includes(t.category_key))
-    : topics;
 
   if (loading) {
     return (
@@ -525,110 +436,6 @@ export default function AdminVendorForm() {
                     </label>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recommendations - Topic Categories & Topics */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Recommendations</CardTitle>
-              <CardDescription>Link to topic categories and topics for recommendations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Topic Categories */}
-                <div className="space-y-4">
-                  {suggestedTopicCategories.length > 0 && (
-                    <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">AI Suggested Topic Categories</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {suggestedTopicCategories.map(tcId => {
-                          const tc = topicCategories.find(c => c.id === tcId);
-                          return tc ? (
-                            <Badge key={tcId} variant="secondary">{tc.name}</Badge>
-                          ) : null;
-                        })}
-                      </div>
-                      <Button size="sm" onClick={applySuggestedTopicCategories}>
-                        Apply Suggestions
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>Topic Categories ({topicCategories.filter((tc) => tc.linked).length} selected)</Label>
-                    {topicCategories.length > 0 ? (
-                      <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                        {topicCategories.map((tc) => (
-                          <label key={tc.id} className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={tc.linked}
-                              onCheckedChange={() => toggleTopicCategory(tc.id)}
-                            />
-                            <span className="text-sm">{tc.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No topic categories found.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Topics */}
-                <div className="space-y-4">
-                  {suggestedTopics.length > 0 && (
-                    <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">AI Suggested Topics</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {suggestedTopics.map(tId => {
-                          const t = topics.find(topic => topic.id === tId);
-                          return t ? (
-                            <Badge key={tId} variant="secondary">{t.name}</Badge>
-                          ) : null;
-                        })}
-                      </div>
-                      <Button size="sm" onClick={applySuggestedTopics}>
-                        Apply Suggestions
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>
-                      Topics ({topics.filter((t) => t.linked).length} selected)
-                      {selectedTopicCategoryKeys.length > 0 && (
-                        <span className="text-muted-foreground ml-2">(filtered by selected categories)</span>
-                      )}
-                    </Label>
-                    {filteredTopics.length > 0 ? (
-                      <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                        {filteredTopics.map((topic) => (
-                          <label key={topic.id} className="flex items-center gap-2 cursor-pointer">
-                            <Checkbox
-                              checked={topic.linked}
-                              onCheckedChange={() => toggleTopic(topic.id)}
-                            />
-                            <span className="text-sm">{topic.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {selectedTopicCategoryKeys.length > 0 
-                          ? 'No topics in selected categories.' 
-                          : 'No active topics found.'}
-                      </p>
-                    )}
-                  </div>
-                </div>
               </div>
             </CardContent>
           </Card>

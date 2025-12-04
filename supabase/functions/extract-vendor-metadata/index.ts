@@ -219,7 +219,7 @@ serve(async (req) => {
     console.log("Extracted name:", companyName);
     console.log("Raw description:", rawDescription);
 
-    // Use AI to normalize description and suggest categories
+    // Use AI to normalize description and suggest martech categories
     let normalizedDescription = rawDescription;
     let suggestedCategories: string[] = [];
     
@@ -230,7 +230,7 @@ serve(async (req) => {
 
 1. A concise description of what the company does (exactly 2 sentences, around 150-200 characters total). Focus on their main product/service and value proposition.
 
-2. Which categories from this list best match their services: ${categoryNames.length > 0 ? categoryNames.join(', ') : 'None provided'}
+2. Which martech categories from this list best match their services: ${categoryNames.length > 0 ? categoryNames.join(', ') : 'None provided'}
 
 Website content:
 ${pageContent}
@@ -239,7 +239,7 @@ ${rawDescription ? `Current meta description: ${rawDescription}` : ''}
 
 Return a JSON object with:
 - "description": string (exactly 2 sentences, 150-200 chars)
-- "categories": array of matching category names (1-3 max, empty if none match)
+- "categories": array of matching martech category names (1-3 max, empty if none match)
 
 Return ONLY valid JSON, no markdown.`;
 
