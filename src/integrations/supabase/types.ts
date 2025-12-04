@@ -127,6 +127,42 @@ export type Database = {
           },
         ]
       }
+      model_topic_categories: {
+        Row: {
+          created_at: string
+          id: string
+          model_id: string
+          topic_category_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          model_id: string
+          topic_category_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          model_id?: string
+          topic_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_topic_categories_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_topic_categories_topic_category_id_fkey"
+            columns: ["topic_category_id"]
+            isOneToOne: false
+            referencedRelation: "topic_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       models: {
         Row: {
           access_level: string | null

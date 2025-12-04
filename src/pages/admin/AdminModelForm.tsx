@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
@@ -51,6 +51,20 @@ interface Model {
   steps: Step[];
 }
 
+interface TopicItem {
+  id: string;
+  name: string;
+  category_key: string | null;
+  linked: boolean;
+}
+
+interface TopicCategoryItem {
+  id: string;
+  key: string;
+  name: string;
+  linked: boolean;
+}
+
 const defaultModel: Model = {
   name: '',
   slug: '',
@@ -79,20 +93,23 @@ export default function AdminModelForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [topics, setTopics] = useState<{ id: string; name: string; linked: boolean }[]>([]);
+  const [topics, setTopics] = useState<TopicItem[]>([]);
+  const [topicCategories, setTopicCategories] = useState<TopicCategoryItem[]>([]);
   const [adminUsers, setAdminUsers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all active topics and admin users in parallel
-      const [topicsRes, adminRolesRes] = await Promise.all([
-        supabase.from('topics').select('id, name').eq('active', true).order('name'),
+      // Fetch all active topics, topic categories, and admin users in parallel
+      const [topicsRes, topicCatsRes, adminRolesRes] = await Promise.all([
+        supabase.from('topics').select('id, name, category_key').eq('active', true).order('order_index'),
+        supabase.from('topic_categories').select('id, key, name').order('order_index'),
         supabase.from('user_roles').select('user_id').eq('role', 'admin'),
       ]);
 
       const topicsData = topicsRes.data;
+      const topicCatsData = topicCatsRes.data;
       const adminUserIds = (adminRolesRes.data || []).map((r) => r.user_id);
 
       // Fetch profiles for admin users
@@ -113,14 +130,16 @@ export default function AdminModelForm() {
 
       if (!isNew && modelId) {
         try {
-          const [modelRes, linkedTopicsRes] = await Promise.all([
+          const [modelRes, linkedTopicsRes, linkedTopicCatsRes] = await Promise.all([
             supabase.from('models').select('*').eq('id', modelId).single(),
             supabase.from('topic_models').select('topic_id').eq('model_id', modelId),
+            supabase.from('model_topic_categories').select('topic_category_id').eq('model_id', modelId),
           ]);
 
           if (modelRes.error) throw modelRes.error;
           
           const linkedTopicIds = new Set((linkedTopicsRes.data || []).map((l) => l.topic_id));
+          const linkedTopicCatIds = new Set((linkedTopicCatsRes.data || []).map((l) => l.topic_category_id));
           
           setModel({
             ...defaultModel,
@@ -132,10 +151,10 @@ export default function AdminModelForm() {
             suggested_actions: modelRes.data.suggested_actions || [],
           });
           
-          // Set owner
           setOwnerId(modelRes.data.owner_id || null);
           
-          setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, linked: linkedTopicIds.has(t.id) })));
+          setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, category_key: t.category_key, linked: linkedTopicIds.has(t.id) })));
+          setTopicCategories((topicCatsData || []).map((tc) => ({ id: tc.id, key: tc.key, name: tc.name, linked: linkedTopicCatIds.has(tc.id) })));
         } catch (error) {
           console.error('Error fetching model:', error);
           toast({
@@ -147,12 +166,12 @@ export default function AdminModelForm() {
           setLoading(false);
         }
       } else {
-        // For new models, set current user as owner
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setOwnerId(user.id);
         }
-        setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, linked: false })));
+        setTopics((topicsData || []).map((t) => ({ id: t.id, name: t.name, category_key: t.category_key, linked: false })));
+        setTopicCategories((topicCatsData || []).map((tc) => ({ id: tc.id, key: tc.key, name: tc.name, linked: false })));
         setLoading(false);
       }
     };
@@ -212,6 +231,13 @@ export default function AdminModelForm() {
       const linkedTopicIds = topics.filter((t) => t.linked).map((t) => ({ topic_id: t.id, model_id: savedModelId }));
       if (linkedTopicIds.length > 0) {
         await supabase.from('topic_models').insert(linkedTopicIds);
+      }
+
+      // Update linked topic categories
+      await supabase.from('model_topic_categories').delete().eq('model_id', savedModelId);
+      const linkedTopicCatIds = topicCategories.filter((tc) => tc.linked).map((tc) => ({ topic_category_id: tc.id, model_id: savedModelId }));
+      if (linkedTopicCatIds.length > 0) {
+        await supabase.from('model_topic_categories').insert(linkedTopicCatIds);
       }
 
       // Send notification if toggle is on
@@ -289,6 +315,18 @@ export default function AdminModelForm() {
       prev.map((t) => (t.id === topicId ? { ...t, linked: !t.linked } : t))
     );
   };
+
+  const toggleTopicCategory = (topicCategoryId: string) => {
+    setTopicCategories((prev) =>
+      prev.map((tc) => (tc.id === topicCategoryId ? { ...tc, linked: !tc.linked } : tc))
+    );
+  };
+
+  // Filter topics by selected topic categories
+  const selectedTopicCategoryKeys = topicCategories.filter(tc => tc.linked).map(tc => tc.key);
+  const filteredTopics = selectedTopicCategoryKeys.length > 0 
+    ? topics.filter(t => t.category_key && selectedTopicCategoryKeys.includes(t.category_key))
+    : topics;
 
   if (loading) {
     return (
@@ -471,25 +509,6 @@ export default function AdminModelForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Topics ({topics.filter((t) => t.linked).length} linked)</Label>
-                {topics.length > 0 ? (
-                  <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-2">
-                    {topics.map((topic) => (
-                      <label key={topic.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={topic.linked}
-                          onCheckedChange={() => toggleTopic(topic.id)}
-                        />
-                        <span className="text-sm">{topic.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No active topics found. Create topics first.</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
                 <Label>Search Tags (comma-separated)</Label>
                 <Input
                   value={model.tags.join(', ')}
@@ -539,6 +558,66 @@ export default function AdminModelForm() {
                   checked={notifyUsers}
                   onCheckedChange={setNotifyUsers}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recommendations - Topic Categories & Topics */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Recommendations</CardTitle>
+              <CardDescription>Link to topic categories and topics for recommendations</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {/* Topic Categories */}
+                <div className="space-y-2">
+                  <Label>Topic Categories ({topicCategories.filter((tc) => tc.linked).length} selected)</Label>
+                  {topicCategories.length > 0 ? (
+                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
+                      {topicCategories.map((tc) => (
+                        <label key={tc.id} className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={tc.linked}
+                            onCheckedChange={() => toggleTopicCategory(tc.id)}
+                          />
+                          <span className="text-sm">{tc.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No topic categories found.</p>
+                  )}
+                </div>
+
+                {/* Topics */}
+                <div className="space-y-2">
+                  <Label>
+                    Topics ({topics.filter((t) => t.linked).length} selected)
+                    {selectedTopicCategoryKeys.length > 0 && (
+                      <span className="text-muted-foreground ml-2">(filtered by selected categories)</span>
+                    )}
+                  </Label>
+                  {filteredTopics.length > 0 ? (
+                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
+                      {filteredTopics.map((topic) => (
+                        <label key={topic.id} className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={topic.linked}
+                            onCheckedChange={() => toggleTopic(topic.id)}
+                          />
+                          <span className="text-sm">{topic.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedTopicCategoryKeys.length > 0 
+                        ? 'No topics in selected categories.' 
+                        : 'No active topics found. Create topics first.'}
+                    </p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
