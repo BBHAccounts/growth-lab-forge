@@ -34,6 +34,7 @@ import AdminTopics from "./pages/admin/AdminTopics";
 import AdminTopicForm from "./pages/admin/AdminTopicForm";
 import AdminResources from "./pages/admin/AdminResources";
 import AdminResourceForm from "./pages/admin/AdminResourceForm";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/admin/martech/vendors/:vendorId" element={<AdminRouteGuard><AdminVendorForm /></AdminRouteGuard>} />
           <Route path="/admin/analytics" element={<AdminRouteGuard><AdminAnalytics /></AdminRouteGuard>} />
           <Route path="/admin/settings" element={<AdminRouteGuard><AdminSettings /></AdminRouteGuard>} />
+          <Route path="/admin/notifications" element={<AdminRouteGuard><AdminNotifications /></AdminRouteGuard>} />
           <Route path="/admin/topics" element={<AdminRouteGuard><AdminTopics /></AdminRouteGuard>} />
           <Route path="/admin/topics/:topicId" element={<AdminRouteGuard><AdminTopicForm /></AdminRouteGuard>} />
           <Route path="/admin/insights-hub" element={<AdminRouteGuard><AdminResources /></AdminRouteGuard>} />

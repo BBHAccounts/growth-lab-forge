@@ -8,7 +8,8 @@ import {
   Settings,
   ArrowLeft,
   Tags,
-  FileText
+  FileText,
+  Bell
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -33,6 +34,7 @@ const adminNavItems = [
   { title: 'Research Lab', url: '/admin/research', icon: FlaskConical },
   { title: 'Martech Map', url: '/admin/martech', icon: MapPin },
   { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
+  { title: 'Notifications', url: '/admin/notifications', icon: Bell },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
