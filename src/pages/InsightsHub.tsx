@@ -26,6 +26,12 @@ interface Resource {
   access_level: string | null;
   likes_count: number | null;
 }
+
+interface TopicCategory {
+  id: string;
+  key: string;
+  name: string;
+}
 const TYPE_COLORS: Record<string, string> = {
   article: "bg-blue-500/20 text-blue-700 dark:text-blue-300",
   webinar: "bg-purple-500/20 text-purple-700 dark:text-purple-300",
@@ -46,6 +52,9 @@ export default function InsightsHub() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedTopicCategory, setSelectedTopicCategory] = useState<string | null>(null);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
+  const [resourceTopicLinks, setResourceTopicLinks] = useState<{ resource_id: string; topic_category_id: string }[]>([]);
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
     align: "start"
@@ -89,24 +98,52 @@ export default function InsightsHub() {
     };
   }, [emblaApi, onSelect]);
   useEffect(() => {
-    const fetchResources = async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("resources").select("*").eq("status", "active").order("featured", {
-        ascending: false
-      }).order("published_date", {
-        ascending: false
-      });
-      if (!error && data) {
-        setResources(data);
+    const fetchData = async () => {
+      // Fetch resources
+      const { data: resourcesData } = await supabase
+        .from("resources")
+        .select("*")
+        .eq("status", "active")
+        .order("featured", { ascending: false })
+        .order("published_date", { ascending: false });
+      
+      if (resourcesData) {
+        setResources(resourcesData);
       }
+
+      // Fetch topic categories
+      const { data: topicCatsData } = await supabase
+        .from("topic_categories")
+        .select("id, key, name")
+        .order("order_index");
+      
+      if (topicCatsData) {
+        setTopicCategories(topicCatsData);
+      }
+
+      // Fetch resource-topic category links
+      const { data: linksData } = await supabase
+        .from("resource_topic_categories")
+        .select("resource_id, topic_category_id");
+      
+      if (linksData) {
+        setResourceTopicLinks(linksData);
+      }
+
       setLoading(false);
     };
-    fetchResources();
+    fetchData();
   }, []);
   const featuredResources = resources.filter(r => r.featured);
-  const filteredResources = selectedType ? resources.filter(r => r.type === selectedType) : resources;
+  
+  // Filter by type and/or topic category
+  const filteredResources = resources.filter(r => {
+    const matchesType = !selectedType || r.type === selectedType;
+    const matchesTopicCategory = !selectedTopicCategory || 
+      resourceTopicLinks.some(link => link.resource_id === r.id && link.topic_category_id === selectedTopicCategory);
+    return matchesType && matchesTopicCategory;
+  });
+  
   const types = ["article", "webinar", "guide", "video", "podcast", "event"];
   return <AppLayout>
       <HeroBanner emoji="💡" title="Insights Hub" description="Curated knowledge to fuel your law firm's growth journey" />
@@ -191,14 +228,57 @@ export default function InsightsHub() {
           </section> : null}
 
         {/* Filter Pills */}
-        <section>
-          <div className="flex flex-wrap gap-2">
-            <Button variant={selectedType === null ? "default" : "outline"} size="sm" onClick={() => setSelectedType(null)} className="rounded-full">
-              All
-            </Button>
-            {types.map(type => <Button key={type} variant={selectedType === type ? "default" : "outline"} size="sm" onClick={() => setSelectedType(type)} className="rounded-full capitalize">
-                {type}
-              </Button>)}
+        <section className="space-y-4">
+          {/* Topic Category Filters */}
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">Filter by topic</p>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant={selectedTopicCategory === null ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setSelectedTopicCategory(null)} 
+                className="rounded-full"
+              >
+                All Topics
+              </Button>
+              {topicCategories.map(tc => (
+                <Button 
+                  key={tc.id} 
+                  variant={selectedTopicCategory === tc.id ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setSelectedTopicCategory(tc.id)} 
+                  className="rounded-full"
+                >
+                  {tc.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Type Filters */}
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">Filter by type</p>
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                variant={selectedType === null ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setSelectedType(null)} 
+                className="rounded-full"
+              >
+                All Types
+              </Button>
+              {types.map(type => (
+                <Button 
+                  key={type} 
+                  variant={selectedType === type ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setSelectedType(type)} 
+                  className="rounded-full capitalize"
+                >
+                  {type}
+                </Button>
+              ))}
+            </div>
           </div>
         </section>
 
