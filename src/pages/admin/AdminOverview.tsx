@@ -7,6 +7,9 @@ import { Users, Box, Heart, FlaskConical } from 'lucide-react';
 interface Stats {
   totalUsers: number;
   activeUsers: number;
+  totalModels: number;
+  totalMartechCategories: number;
+  totalVendors: number;
   topModels: { name: string; count: number }[];
   topLikedModels: { name: string; likes: number }[];
   topVendors: { name: string; likes: number }[];
@@ -17,6 +20,9 @@ export default function AdminOverview() {
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     activeUsers: 0,
+    totalModels: 0,
+    totalMartechCategories: 0,
+    totalVendors: 0,
     topModels: [],
     topLikedModels: [],
     topVendors: [],
@@ -27,18 +33,23 @@ export default function AdminOverview() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Total users
-        const { count: totalUsers } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-
-        // Active users (last 30 days) - using profiles updated_at as proxy
+        // Fetch counts in parallel
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const { count: activeUsers } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .gte('updated_at', thirtyDaysAgo.toISOString());
+
+        const [
+          { count: totalUsers },
+          { count: activeUsers },
+          { count: totalModels },
+          { count: totalMartechCategories },
+          { count: totalVendors },
+        ] = await Promise.all([
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', thirtyDaysAgo.toISOString()),
+          supabase.from('models').select('*', { count: 'exact', head: true }),
+          supabase.from('martech_categories').select('*', { count: 'exact', head: true }),
+          supabase.from('vendors').select('*', { count: 'exact', head: true }),
+        ]);
 
         // Top activated models
         const { data: activatedModels } = await supabase
@@ -100,6 +111,9 @@ export default function AdminOverview() {
         setStats({
           totalUsers: totalUsers || 0,
           activeUsers: activeUsers || 0,
+          totalModels: totalModels || 0,
+          totalMartechCategories: totalMartechCategories || 0,
+          totalVendors: totalVendors || 0,
           topModels,
           topLikedModels,
           topVendors,
@@ -124,7 +138,7 @@ export default function AdminOverview() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -151,7 +165,27 @@ export default function AdminOverview() {
               <Box className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{loading ? '...' : stats.topLikedModels.length}</div>
+              <div className="text-2xl font-bold">{loading ? '...' : stats.totalModels}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Martech Categories</CardTitle>
+              <Box className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{loading ? '...' : stats.totalMartechCategories}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
+              <Box className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{loading ? '...' : stats.totalVendors}</div>
             </CardContent>
           </Card>
 
