@@ -202,6 +202,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          link: string | null
+          message: string | null
+          read: boolean
+          reference_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string | null
+          read?: boolean
+          reference_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string | null
+          read?: boolean
+          reference_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           created_at: string | null
@@ -868,6 +904,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      notify_all_users: {
+        Args: {
+          p_link: string
+          p_message: string
+          p_reference_id: string
+          p_title: string
+          p_type: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
