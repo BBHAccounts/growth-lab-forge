@@ -26,7 +26,6 @@ interface Topic {
   recommended_roles: string[];
   recommended_firm_sizes: string[];
   recommended_firm_types: string[];
-  interest_area_keywords: string[];
   national_or_international: string[];
   min_growth_maturity: number;
   max_growth_maturity: number;
@@ -42,19 +41,6 @@ interface TopicCategory {
   order_index: number;
 }
 
-interface CategoryItem {
-  id: string;
-  name: string;
-  linked: boolean;
-}
-
-interface ModelItem {
-  id: string;
-  name: string;
-  emoji: string | null;
-  linked: boolean;
-}
-
 const defaultTopic: Topic = {
   key: '',
   name: '',
@@ -66,7 +52,6 @@ const defaultTopic: Topic = {
   recommended_roles: [],
   recommended_firm_sizes: [],
   recommended_firm_types: [],
-  interest_area_keywords: [],
   national_or_international: [],
   min_growth_maturity: 1,
   max_growth_maturity: 5,
@@ -91,23 +76,17 @@ export default function AdminTopicForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const [models, setModels] = useState<ModelItem[]>([]);
-  const [vendorCategories, setVendorCategories] = useState<CategoryItem[]>([]);
-  const [resourceCategories, setResourceCategories] = useState<CategoryItem[]>([]);
   const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all models, categories and topic categories
-      const [modelsRes, vendorCatsRes, resourceCatsRes, topicCatsRes] = await Promise.all([
-        supabase.from('models').select('id, name, emoji').eq('status', 'active').order('name'),
-        supabase.from('martech_categories').select('id, name').order('name'),
-        supabase.from('resource_categories').select('id, name').order('name'),
-        supabase.from('topic_categories').select('id, key, name, order_index').order('order_index'),
-      ]);
+      // Fetch topic categories
+      const { data: topicCatsData } = await supabase
+        .from('topic_categories')
+        .select('id, key, name, order_index')
+        .order('order_index');
 
-      setTopicCategories(topicCatsRes.data || []);
+      setTopicCategories(topicCatsData || []);
 
       if (!isNew && topicId) {
         // Fetch topic
@@ -134,28 +113,8 @@ export default function AdminTopicForm() {
           recommended_roles: topicData.recommended_roles || [],
           recommended_firm_sizes: topicData.recommended_firm_sizes || [],
           recommended_firm_types: topicData.recommended_firm_types || [],
-          interest_area_keywords: topicData.interest_area_keywords || [],
           national_or_international: topicData.national_or_international || [],
         });
-
-        // Fetch linked models and categories
-        const [linkedModels, linkedVendorCats, linkedResourceCats] = await Promise.all([
-          supabase.from('topic_models').select('model_id').eq('topic_id', topicId),
-          supabase.from('topic_vendor_categories').select('category_id').eq('topic_id', topicId),
-          supabase.from('topic_resource_categories').select('category_id').eq('topic_id', topicId),
-        ]);
-
-        const linkedModelIds = new Set((linkedModels.data || []).map((l) => l.model_id));
-        const linkedVendorCatIds = new Set((linkedVendorCats.data || []).map((l) => l.category_id));
-        const linkedResourceCatIds = new Set((linkedResourceCats.data || []).map((l) => l.category_id));
-
-        setModels((modelsRes.data || []).map((m) => ({ id: m.id, name: m.name, emoji: m.emoji, linked: linkedModelIds.has(m.id) })));
-        setVendorCategories((vendorCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedVendorCatIds.has(c.id) })));
-        setResourceCategories((resourceCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedResourceCatIds.has(c.id) })));
-      } else {
-        setModels((modelsRes.data || []).map((m) => ({ id: m.id, name: m.name, emoji: m.emoji, linked: false })));
-        setVendorCategories((vendorCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
-        setResourceCategories((resourceCatsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
       }
 
       setLoading(false);
@@ -172,8 +131,6 @@ export default function AdminTopicForm() {
 
     setSaving(true);
     try {
-      let savedTopicId = topicId;
-
       const topicData = {
         key: topic.key || null,
         name: topic.name,
@@ -185,7 +142,6 @@ export default function AdminTopicForm() {
         recommended_roles: topic.recommended_roles,
         recommended_firm_sizes: topic.recommended_firm_sizes,
         recommended_firm_types: topic.recommended_firm_types,
-        interest_area_keywords: topic.interest_area_keywords,
         national_or_international: topic.national_or_international,
         min_growth_maturity: topic.min_growth_maturity,
         max_growth_maturity: topic.max_growth_maturity,
@@ -195,33 +151,11 @@ export default function AdminTopicForm() {
       };
 
       if (isNew) {
-        const { data, error } = await supabase.from('topics').insert([topicData]).select('id').single();
+        const { error } = await supabase.from('topics').insert([topicData]);
         if (error) throw error;
-        savedTopicId = data.id;
       } else {
         const { error } = await supabase.from('topics').update(topicData).eq('id', topicId);
         if (error) throw error;
-      }
-
-      // Update linked models (direct link)
-      await supabase.from('topic_models').delete().eq('topic_id', savedTopicId);
-      const linkedModelIds = models.filter((m) => m.linked).map((m) => ({ topic_id: savedTopicId, model_id: m.id }));
-      if (linkedModelIds.length > 0) {
-        await supabase.from('topic_models').insert(linkedModelIds);
-      }
-
-      // Update linked vendor categories
-      await supabase.from('topic_vendor_categories').delete().eq('topic_id', savedTopicId);
-      const linkedVendorCatIds = vendorCategories.filter((c) => c.linked).map((c) => ({ topic_id: savedTopicId, category_id: c.id }));
-      if (linkedVendorCatIds.length > 0) {
-        await supabase.from('topic_vendor_categories').insert(linkedVendorCatIds);
-      }
-
-      // Update linked resource categories
-      await supabase.from('topic_resource_categories').delete().eq('topic_id', savedTopicId);
-      const linkedResourceCatIds = resourceCategories.filter((c) => c.linked).map((c) => ({ topic_id: savedTopicId, category_id: c.id }));
-      if (linkedResourceCatIds.length > 0) {
-        await supabase.from('topic_resource_categories').insert(linkedResourceCatIds);
       }
 
       toast({ title: 'Success', description: isNew ? 'Topic created successfully' : 'Topic updated successfully' });
@@ -252,31 +186,6 @@ export default function AdminTopicForm() {
     const current = topic[field] as string[];
     const updated = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
     setTopic({ ...topic, [field]: updated });
-  };
-
-  const updateKeywords = (value: string) => {
-    setTopic({
-      ...topic,
-      interest_area_keywords: value.split(',').map((v) => v.trim()).filter(Boolean),
-    });
-  };
-
-  const toggleModel = (modelId: string) => {
-    setModels((prev) =>
-      prev.map((m) => (m.id === modelId ? { ...m, linked: !m.linked } : m))
-    );
-  };
-
-  const toggleCategory = (type: 'vendor' | 'resource', categoryId: string) => {
-    if (type === 'vendor') {
-      setVendorCategories((prev) =>
-        prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
-      );
-    } else {
-      setResourceCategories((prev) =>
-        prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
-      );
-    }
   };
 
   if (loading) {
@@ -387,15 +296,6 @@ export default function AdminTopicForm() {
                   />
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label>Interest Area Keywords (comma-separated)</Label>
-                <Input
-                  value={topic.interest_area_keywords.join(', ')}
-                  onChange={(e) => updateKeywords(e.target.value)}
-                  placeholder="growth, marketing, BD, technology..."
-                />
-              </div>
             </CardContent>
           </Card>
 
@@ -467,7 +367,7 @@ export default function AdminTopicForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Scope</Label>
+                <Label>Scope (National/International)</Label>
                 <div className="flex flex-wrap gap-3">
                   {SCOPE_OPTIONS.map((opt) => (
                     <label key={opt} className="flex items-center gap-2 cursor-pointer">
@@ -484,107 +384,34 @@ export default function AdminTopicForm() {
           </Card>
 
           {/* Maturity Levels */}
-          <Card>
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Maturity Targeting</CardTitle>
-              <CardDescription>Match users by their maturity levels</CardDescription>
+              <CardTitle>Maturity Levels</CardTitle>
+              <CardDescription>Set the minimum and maximum maturity levels for targeting</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <Label>Growth Maturity Range: {topic.min_growth_maturity} - {topic.max_growth_maturity}</Label>
-                <Slider
-                  min={1}
-                  max={5}
-                  step={1}
-                  value={[topic.min_growth_maturity, topic.max_growth_maturity]}
-                  onValueChange={([min, max]) => setTopic({ ...topic, min_growth_maturity: min, max_growth_maturity: max })}
-                />
-              </div>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="space-y-4">
+                  <Label>Growth Maturity Range: {topic.min_growth_maturity} - {topic.max_growth_maturity}</Label>
+                  <Slider
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={[topic.min_growth_maturity, topic.max_growth_maturity]}
+                    onValueChange={([min, max]) => setTopic({ ...topic, min_growth_maturity: min, max_growth_maturity: max })}
+                  />
+                </div>
 
-              <div className="space-y-4">
-                <Label>Data Maturity Range: {topic.min_data_maturity} - {topic.max_data_maturity}</Label>
-                <Slider
-                  min={1}
-                  max={5}
-                  step={1}
-                  value={[topic.min_data_maturity, topic.max_data_maturity]}
-                  onValueChange={([min, max]) => setTopic({ ...topic, min_data_maturity: min, max_data_maturity: max })}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Linked Models */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Linked Models</CardTitle>
-              <CardDescription>Select models to recommend for this topic.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Models ({models.filter((m) => m.linked).length} selected)</Label>
-                {models.length > 0 ? (
-                  <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                    {models.map((model) => (
-                      <label key={model.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={model.linked}
-                          onCheckedChange={() => toggleModel(model.id)}
-                        />
-                        <span className="text-sm">{model.emoji} {model.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No active models found.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Linked Categories */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Linked Categories</CardTitle>
-              <CardDescription>Select vendor and resource categories to recommend for this topic.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Vendor Categories ({vendorCategories.filter((c) => c.linked).length} selected)</Label>
-                {vendorCategories.length > 0 ? (
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
-                    {vendorCategories.map((cat) => (
-                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={cat.linked}
-                          onCheckedChange={() => toggleCategory('vendor', cat.id)}
-                        />
-                        <span className="text-sm">{cat.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No vendor categories defined yet. Create them in the Martech section.</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Resource Categories ({resourceCategories.filter((c) => c.linked).length} selected)</Label>
-                {resourceCategories.length > 0 ? (
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
-                    {resourceCategories.map((cat) => (
-                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={cat.linked}
-                          onCheckedChange={() => toggleCategory('resource', cat.id)}
-                        />
-                        <span className="text-sm">{cat.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No resource categories defined yet. Create them in the Resources section.</p>
-                )}
+                <div className="space-y-4">
+                  <Label>Data Maturity Range: {topic.min_data_maturity} - {topic.max_data_maturity}</Label>
+                  <Slider
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={[topic.min_data_maturity, topic.max_data_maturity]}
+                    onValueChange={([min, max]) => setTopic({ ...topic, min_data_maturity: min, max_data_maturity: max })}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
