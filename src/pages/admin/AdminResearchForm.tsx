@@ -17,7 +17,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Plus, X, Eye } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, X, Eye, Bell } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -62,6 +62,7 @@ export default function AdminResearchForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
     if (!isNew && studyId) {
@@ -122,8 +123,20 @@ export default function AdminResearchForm() {
       };
 
       if (isNew) {
-        const { error } = await supabase.from('research_studies').insert([studyData] as never);
+        const { data, error } = await supabase.from('research_studies').insert([studyData] as never).select('id').single();
         if (error) throw error;
+        
+        // Send notification if toggle is on
+        if (notifyUsers && study.active) {
+          await supabase.rpc('notify_all_users', {
+            p_type: 'new_research',
+            p_title: `New Research Study: ${study.title}`,
+            p_message: study.description || 'Participate in our latest research!',
+            p_link: `/research/${study.slug || data.id}`,
+            p_reference_id: data.id,
+          });
+        }
+        
         toast({ title: 'Success', description: 'Study created successfully' });
       } else {
         const { error } = await supabase
@@ -131,6 +144,18 @@ export default function AdminResearchForm() {
           .update(studyData as never)
           .eq('id', studyId);
         if (error) throw error;
+        
+        // Send notification if toggle is on
+        if (notifyUsers && study.active) {
+          await supabase.rpc('notify_all_users', {
+            p_type: 'new_research',
+            p_title: `New Research Study: ${study.title}`,
+            p_message: study.description || 'Participate in our latest research!',
+            p_link: `/research/${study.slug || studyId}`,
+            p_reference_id: studyId,
+          });
+        }
+        
         toast({ title: 'Success', description: 'Study updated successfully' });
       }
 
@@ -301,6 +326,20 @@ export default function AdminResearchForm() {
                 <Switch
                   checked={study.active}
                   onCheckedChange={(checked) => setStudy({ ...study, active: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between border-t pt-4">
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Bell className="w-4 h-4" />
+                    Notify Users
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Send notification to all users on save</p>
+                </div>
+                <Switch
+                  checked={notifyUsers}
+                  onCheckedChange={setNotifyUsers}
                 />
               </div>
             </CardContent>

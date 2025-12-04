@@ -6,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Sparkles, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface Category {
@@ -54,6 +55,7 @@ export default function AdminVendorForm() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
+  const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -223,6 +225,17 @@ export default function AdminVendorForm() {
             }))
           );
         }
+      }
+
+      // Send notification if toggle is on
+      if (notifyUsers) {
+        await supabase.rpc('notify_all_users', {
+          p_type: 'new_vendor',
+          p_title: `New Vendor Added: ${vendor.name}`,
+          p_message: vendor.description || 'Discover a new martech vendor!',
+          p_link: '/martech',
+          p_reference_id: vendorIdToUse,
+        });
       }
 
       toast({
@@ -478,6 +491,25 @@ export default function AdminVendorForm() {
                     </label>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Notification */}
+          <Card className="lg:col-span-2">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Bell className="w-4 h-4" />
+                    Notify Users
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Send notification to all users on save</p>
+                </div>
+                <Switch
+                  checked={notifyUsers}
+                  onCheckedChange={setNotifyUsers}
+                />
               </div>
             </CardContent>
           </Card>

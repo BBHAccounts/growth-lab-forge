@@ -18,7 +18,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User, Bell } from 'lucide-react';
 
 interface Step {
   title: string;
@@ -82,6 +82,7 @@ export default function AdminModelForm() {
   const [topics, setTopics] = useState<{ id: string; name: string; linked: boolean }[]>([]);
   const [adminUsers, setAdminUsers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -211,6 +212,17 @@ export default function AdminModelForm() {
       const linkedTopicIds = topics.filter((t) => t.linked).map((t) => ({ topic_id: t.id, model_id: savedModelId }));
       if (linkedTopicIds.length > 0) {
         await supabase.from('topic_models').insert(linkedTopicIds);
+      }
+
+      // Send notification if toggle is on
+      if (notifyUsers && model.status === 'active') {
+        await supabase.rpc('notify_all_users', {
+          p_type: 'new_model',
+          p_title: `New Model Available: ${model.name}`,
+          p_message: model.short_description || 'Check out our latest model!',
+          p_link: `/models/${model.slug || savedModelId}`,
+          p_reference_id: savedModelId,
+        });
       }
 
       navigate('/admin/models');
@@ -512,6 +524,20 @@ export default function AdminModelForm() {
                 <Switch
                   checked={model.featured}
                   onCheckedChange={(checked) => setModel({ ...model, featured: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between border-t pt-4">
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <Bell className="w-4 h-4" />
+                    Notify Users
+                  </Label>
+                  <p className="text-sm text-muted-foreground">Send notification to all users on save</p>
+                </div>
+                <Switch
+                  checked={notifyUsers}
+                  onCheckedChange={setNotifyUsers}
                 />
               </div>
             </CardContent>
