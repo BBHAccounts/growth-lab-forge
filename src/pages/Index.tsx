@@ -215,9 +215,6 @@ const Index = () => {
               </div>
               
               <div className="p-5">
-                {/* Reading Reminder */}
-                <ReadingReminderCard />
-                
                 {loading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
@@ -226,6 +223,9 @@ const Index = () => {
                   </div>
                 ) : (
                   <ul className="space-y-3">
+                    {/* Reading Reminder - shows if no article read in 2 weeks */}
+                    <ReadingReminderCard />
+                    
                     {/* Active model tasks */}
                     {todos.slice(0, 3).map((todo) => (
                       <li key={todo.id}>
