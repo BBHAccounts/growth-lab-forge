@@ -198,7 +198,7 @@ export default function Auth() {
           </div>
           <div className="mt-12 pt-8 border-t border-foreground/20">
             <a href="https://beyondbillablehours.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-foreground/60 hover:text-foreground/80 transition-colors">
-              <img src={glLogoYellow} alt="Beyond Billable Hours" className="w-6 h-6 rounded-full object-cover" />
+              <img alt="Beyond Billable Hours" className="w-6 h-6 rounded-full object-cover" src="/lovable-uploads/76253b34-5e49-490a-9c55-927d64141968.jpg" />
               <span className="text-sm">By Beyond Billable Hours</span>
             </a>
           </div>
