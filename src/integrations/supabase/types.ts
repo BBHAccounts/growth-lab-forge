@@ -567,6 +567,33 @@ export type Database = {
         }
         Relationships: []
       }
+      topic_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          name: string
+          order_index: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          name: string
+          order_index?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          name?: string
+          order_index?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       topic_model_categories: {
         Row: {
           category_id: string
@@ -714,59 +741,79 @@ export type Database = {
       topics: {
         Row: {
           active: boolean | null
+          category_key: string | null
           created_at: string
           description: string | null
           id: string
           interest_area_keywords: string[] | null
+          key: string | null
           max_data_maturity: number | null
           max_growth_maturity: number | null
           min_data_maturity: number | null
           min_growth_maturity: number | null
           name: string
           national_or_international: string[] | null
+          order_index: number | null
           recommended_firm_sizes: string[] | null
           recommended_firm_types: string[] | null
+          recommended_for: string | null
           recommended_roles: string[] | null
           recommended_seniority: string[] | null
           updated_at: string
         }
         Insert: {
           active?: boolean | null
+          category_key?: string | null
           created_at?: string
           description?: string | null
           id?: string
           interest_area_keywords?: string[] | null
+          key?: string | null
           max_data_maturity?: number | null
           max_growth_maturity?: number | null
           min_data_maturity?: number | null
           min_growth_maturity?: number | null
           name: string
           national_or_international?: string[] | null
+          order_index?: number | null
           recommended_firm_sizes?: string[] | null
           recommended_firm_types?: string[] | null
+          recommended_for?: string | null
           recommended_roles?: string[] | null
           recommended_seniority?: string[] | null
           updated_at?: string
         }
         Update: {
           active?: boolean | null
+          category_key?: string | null
           created_at?: string
           description?: string | null
           id?: string
           interest_area_keywords?: string[] | null
+          key?: string | null
           max_data_maturity?: number | null
           max_growth_maturity?: number | null
           min_data_maturity?: number | null
           min_growth_maturity?: number | null
           name?: string
           national_or_international?: string[] | null
+          order_index?: number | null
           recommended_firm_sizes?: string[] | null
           recommended_firm_types?: string[] | null
+          recommended_for?: string | null
           recommended_roles?: string[] | null
           recommended_seniority?: string[] | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_topics_category_key"
+            columns: ["category_key"]
+            isOneToOne: false
+            referencedRelation: "topic_categories"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       user_model_access: {
         Row: {

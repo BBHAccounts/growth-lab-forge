@@ -16,8 +16,12 @@ import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 
 interface Topic {
   id?: string;
+  key: string;
   name: string;
   description: string;
+  category_key: string;
+  recommended_for: string;
+  order_index: number;
   recommended_seniority: string[];
   recommended_roles: string[];
   recommended_firm_sizes: string[];
@@ -29,6 +33,13 @@ interface Topic {
   min_data_maturity: number;
   max_data_maturity: number;
   active: boolean;
+}
+
+interface TopicCategory {
+  id: string;
+  key: string;
+  name: string;
+  order_index: number;
 }
 
 interface CategoryItem {
@@ -45,8 +56,12 @@ interface ModelItem {
 }
 
 const defaultTopic: Topic = {
+  key: '',
   name: '',
   description: '',
+  category_key: '',
+  recommended_for: '',
+  order_index: 0,
   recommended_seniority: [],
   recommended_roles: [],
   recommended_firm_sizes: [],
@@ -80,15 +95,19 @@ export default function AdminTopicForm() {
   const [models, setModels] = useState<ModelItem[]>([]);
   const [vendorCategories, setVendorCategories] = useState<CategoryItem[]>([]);
   const [resourceCategories, setResourceCategories] = useState<CategoryItem[]>([]);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all models and categories
-      const [modelsRes, vendorCatsRes, resourceCatsRes] = await Promise.all([
+      // Fetch all models, categories and topic categories
+      const [modelsRes, vendorCatsRes, resourceCatsRes, topicCatsRes] = await Promise.all([
         supabase.from('models').select('id, name, emoji').eq('status', 'active').order('name'),
         supabase.from('martech_categories').select('id, name').order('name'),
         supabase.from('resource_categories').select('id, name').order('name'),
+        supabase.from('topic_categories').select('id, key, name, order_index').order('order_index'),
       ]);
+
+      setTopicCategories(topicCatsRes.data || []);
 
       if (!isNew && topicId) {
         // Fetch topic
@@ -107,6 +126,10 @@ export default function AdminTopicForm() {
         setTopic({
           ...defaultTopic,
           ...topicData,
+          key: topicData.key || '',
+          category_key: topicData.category_key || '',
+          recommended_for: topicData.recommended_for || '',
+          order_index: topicData.order_index || 0,
           recommended_seniority: topicData.recommended_seniority || [],
           recommended_roles: topicData.recommended_roles || [],
           recommended_firm_sizes: topicData.recommended_firm_sizes || [],
@@ -152,8 +175,12 @@ export default function AdminTopicForm() {
       let savedTopicId = topicId;
 
       const topicData = {
+        key: topic.key || null,
         name: topic.name,
         description: topic.description,
+        category_key: topic.category_key || null,
+        recommended_for: topic.recommended_for || null,
+        order_index: topic.order_index,
         recommended_seniority: topic.recommended_seniority,
         recommended_roles: topic.recommended_roles,
         recommended_firm_sizes: topic.recommended_firm_sizes,
@@ -298,6 +325,29 @@ export default function AdminTopicForm() {
               </div>
 
               <div className="space-y-2">
+                <Label>Key (unique identifier)</Label>
+                <Input
+                  value={topic.key}
+                  onChange={(e) => setTopic({ ...topic, key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                  placeholder="firm_growth_strategy"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <select
+                  value={topic.category_key}
+                  onChange={(e) => setTopic({ ...topic, category_key: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Select category...</option>
+                  {topicCategories.map((cat) => (
+                    <option key={cat.key} value={cat.key}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
                   value={topic.description}
@@ -308,22 +358,42 @@ export default function AdminTopicForm() {
               </div>
 
               <div className="space-y-2">
+                <Label>Recommended For (human-readable)</Label>
+                <Textarea
+                  value={topic.recommended_for}
+                  onChange={(e) => setTopic({ ...topic, recommended_for: e.target.value })}
+                  placeholder="Senior partners and BD leaders in firms of any size..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Order Index</Label>
+                  <Input
+                    type="number"
+                    value={topic.order_index}
+                    onChange={(e) => setTopic({ ...topic, order_index: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>Active</Label>
+                    <p className="text-sm text-muted-foreground">Show in recommendations</p>
+                  </div>
+                  <Switch
+                    checked={topic.active}
+                    onCheckedChange={(checked) => setTopic({ ...topic, active: checked })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Interest Area Keywords (comma-separated)</Label>
                 <Input
                   value={topic.interest_area_keywords.join(', ')}
                   onChange={(e) => updateKeywords(e.target.value)}
                   placeholder="growth, marketing, BD, technology..."
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Active</Label>
-                  <p className="text-sm text-muted-foreground">Show in recommendations</p>
-                </div>
-                <Switch
-                  checked={topic.active}
-                  onCheckedChange={(checked) => setTopic({ ...topic, active: checked })}
                 />
               </div>
             </CardContent>
