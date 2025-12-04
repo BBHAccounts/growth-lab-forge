@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.generate-insight-image]
 verify_jwt = true
+
+[functions.extract-vendor-metadata]
+verify_jwt = true
