@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload, User } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload, User, Sparkles } from 'lucide-react';
 
 interface Resource {
   id?: string;
@@ -71,6 +71,7 @@ export default function AdminResourceForm() {
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [creatorInfo, setCreatorInfo] = useState<{ name: string; email: string; createdAt: string } | null>(null);
@@ -151,6 +152,38 @@ export default function AdminResourceForm() {
       setUploading(false);
       // Reset the input
       e.target.value = '';
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!resource.title) {
+      toast({ title: 'Error', description: 'Please enter a title first', variant: 'destructive' });
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-insight-image', {
+        body: { 
+          title: resource.title, 
+          description: resource.description,
+          type: resource.type,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.image_url) {
+        setResource((prev) => ({ ...prev, image_url: data.image_url }));
+        toast({ title: 'Success', description: 'AI image generated successfully' });
+      } else if (data?.error) {
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({ title: 'Error', description: 'Failed to generate image', variant: 'destructive' });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -419,19 +452,33 @@ export default function AdminResourceForm() {
                   <Input
                     value={resource.image_url}
                     onChange={(e) => setResource({ ...resource, image_url: e.target.value })}
-                    placeholder="https://... (auto-filled, enter URL, or upload)"
+                    placeholder="https://... (auto-filled, enter URL, upload, or generate)"
                     className="flex-1"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => document.getElementById('image-upload')?.click()}
-                    disabled={uploading}
+                    disabled={uploading || generating}
+                    title="Upload image"
                   >
                     {uploading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Upload className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateImage}
+                    disabled={generating || uploading || !resource.title}
+                    title="Generate AI image"
+                  >
+                    {generating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
                     )}
                   </Button>
                   <input
@@ -442,6 +489,9 @@ export default function AdminResourceForm() {
                     onChange={handleImageUpload}
                   />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload an image or click <Sparkles className="w-3 h-3 inline" /> to generate one with AI based on the title
+                </p>
                 {resource.image_url ? (
                   <div className="mt-2 relative group">
                     <img 
@@ -472,7 +522,7 @@ export default function AdminResourceForm() {
                   <div className="mt-2 w-full h-32 bg-muted/50 rounded-md border border-dashed flex items-center justify-center">
                     <div className="text-center text-muted-foreground">
                       <ImageOff className="w-8 h-8 mx-auto mb-1" />
-                      <p className="text-xs">No image - use Auto-fill, enter URL, or upload</p>
+                      <p className="text-xs">No image yet</p>
                     </div>
                   </div>
                 )}

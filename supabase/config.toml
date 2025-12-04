@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.extract-url-metadata]
 verify_jwt = true
+
+[functions.generate-insight-image]
+verify_jwt = true
