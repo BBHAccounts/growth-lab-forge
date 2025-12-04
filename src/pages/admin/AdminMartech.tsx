@@ -266,11 +266,22 @@ export default function AdminMartech() {
     );
   };
 
-  // Group topics by their topic category for better organization
-  const topicsByCategory = topicCategories.map(tc => ({
-    ...tc,
-    topics: topics.filter(t => t.category_key === tc.key),
-  }));
+  // Filter and group topics by selected topic categories
+  const selectedTopicCategoryKeys = topicCategories
+    .filter(tc => linkedTopicCategories.includes(tc.id))
+    .map(tc => tc.key);
+  
+  const filteredTopicsByCategory = linkedTopicCategories.length > 0
+    ? topicCategories
+        .filter(tc => linkedTopicCategories.includes(tc.id))
+        .map(tc => ({
+          ...tc,
+          topics: topics.filter(t => t.category_key === tc.key),
+        }))
+    : topicCategories.map(tc => ({
+        ...tc,
+        topics: topics.filter(t => t.category_key === tc.key),
+      }));
 
   const vendorColumns: Column<Vendor>[] = [
     {
@@ -468,9 +479,14 @@ export default function AdminMartech() {
 
             {/* Topics */}
             <div className="space-y-3">
-              <Label>Topics ({linkedTopics.length} selected)</Label>
+              <Label>
+                Topics ({linkedTopics.length} selected)
+                {linkedTopicCategories.length > 0 && (
+                  <span className="text-muted-foreground ml-2 text-xs">(filtered by selected categories)</span>
+                )}
+              </Label>
               <div className="max-h-64 overflow-y-auto border rounded-md p-2 space-y-3">
-                {topicsByCategory.map((tc) => (
+                {filteredTopicsByCategory.map((tc) => (
                   tc.topics.length > 0 && (
                     <div key={tc.id}>
                       <p className="text-xs font-medium text-muted-foreground mb-1">{tc.name}</p>
@@ -488,7 +504,10 @@ export default function AdminMartech() {
                     </div>
                   )
                 ))}
-                {topics.length === 0 && (
+                {(linkedTopicCategories.length > 0 && filteredTopicsByCategory.every(tc => tc.topics.length === 0)) && (
+                  <p className="text-sm text-muted-foreground">No topics in selected categories.</p>
+                )}
+                {linkedTopicCategories.length === 0 && topics.length === 0 && (
                   <p className="text-sm text-muted-foreground">No active topics found.</p>
                 )}
               </div>
