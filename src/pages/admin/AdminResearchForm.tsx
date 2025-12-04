@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
@@ -25,6 +26,11 @@ interface Question {
   type: 'text' | 'textarea' | 'single-choice' | 'multi-choice' | 'scale';
   options?: string[];
   required?: boolean;
+}
+
+interface TopicCategory {
+  id: string;
+  name: string;
 }
 
 interface Study {
@@ -59,29 +65,42 @@ export default function AdminResearchForm() {
   const isNew = studyId === 'new';
 
   const [study, setStudy] = useState<Study>(defaultStudy);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
+  const [selectedTopicCategories, setSelectedTopicCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notifyUsers, setNotifyUsers] = useState(false);
 
   useEffect(() => {
-    if (!isNew && studyId) {
-      const fetchStudy = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('research_studies')
-            .select('*')
-            .eq('id', studyId)
-            .single();
+    const fetchData = async () => {
+      // Always fetch topic categories
+      const { data: topicCatsData } = await supabase
+        .from('topic_categories')
+        .select('id, name')
+        .order('order_index');
+      
+      if (topicCatsData) {
+        setTopicCategories(topicCatsData);
+      }
 
-          if (error) throw error;
+      if (!isNew && studyId) {
+        try {
+          const [studyRes, topicCatLinksRes] = await Promise.all([
+            supabase.from('research_studies').select('*').eq('id', studyId).single(),
+            supabase.from('research_study_topic_categories').select('topic_category_id').eq('study_id', studyId),
+          ]);
+
+          if (studyRes.error) throw studyRes.error;
           
           setStudy({
             ...defaultStudy,
-            ...data,
-            questions: (data.questions as unknown as Question[]) || [],
-            target_audience_tags: data.target_audience_tags || [],
+            ...studyRes.data,
+            questions: (studyRes.data.questions as unknown as Question[]) || [],
+            target_audience_tags: studyRes.data.target_audience_tags || [],
           });
+          
+          setSelectedTopicCategories((topicCatLinksRes.data || []).map(l => l.topic_category_id));
         } catch (error) {
           console.error('Error fetching study:', error);
           toast({
@@ -89,13 +108,12 @@ export default function AdminResearchForm() {
             description: 'Failed to load study',
             variant: 'destructive',
           });
-        } finally {
-          setLoading(false);
         }
-      };
+      }
+      setLoading(false);
+    };
 
-      fetchStudy();
-    }
+    fetchData();
   }, [studyId, isNew, toast]);
 
   const handleSave = async () => {
@@ -126,6 +144,16 @@ export default function AdminResearchForm() {
         const { data, error } = await supabase.from('research_studies').insert([studyData] as never).select('id').single();
         if (error) throw error;
         
+        // Save topic category links
+        if (selectedTopicCategories.length > 0) {
+          await supabase.from('research_study_topic_categories').insert(
+            selectedTopicCategories.map(tcId => ({
+              study_id: data.id,
+              topic_category_id: tcId,
+            }))
+          );
+        }
+        
         // Send notification if toggle is on
         if (notifyUsers && study.active) {
           await supabase.rpc('notify_all_users', {
@@ -144,6 +172,17 @@ export default function AdminResearchForm() {
           .update(studyData as never)
           .eq('id', studyId);
         if (error) throw error;
+        
+        // Update topic category links
+        await supabase.from('research_study_topic_categories').delete().eq('study_id', studyId);
+        if (selectedTopicCategories.length > 0) {
+          await supabase.from('research_study_topic_categories').insert(
+            selectedTopicCategories.map(tcId => ({
+              study_id: studyId,
+              topic_category_id: tcId,
+            }))
+          );
+        }
         
         // Send notification if toggle is on
         if (notifyUsers && study.active) {
@@ -341,6 +380,35 @@ export default function AdminResearchForm() {
                   checked={notifyUsers}
                   onCheckedChange={setNotifyUsers}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Topic Categories */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Topic Categories</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {topicCategories.map((tc) => (
+                  <label key={tc.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={selectedTopicCategories.includes(tc.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedTopicCategories([...selectedTopicCategories, tc.id]);
+                        } else {
+                          setSelectedTopicCategories(selectedTopicCategories.filter(id => id !== tc.id));
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{tc.name}</span>
+                  </label>
+                ))}
+                {topicCategories.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No topic categories available.</p>
+                )}
               </div>
             </CardContent>
           </Card>
