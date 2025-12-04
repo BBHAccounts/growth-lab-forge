@@ -122,7 +122,7 @@ export function AppSidebar() {
                   <NavLink to="/about" className={({
                   isActive
                 }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
-                    <img alt="BBH" className="h-5 w-5 rounded-sm object-cover" src="/lovable-uploads/413e85a8-5a7d-49e8-b0ca-9800486157e7.png" />
+                    <img alt="BBH" src="/lovable-uploads/413e85a8-5a7d-49e8-b0ca-9800486157e7.png" className="h-5 w-5" />
                     <span>About BBH</span>
                   </NavLink>
                 </SidebarMenuButton>
