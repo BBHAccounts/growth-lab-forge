@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload } from 'lucide-react';
 
 interface Resource {
   id?: string;
@@ -70,6 +70,7 @@ export default function AdminResourceForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
 
@@ -105,6 +106,50 @@ export default function AdminResourceForm() {
       toast({ title: 'Error', description: 'Failed to extract metadata', variant: 'destructive' });
     } finally {
       setExtracting(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Error', description: 'Please select an image file', variant: 'destructive' });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Error', description: 'Image must be less than 5MB', variant: 'destructive' });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `resources/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('resource-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('resource-images')
+        .getPublicUrl(filePath);
+
+      setResource((prev) => ({ ...prev, image_url: publicUrl }));
+      toast({ title: 'Success', description: 'Image uploaded successfully' });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({ title: 'Error', description: 'Failed to upload image', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      // Reset the input
+      e.target.value = '';
     }
   };
 
@@ -339,12 +384,34 @@ export default function AdminResourceForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Image URL</Label>
-                <Input
-                  value={resource.image_url}
-                  onChange={(e) => setResource({ ...resource, image_url: e.target.value })}
-                  placeholder="https://... (auto-filled or enter manually)"
-                />
+                <Label>Image</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={resource.image_url}
+                    onChange={(e) => setResource({ ...resource, image_url: e.target.value })}
+                    placeholder="https://... (auto-filled, enter URL, or upload)"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('image-upload')?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </div>
                 {resource.image_url ? (
                   <div className="mt-2 relative group">
                     <img 
@@ -375,7 +442,7 @@ export default function AdminResourceForm() {
                   <div className="mt-2 w-full h-32 bg-muted/50 rounded-md border border-dashed flex items-center justify-center">
                     <div className="text-center text-muted-foreground">
                       <ImageOff className="w-8 h-8 mx-auto mb-1" />
-                      <p className="text-xs">No image - use Auto-fill or enter URL manually</p>
+                      <p className="text-xs">No image - use Auto-fill, enter URL, or upload</p>
                     </div>
                   </div>
                 )}
