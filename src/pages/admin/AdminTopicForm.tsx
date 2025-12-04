@@ -41,16 +41,6 @@ interface TopicCategory {
   order_index: number;
 }
 
-interface ModelCategory {
-  id: string;
-  name: string;
-}
-
-interface MartechCategory {
-  id: string;
-  name: string;
-}
-
 const defaultTopic: Topic = {
   key: '',
   name: '',
@@ -87,39 +77,31 @@ export default function AdminTopicForm() {
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
-  const [modelCategories, setModelCategories] = useState<ModelCategory[]>([]);
-  const [martechCategories, setMartechCategories] = useState<MartechCategory[]>([]);
-  const [linkedModelCategories, setLinkedModelCategories] = useState<string[]>([]);
-  const [linkedVendorCategories, setLinkedVendorCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch topic categories, model categories, and martech categories in parallel
-      const [topicCatsRes, modelCatsRes, martechCatsRes] = await Promise.all([
-        supabase.from('topic_categories').select('id, key, name, order_index').order('order_index'),
-        supabase.from('model_categories').select('id, name').order('name'),
-        supabase.from('martech_categories').select('id, name').order('name'),
-      ]);
+      // Fetch topic categories
+      const { data: topicCatsData } = await supabase
+        .from('topic_categories')
+        .select('id, key, name, order_index')
+        .order('order_index');
 
-      setTopicCategories(topicCatsRes.data || []);
-      setModelCategories(modelCatsRes.data || []);
-      setMartechCategories(martechCatsRes.data || []);
+      setTopicCategories(topicCatsData || []);
 
       if (!isNew && topicId) {
-        // Fetch topic and existing links in parallel
-        const [topicRes, modelCatLinksRes, vendorCatLinksRes] = await Promise.all([
-          supabase.from('topics').select('*').eq('id', topicId).single(),
-          supabase.from('topic_model_categories').select('category_id').eq('topic_id', topicId),
-          supabase.from('topic_vendor_categories').select('category_id').eq('topic_id', topicId),
-        ]);
+        // Fetch topic
+        const { data: topicData, error } = await supabase
+          .from('topics')
+          .select('*')
+          .eq('id', topicId)
+          .single();
 
-        if (topicRes.error) {
-          console.error('Error fetching topic:', topicRes.error);
+        if (error) {
+          console.error('Error fetching topic:', error);
           toast({ title: 'Error', description: 'Failed to load topic', variant: 'destructive' });
           return;
         }
 
-        const topicData = topicRes.data;
         setTopic({
           ...defaultTopic,
           ...topicData,
@@ -133,9 +115,6 @@ export default function AdminTopicForm() {
           recommended_firm_types: topicData.recommended_firm_types || [],
           national_or_international: topicData.national_or_international || [],
         });
-
-        setLinkedModelCategories((modelCatLinksRes.data || []).map(l => l.category_id));
-        setLinkedVendorCategories((vendorCatLinksRes.data || []).map(l => l.category_id));
       }
 
       setLoading(false);
@@ -171,31 +150,12 @@ export default function AdminTopicForm() {
         active: topic.active,
       };
 
-      let savedTopicId = topicId;
-
       if (isNew) {
-        const { data, error } = await supabase.from('topics').insert([topicData]).select('id').single();
+        const { error } = await supabase.from('topics').insert([topicData]);
         if (error) throw error;
-        savedTopicId = data.id;
       } else {
         const { error } = await supabase.from('topics').update(topicData).eq('id', topicId);
         if (error) throw error;
-      }
-
-      // Update linked model categories
-      await supabase.from('topic_model_categories').delete().eq('topic_id', savedTopicId);
-      if (linkedModelCategories.length > 0) {
-        await supabase.from('topic_model_categories').insert(
-          linkedModelCategories.map(catId => ({ topic_id: savedTopicId, category_id: catId }))
-        );
-      }
-
-      // Update linked vendor categories
-      await supabase.from('topic_vendor_categories').delete().eq('topic_id', savedTopicId);
-      if (linkedVendorCategories.length > 0) {
-        await supabase.from('topic_vendor_categories').insert(
-          linkedVendorCategories.map(catId => ({ topic_id: savedTopicId, category_id: catId }))
-        );
       }
 
       toast({ title: 'Success', description: isNew ? 'Topic created successfully' : 'Topic updated successfully' });
@@ -451,65 +411,6 @@ export default function AdminTopicForm() {
                     value={[topic.min_data_maturity, topic.max_data_maturity]}
                     onValueChange={([min, max]) => setTopic({ ...topic, min_data_maturity: min, max_data_maturity: max })}
                   />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Category Links */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Category Links</CardTitle>
-              <CardDescription>Link this topic to model categories and vendor (martech) categories for recommendations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Model Categories ({linkedModelCategories.length} selected)</Label>
-                  <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
-                    {modelCategories.map((cat) => (
-                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={linkedModelCategories.includes(cat.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setLinkedModelCategories(prev => [...prev, cat.id]);
-                            } else {
-                              setLinkedModelCategories(prev => prev.filter(id => id !== cat.id));
-                            }
-                          }}
-                        />
-                        <span className="text-sm">{cat.name}</span>
-                      </label>
-                    ))}
-                    {modelCategories.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No model categories available</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Vendor Categories ({linkedVendorCategories.length} selected)</Label>
-                  <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-2">
-                    {martechCategories.map((cat) => (
-                      <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                        <Checkbox
-                          checked={linkedVendorCategories.includes(cat.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setLinkedVendorCategories(prev => [...prev, cat.id]);
-                            } else {
-                              setLinkedVendorCategories(prev => prev.filter(id => id !== cat.id));
-                            }
-                          }}
-                        />
-                        <span className="text-sm">{cat.name}</span>
-                      </label>
-                    ))}
-                    {martechCategories.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No vendor categories available</p>
-                    )}
-                  </div>
                 </div>
               </div>
             </CardContent>
