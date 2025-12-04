@@ -473,6 +473,7 @@ export type Database = {
           access_level: string | null
           author: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           emoji: string | null
           estimated_time: number | null
@@ -491,6 +492,7 @@ export type Database = {
           access_level?: string | null
           author?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           emoji?: string | null
           estimated_time?: number | null
@@ -509,6 +511,7 @@ export type Database = {
           access_level?: string | null
           author?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           emoji?: string | null
           estimated_time?: number | null

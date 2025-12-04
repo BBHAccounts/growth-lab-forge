@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink, Upload, User } from 'lucide-react';
 
 interface Resource {
   id?: string;
@@ -73,6 +73,7 @@ export default function AdminResourceForm() {
   const [uploading, setUploading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [creatorInfo, setCreatorInfo] = useState<{ name: string; email: string; createdAt: string } | null>(null);
 
   const handleExtractMetadata = async () => {
     if (!resource.url) {
@@ -181,6 +182,23 @@ export default function AdminResourceForm() {
           access_level: resourceData.access_level || 'all',
         });
 
+        // Fetch creator info if available
+        if (resourceData.created_by) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('user_id', resourceData.created_by)
+            .maybeSingle();
+
+          if (profileData) {
+            setCreatorInfo({
+              name: profileData.full_name || 'Unknown',
+              email: profileData.email || '',
+              createdAt: resourceData.created_at,
+            });
+          }
+        }
+
         // Fetch linked categories
         const { data: linkedCats } = await supabase
           .from('resource_category_links')
@@ -225,7 +243,11 @@ export default function AdminResourceForm() {
       };
 
       if (isNew) {
-        const { data, error } = await supabase.from('resources').insert([resourceData]).select('id').single();
+        // Get current user for created_by
+        const { data: { user } } = await supabase.auth.getUser();
+        const insertData = user ? { ...resourceData, created_by: user.id } : resourceData;
+        
+        const { data, error } = await supabase.from('resources').insert([insertData]).select('id').single();
         if (error) throw error;
         savedResourceId = data.id;
       } else {
@@ -289,6 +311,14 @@ export default function AdminResourceForm() {
             <div>
               <h1 className="text-2xl font-bold">{isNew ? 'Add Insight' : 'Edit Insight'}</h1>
               <p className="text-muted-foreground">{isNew ? 'Create a new insight' : resource.title}</p>
+              {creatorInfo && (
+                <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                  <User className="w-3 h-3" />
+                  <span>Added by {creatorInfo.name}</span>
+                  {creatorInfo.email && <span className="text-muted-foreground/60">({creatorInfo.email})</span>}
+                  <span>on {new Date(creatorInfo.createdAt).toLocaleDateString()}</span>
+                </div>
+              )}
             </div>
           </div>
           {!isNew && (
