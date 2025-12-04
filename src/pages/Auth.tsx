@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, Mail, CheckCircle, ArrowLeft } from "lucide-react";
 import glLogoYellow from "@/assets/gl-logo-yellow.svg";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
-
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,9 +26,10 @@ export default function Auth() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const navigate = useNavigate();
-
   useEffect(() => {
     // Check for password reset flow from URL
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -37,152 +37,147 @@ export default function Auth() {
     if (type === 'recovery') {
       setIsResettingPassword(true);
     }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-          setIsResettingPassword(true);
-        } else if (session?.user && !isResettingPassword) {
-          navigate("/");
-        }
+    const {
+      data: {
+        subscription
       }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsResettingPassword(true);
+      } else if (session?.user && !isResettingPassword) {
+        navigate("/");
+      }
+    });
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       if (session?.user && !isResettingPassword) {
         navigate("/");
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate, isResettingPassword]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password
     });
-
     if (error) {
       toast({
         title: "Login failed",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       toast({
         title: "Welcome back!",
-        description: "You've successfully logged in.",
+        description: "You've successfully logged in."
       });
       navigate("/");
     }
-
     setLoading(false);
   };
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     const redirectUrl = `${window.location.origin}/`;
-
-    const { error, data } = await supabase.auth.signUp({
+    const {
+      error,
+      data
+    } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
-          consent_accepted_at: new Date().toISOString(),
-        },
-      },
+          consent_accepted_at: new Date().toISOString()
+        }
+      }
     });
-
     if (error) {
       toast({
         title: "Signup failed",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else if (data.user && !data.session) {
       // User created but needs email verification
       setSignupSuccess(true);
       toast({
         title: "Check your email",
-        description: "We've sent you a verification link to complete your registration.",
+        description: "We've sent you a verification link to complete your registration."
       });
     } else if (data.session) {
       // Auto-confirmed (for testing or if disabled)
       toast({
         title: "Account created!",
-        description: "Welcome to Growth Lab.",
+        description: "Welcome to Growth Lab."
       });
       navigate("/");
     }
-
     setLoading(false);
     setConsentAccepted(false);
   };
-
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`,
+    const {
+      error
+    } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth`
     });
-
     if (error) {
       toast({
         title: "Request failed",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       setResetEmailSent(true);
       toast({
         title: "Check your email",
-        description: "We've sent you a password reset link.",
+        description: "We've sent you a password reset link."
       });
     }
-
     setLoading(false);
   };
-
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-
+    const {
+      error
+    } = await supabase.auth.updateUser({
+      password: newPassword
+    });
     if (error) {
       toast({
         title: "Password update failed",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } else {
       toast({
         title: "Password updated",
-        description: "Your password has been successfully reset.",
+        description: "Your password has been successfully reset."
       });
       setIsResettingPassword(false);
       setNewPassword("");
       navigate("/");
     }
-
     setLoading(false);
   };
-
-  return (
-    <div className="min-h-screen flex">
+  return <div className="min-h-screen flex">
       {/* Left side - Branding with tech grid pattern */}
       <div className="hidden lg:flex lg:w-1/2 hero-tech items-center justify-center p-12">
         <div className="max-w-md relative z-10">
-          <img src={glLogoYellow} alt="Growth Lab" className="w-16 h-16 rounded-xl mb-8" />
+          <img alt="Growth Lab" className="w-16 h-16 rounded-xl mb-8" src="/lovable-uploads/89dc4fa4-283a-40b4-aaf9-cd91cde9af43.png" />
           <h1 className="text-4xl font-bold mb-4 text-foreground">Growth Lab</h1>
           <p className="text-xl text-foreground/80 mb-8">
             Strategic frameworks and tools to accelerate your legal business development.
@@ -202,17 +197,8 @@ export default function Auth() {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-foreground/20">
-            <a 
-              href="https://beyondbillablehours.io/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-foreground/60 hover:text-foreground/80 transition-colors"
-            >
-              <img 
-                src={glLogoYellow} 
-                alt="Beyond Billable Hours" 
-                className="w-6 h-6 rounded-full object-cover"
-              />
+            <a href="https://beyondbillablehours.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-foreground/60 hover:text-foreground/80 transition-colors">
+              <img src={glLogoYellow} alt="Beyond Billable Hours" className="w-6 h-6 rounded-full object-cover" />
               <span className="text-sm">By Beyond Billable Hours</span>
             </a>
           </div>
@@ -228,35 +214,16 @@ export default function Auth() {
               {isResettingPassword ? "Reset Your Password" : forgotPassword ? "Forgot Password" : "Welcome to Growth Lab"}
             </CardTitle>
             <CardDescription>
-              {isResettingPassword 
-                ? "Enter your new password below" 
-                : forgotPassword 
-                  ? "Enter your email to receive a reset link" 
-                  : "Sign in to access your strategic toolkit"}
+              {isResettingPassword ? "Enter your new password below" : forgotPassword ? "Enter your email to receive a reset link" : "Sign in to access your strategic toolkit"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isResettingPassword ? (
-              <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            {isResettingPassword ? <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
                   <div className="relative">
-                    <Input
-                      id="new-password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      minLength={6}
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                    <Input id="new-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} minLength={6} required />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
@@ -266,10 +233,7 @@ export default function Auth() {
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Update Password
                 </Button>
-              </form>
-            ) : forgotPassword ? (
-              resetEmailSent ? (
-                <div className="text-center py-6 space-y-4">
+              </form> : forgotPassword ? resetEmailSent ? <div className="text-center py-6 space-y-4">
                   <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                     <Mail className="h-8 w-8 text-primary" />
                   </div>
@@ -285,52 +249,31 @@ export default function Auth() {
                       Click the link in the email to reset your password.
                     </p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => {
-                      setForgotPassword(false);
-                      setResetEmailSent(false);
-                      setEmail("");
-                    }}
-                  >
+                  <Button variant="outline" className="mt-4" onClick={() => {
+              setForgotPassword(false);
+              setResetEmailSent(false);
+              setEmail("");
+            }}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to sign in
                   </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleForgotPassword} className="space-y-4">
+                </div> : <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="reset-email">Email</Label>
-                    <Input
-                      id="reset-email"
-                      type="email"
-                      placeholder="you@lawfirm.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <Input id="reset-email" type="email" placeholder="you@lawfirm.com" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Send Reset Link
                   </Button>
-                  <Button 
-                    type="button"
-                    variant="ghost" 
-                    className="w-full"
-                    onClick={() => {
-                      setForgotPassword(false);
-                      setEmail("");
-                    }}
-                  >
+                  <Button type="button" variant="ghost" className="w-full" onClick={() => {
+              setForgotPassword(false);
+              setEmail("");
+            }}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to sign in
                   </Button>
-                </form>
-              )
-            ) : (
-            <Tabs defaultValue="login" className="w-full">
+                </form> : <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -340,42 +283,18 @@ export default function Auth() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="you@lawfirm.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <Input id="login-email" type="email" placeholder="you@lawfirm.com" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="login-password">Password</Label>
-                      <button
-                        type="button"
-                        onClick={() => setForgotPassword(true)}
-                        className="text-xs text-primary hover:underline"
-                      >
+                      <button type="button" onClick={() => setForgotPassword(true)} className="text-xs text-primary hover:underline">
                         Forgot password?
                       </button>
                     </div>
                     <div className="relative">
-                      <Input
-                        id="login-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
+                      <Input id="login-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+                      <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
@@ -388,8 +307,7 @@ export default function Auth() {
               </TabsContent>
 
               <TabsContent value="signup">
-                {signupSuccess ? (
-                  <div className="text-center py-6 space-y-4">
+                {signupSuccess ? <div className="text-center py-6 space-y-4">
                     <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                       <Mail className="h-8 w-8 text-primary" />
                     </div>
@@ -405,84 +323,38 @@ export default function Auth() {
                         Click the link in the email to complete your registration and sign in.
                       </p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      className="mt-4"
-                      onClick={() => {
-                        setSignupSuccess(false);
-                        setEmail("");
-                        setPassword("");
-                        setFullName("");
-                      }}
-                    >
+                    <Button variant="outline" className="mt-4" onClick={() => {
+                  setSignupSuccess(false);
+                  setEmail("");
+                  setPassword("");
+                  setFullName("");
+                }}>
                       Back to sign up
                     </Button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSignup} className="space-y-4">
+                  </div> : <form onSubmit={handleSignup} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Jane Smith"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
+                      <Input id="signup-name" type="text" placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@lawfirm.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
+                      <Input id="signup-email" type="email" placeholder="you@lawfirm.com" value={email} onChange={e => setEmail(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
                       <div className="relative">
-                        <Input
-                          id="signup-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          minLength={6}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
+                        <Input id="signup-password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} minLength={6} required />
+                        <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => setShowPassword(!showPassword)}>
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">Minimum 6 characters</p>
                     </div>
                     <div className="flex items-start space-x-3 pt-2">
-                      <Checkbox 
-                        id="consent" 
-                        checked={consentAccepted}
-                        onCheckedChange={(checked) => setConsentAccepted(checked === true)}
-                        className="mt-0.5"
-                      />
-                      <Label 
-                        htmlFor="consent" 
-                        className="text-sm leading-relaxed cursor-pointer text-muted-foreground"
-                      >
+                      <Checkbox id="consent" checked={consentAccepted} onCheckedChange={checked => setConsentAccepted(checked === true)} className="mt-0.5" />
+                      <Label htmlFor="consent" className="text-sm leading-relaxed cursor-pointer text-muted-foreground">
                         By creating an account, I agree to the Growth Lab{" "}
-                        <button
-                          type="button"
-                          onClick={() => setShowTerms(true)}
-                          className="text-primary underline hover:no-underline"
-                        >
+                        <button type="button" onClick={() => setShowTerms(true)} className="text-primary underline hover:no-underline">
                           Terms of Use and Privacy Notice
                         </button>
                         . I understand that Growth Lab is part of BeyondBillableHours, that anonymised data may be used for industry insights, and that I may receive platform and marketing communications.
@@ -492,11 +364,9 @@ export default function Auth() {
                       {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                       Create Account
                     </Button>
-                  </form>
-                )}
+                  </form>}
               </TabsContent>
-            </Tabs>
-            )}
+            </Tabs>}
           </CardContent>
         </Card>
       </div>
@@ -686,6 +556,5 @@ export default function Auth() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
