@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface Category {
   id: string;
@@ -51,6 +52,8 @@ export default function AdminVendorForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [suggestedCategories, setSuggestedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,6 +102,70 @@ export default function AdminVendorForm() {
 
     fetchData();
   }, [vendorId, isNew, toast]);
+
+  const handleExtractMetadata = async () => {
+    if (!vendor.website_url) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a website URL first',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setExtracting(true);
+    setSuggestedCategories([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-vendor-metadata', {
+        body: { 
+          url: vendor.website_url,
+          categories: categories,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update vendor with extracted data
+      setVendor(prev => ({
+        ...prev,
+        name: data.name || prev.name,
+        description: data.description || prev.description,
+        logo_url: data.logo_url || prev.logo_url,
+      }));
+
+      // Store suggested categories for display
+      if (data.suggested_categories && data.suggested_categories.length > 0) {
+        setSuggestedCategories(data.suggested_categories);
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Metadata extracted successfully',
+      });
+    } catch (error) {
+      console.error('Error extracting metadata:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to extract metadata from URL',
+        variant: 'destructive',
+      });
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const applySuggestedCategories = () => {
+    setSelectedCategories(prev => {
+      const combined = new Set([...prev, ...suggestedCategories]);
+      return Array.from(combined);
+    });
+    setSuggestedCategories([]);
+    toast({
+      title: 'Applied',
+      description: 'Suggested categories have been added',
+    });
+  };
 
   const handleSave = async () => {
     if (!vendor.name.trim()) {
@@ -258,6 +325,34 @@ export default function AdminVendorForm() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label>Website URL</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={vendor.website_url}
+                    onChange={(e) => setVendor({ ...vendor, website_url: e.target.value })}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleExtractMetadata}
+                    disabled={extracting || !vendor.website_url}
+                  >
+                    {extracting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-4 h-4" />
+                    )}
+                    <span className="ml-2 hidden sm:inline">Auto-fill</span>
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter the website URL and click Auto-fill to extract vendor details
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Name *</Label>
                 <Input
                   value={vendor.name}
@@ -277,21 +372,24 @@ export default function AdminVendorForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Website URL</Label>
-                <Input
-                  value={vendor.website_url}
-                  onChange={(e) => setVendor({ ...vendor, website_url: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label>Logo URL</Label>
                 <Input
                   value={vendor.logo_url}
                   onChange={(e) => setVendor({ ...vendor, logo_url: e.target.value })}
                   placeholder="https://..."
                 />
+                {vendor.logo_url && (
+                  <div className="mt-2 p-2 border rounded-md bg-muted/30">
+                    <img 
+                      src={vendor.logo_url} 
+                      alt="Logo preview" 
+                      className="h-12 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -301,7 +399,26 @@ export default function AdminVendorForm() {
             <CardHeader>
               <CardTitle>Categories</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {suggestedCategories.length > 0 && (
+                <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">AI Suggested Categories</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {suggestedCategories.map(catId => {
+                      const cat = categories.find(c => c.id === catId);
+                      return cat ? (
+                        <Badge key={catId} variant="secondary">{cat.name}</Badge>
+                      ) : null;
+                    })}
+                  </div>
+                  <Button size="sm" onClick={applySuggestedCategories}>
+                    Apply Suggestions
+                  </Button>
+                </div>
+              )}
               <div className="space-y-2">
                 {categories.map((category) => (
                   <div key={category.id} className="flex items-center gap-2">
