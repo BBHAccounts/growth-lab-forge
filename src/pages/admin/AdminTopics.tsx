@@ -62,14 +62,14 @@ export default function AdminTopics() {
         const topicsWithCounts = await Promise.all(
           (topicsData || []).map(async (topic) => {
             const [modelCats, vendorCats] = await Promise.all([
-              supabase.from('topic_model_categories').select('id', { count: 'exact' }).eq('topic_id', topic.id),
-              supabase.from('topic_vendor_categories').select('id', { count: 'exact' }).eq('topic_id', topic.id),
+              supabase.from('topic_model_categories').select('*', { count: 'exact', head: true }).eq('topic_id', topic.id),
+              supabase.from('topic_vendor_categories').select('*', { count: 'exact', head: true }).eq('topic_id', topic.id),
             ]);
 
             return {
               ...topic,
-              model_cat_count: modelCats.count || 0,
-              vendor_cat_count: vendorCats.count || 0,
+              model_cat_count: modelCats.count ?? 0,
+              vendor_cat_count: vendorCats.count ?? 0,
             };
           })
         );
