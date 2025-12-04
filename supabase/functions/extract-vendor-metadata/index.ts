@@ -213,28 +213,35 @@ serve(async (req) => {
     // Extract basic metadata from HTML
     const logoUrl = extractLogo(html, url);
     const companyName = extractCompanyName(html);
-    const description = extractDescription(html);
+    const rawDescription = extractDescription(html);
 
     console.log("Selected logo:", logoUrl);
     console.log("Extracted name:", companyName);
-    console.log("Extracted description:", description);
+    console.log("Raw description:", rawDescription);
 
-    // Use AI to suggest categories if we have categories list and page content
+    // Use AI to normalize description and suggest categories
+    let normalizedDescription = rawDescription;
     let suggestedCategories: string[] = [];
     
-    if (categories && categories.length > 0 && pageContent) {
-      const categoryNames = categories.map((c: { id: string; name: string }) => c.name);
+    if (pageContent) {
+      const categoryNames = categories?.map((c: { id: string; name: string }) => c.name) || [];
       
-      const prompt = `Based on this company's website content, suggest which categories from the list best match their services.
+      const prompt = `Analyze this company's website and provide:
 
-Company website content:
+1. A concise description of what the company does (exactly 2 sentences, around 150-200 characters total). Focus on their main product/service and value proposition.
+
+2. Which categories from this list best match their services: ${categoryNames.length > 0 ? categoryNames.join(', ') : 'None provided'}
+
+Website content:
 ${pageContent}
 
-Available categories:
-${categoryNames.join(', ')}
+${rawDescription ? `Current meta description: ${rawDescription}` : ''}
 
-Return ONLY a JSON array of category names that match (e.g., ["Category 1", "Category 2"]). 
-Select 1-3 most relevant categories. If none match well, return an empty array [].`;
+Return a JSON object with:
+- "description": string (exactly 2 sentences, 150-200 chars)
+- "categories": array of matching category names (1-3 max, empty if none match)
+
+Return ONLY valid JSON, no markdown.`;
 
       try {
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -246,7 +253,7 @@ Select 1-3 most relevant categories. If none match well, return an empty array [
           body: JSON.stringify({
             model: "google/gemini-2.5-flash",
             messages: [
-              { role: "system", content: "You categorize martech/business software vendors. Return only valid JSON arrays." },
+              { role: "system", content: "You analyze vendor websites and provide concise, consistent descriptions. Always respond with valid JSON only." },
               { role: "user", content: prompt },
             ],
           }),
@@ -255,26 +262,32 @@ Select 1-3 most relevant categories. If none match well, return an empty array [
         if (response.ok) {
           const data = await response.json();
           const content = data.choices?.[0]?.message?.content || "";
-          console.log("AI category response:", content);
+          console.log("AI response:", content);
           
-          // Parse JSON array from response
-          const jsonMatch = content.match(/\[[\s\S]*?\]/);
+          // Parse JSON from response
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             const parsed = JSON.parse(jsonMatch[0]);
-            // Map category names back to IDs
-            suggestedCategories = categories
-              .filter((c: { id: string; name: string }) => parsed.includes(c.name))
-              .map((c: { id: string; name: string }) => c.id);
+            
+            if (parsed.description) {
+              normalizedDescription = parsed.description;
+            }
+            
+            if (parsed.categories && Array.isArray(parsed.categories) && categories) {
+              suggestedCategories = categories
+                .filter((c: { id: string; name: string }) => parsed.categories.includes(c.name))
+                .map((c: { id: string; name: string }) => c.id);
+            }
           }
         }
       } catch (aiError) {
-        console.log("AI category suggestion failed:", aiError);
+        console.log("AI processing failed:", aiError);
       }
     }
 
     const result = {
       name: companyName,
-      description: description,
+      description: normalizedDescription,
       logo_url: logoUrl,
       suggested_categories: suggestedCategories,
     };
