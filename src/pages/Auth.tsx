@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, Mail, CheckCircle, ArrowLeft } from "lucide-react";
-import bbhLogo from "@/assets/bbh-logo.jpg";
+import glLogoYellow from "@/assets/gl-logo-yellow.svg";
+import glLogoDark from "@/assets/gl-logo-dark.svg";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -181,9 +182,7 @@ export default function Auth() {
       {/* Left side - Branding with tech grid pattern */}
       <div className="hidden lg:flex lg:w-1/2 hero-tech items-center justify-center p-12">
         <div className="max-w-md relative z-10">
-          <div className="w-16 h-16 rounded-xl bg-foreground flex items-center justify-center mb-8">
-            <span className="text-background font-bold text-2xl">G</span>
-          </div>
+          <img src={glLogoYellow} alt="Growth Lab" className="w-16 h-16 rounded-xl mb-8" />
           <h1 className="text-4xl font-bold mb-4 text-foreground">Growth Lab</h1>
           <p className="text-xl text-foreground/80 mb-8">
             Strategic frameworks and tools to accelerate your legal business development.
@@ -210,7 +209,7 @@ export default function Auth() {
               className="flex items-center gap-2 text-foreground/60 hover:text-foreground/80 transition-colors"
             >
               <img 
-                src={bbhLogo} 
+                src={glLogoYellow} 
                 alt="Beyond Billable Hours" 
                 className="w-6 h-6 rounded-full object-cover"
               />
@@ -224,9 +223,7 @@ export default function Auth() {
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <Card className="w-full max-w-md border-border shadow-elevated">
           <CardHeader className="text-center">
-            <div className="lg:hidden w-12 h-12 rounded-lg bg-accent flex items-center justify-center mx-auto mb-4">
-              <span className="text-accent-foreground font-bold text-lg">G</span>
-            </div>
+            <img src={glLogoDark} alt="Growth Lab" className="lg:hidden w-12 h-12 rounded-lg mx-auto mb-4" />
             <CardTitle className="text-2xl">
               {isResettingPassword ? "Reset Your Password" : forgotPassword ? "Forgot Password" : "Welcome to Growth Lab"}
             </CardTitle>
