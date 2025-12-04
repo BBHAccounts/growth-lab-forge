@@ -7,7 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Gift, CheckCircle, Clock } from "lucide-react";
+
+interface TopicCategory {
+  id: string;
+  name: string;
+}
 
 interface Study {
   id: string;
@@ -22,27 +34,43 @@ interface Study {
     type: string;
     options?: string[];
   }>;
+  topicCategoryIds?: string[];
 }
 
 export default function Research() {
   const navigate = useNavigate();
   const [studies, setStudies] = useState<Study[]>([]);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
   const [selectedStudy, setSelectedStudy] = useState<Study | null>(null);
   const [completedStudies, setCompletedStudies] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [topicCategoryFilter, setTopicCategoryFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
-        .from("research_studies")
-        .select("*")
-        .eq("active", true)
-        .order("created_at");
+      // Fetch studies and topic categories in parallel
+      const [studiesRes, topicCatsRes] = await Promise.all([
+        supabase.from("research_studies").select("*").eq("active", true).order("created_at"),
+        supabase.from("topic_categories").select("id, name").order("order_index"),
+      ]);
 
-      if (data) {
-        const parsedStudies = data.map((s) => ({
+      if (topicCatsRes.data) {
+        setTopicCategories(topicCatsRes.data);
+      }
+
+      if (studiesRes.data) {
+        // Fetch topic category links for studies
+        const { data: topicCatLinks } = await supabase
+          .from("research_study_topic_categories")
+          .select("study_id, topic_category_id")
+          .in("study_id", studiesRes.data.map(s => s.id));
+
+        const parsedStudies = studiesRes.data.map((s) => ({
           ...s,
           questions: Array.isArray(s.questions) ? (s.questions as unknown as Study['questions']) : [],
+          topicCategoryIds: (topicCatLinks || [])
+            .filter(link => link.study_id === s.id)
+            .map(link => link.topic_category_id),
         }));
         setStudies(parsedStudies);
       }
@@ -69,6 +97,12 @@ export default function Research() {
 
   const isCompleted = (studyId: string) => completedStudies.includes(studyId);
 
+  // Filter studies by topic category
+  const filteredStudies = studies.filter(study => {
+    if (topicCategoryFilter === "all") return true;
+    return study.topicCategoryIds?.includes(topicCategoryFilter);
+  });
+
   return (
     <AppLayout>
       <HeroBanner
@@ -93,6 +127,23 @@ export default function Research() {
           </CardContent>
         </Card>
 
+        {/* Filter */}
+        <div className="flex gap-4">
+          <Select value={topicCategoryFilter} onValueChange={setTopicCategoryFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Topic Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {topicCategories.map((tc) => (
+                <SelectItem key={tc.id} value={tc.id}>
+                  {tc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Studies Grid */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -106,17 +157,21 @@ export default function Research() {
               </Card>
             ))}
           </div>
-        ) : studies.length === 0 ? (
+        ) : filteredStudies.length === 0 ? (
           <Card className="text-center p-12">
             <div className="text-6xl mb-4">🧪</div>
-            <h3 className="text-xl font-semibold mb-2">No active studies</h3>
+            <h3 className="text-xl font-semibold mb-2">
+              {studies.length === 0 ? "No active studies" : "No studies found"}
+            </h3>
             <p className="text-muted-foreground">
-              New research studies are coming soon. Check back later!
+              {studies.length === 0 
+                ? "New research studies are coming soon. Check back later!"
+                : "Try selecting a different category."}
             </p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {studies.map((study) => (
+            {filteredStudies.map((study) => (
               <Card
                 key={study.id}
                 className={`group hover:shadow-elevated transition-all duration-300 cursor-pointer ${

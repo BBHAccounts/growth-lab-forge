@@ -7,11 +7,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Heart, Clock, Users, ArrowRight, Play, Search, CheckCircle } from "lucide-react";
 import { useReactions } from "@/hooks/use-reactions";
 import { AccessBadge } from "@/components/AccessBadge";
 
 interface Topic {
+  id: string;
+  name: string;
+}
+
+interface TopicCategory {
   id: string;
   name: string;
 }
@@ -27,16 +39,19 @@ interface Model {
   likes_count: number | null;
   unlock_level: string | null;
   topics?: Topic[];
+  topicCategoryIds?: string[];
 }
 
 type FilterType = "all" | "activated" | "not-activated";
 
 export default function Models() {
   const [models, setModels] = useState<Model[]>([]);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
   const [activatedModelIds, setActivatedModelIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [topicCategoryFilter, setTopicCategoryFilter] = useState<string>("all");
 
   const { isLiked, isLoading, toggleReaction } = useReactions({
     targetType: "model",
@@ -45,26 +60,33 @@ export default function Models() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch models
-      const { data: modelsData, error: modelsError } = await supabase
-        .from("models")
-        .select("*")
-        .order("created_at", { ascending: true });
+      // Fetch models and topic categories in parallel
+      const [modelsRes, topicCatsRes] = await Promise.all([
+        supabase.from("models").select("*").order("created_at", { ascending: true }),
+        supabase.from("topic_categories").select("id, name").order("order_index"),
+      ]);
 
-      if (!modelsError && modelsData) {
-        // Fetch topic links for all models
-        const { data: topicLinks } = await supabase
-          .from("topic_models")
-          .select("model_id, topic_id, topics(id, name)")
-          .in("model_id", modelsData.map(m => m.id));
+      if (topicCatsRes.data) {
+        setTopicCategories(topicCatsRes.data);
+      }
 
-        // Map topics to models
-        const modelsWithTopics = modelsData.map(model => ({
+      if (!modelsRes.error && modelsRes.data) {
+        // Fetch topic links and topic category links for all models
+        const [topicLinksRes, topicCatLinksRes] = await Promise.all([
+          supabase.from("topic_models").select("model_id, topic_id, topics(id, name)").in("model_id", modelsRes.data.map(m => m.id)),
+          supabase.from("model_topic_categories").select("model_id, topic_category_id").in("model_id", modelsRes.data.map(m => m.id)),
+        ]);
+
+        // Map topics and topic categories to models
+        const modelsWithTopics = modelsRes.data.map(model => ({
           ...model,
-          topics: (topicLinks || [])
+          topics: (topicLinksRes.data || [])
             .filter(link => link.model_id === model.id)
             .map(link => link.topics as unknown as Topic)
             .filter(Boolean),
+          topicCategoryIds: (topicCatLinksRes.data || [])
+            .filter(link => link.model_id === model.id)
+            .map(link => link.topic_category_id),
         }));
 
         setModels(modelsWithTopics);
@@ -121,7 +143,12 @@ export default function Models() {
       (filter === "activated" && isActivated(model.id)) ||
       (filter === "not-activated" && !isActivated(model.id));
 
-    return matchesSearch && matchesFilter;
+    // Topic category filter
+    const matchesTopicCategory = 
+      topicCategoryFilter === "all" ||
+      model.topicCategoryIds?.includes(topicCategoryFilter);
+
+    return matchesSearch && matchesFilter && matchesTopicCategory;
   });
 
   return (
@@ -134,15 +161,30 @@ export default function Models() {
 
       <div className="p-6 md:p-8">
         {/* Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search models..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search models..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={topicCategoryFilter} onValueChange={setTopicCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="Topic Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {topicCategories.map((tc) => (
+                  <SelectItem key={tc.id} value={tc.id}>
+                    {tc.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex gap-2">
             <Button

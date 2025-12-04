@@ -564,6 +564,42 @@ export type Database = {
         }
         Relationships: []
       }
+      research_study_topic_categories: {
+        Row: {
+          created_at: string
+          id: string
+          study_id: string
+          topic_category_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          study_id: string
+          topic_category_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          study_id?: string
+          topic_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_study_topic_categories_study_id_fkey"
+            columns: ["study_id"]
+            isOneToOne: false
+            referencedRelation: "research_studies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "research_study_topic_categories_topic_category_id_fkey"
+            columns: ["topic_category_id"]
+            isOneToOne: false
+            referencedRelation: "topic_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resource_categories: {
         Row: {
           created_at: string
