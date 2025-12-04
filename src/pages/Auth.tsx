@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, Mail, CheckCircle } from "lucide-react";
 import bbhLogo from "@/assets/bbh-logo.jpg";
@@ -17,6 +19,8 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -64,9 +68,14 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const openConsentDialog = (e: React.FormEvent) => {
     e.preventDefault();
+    setShowConsentDialog(true);
+  };
+
+  const handleSignup = async () => {
     setLoading(true);
+    setShowConsentDialog(false);
 
     const redirectUrl = `${window.location.origin}/`;
 
@@ -77,6 +86,7 @@ export default function Auth() {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          consent_accepted_at: new Date().toISOString(),
         },
       },
     });
@@ -104,9 +114,73 @@ export default function Auth() {
     }
 
     setLoading(false);
+    setConsentAccepted(false);
   };
 
   return (
+    <>
+    <Dialog open={showConsentDialog} onOpenChange={(open) => {
+      setShowConsentDialog(open);
+      if (!open) setConsentAccepted(false);
+    }}>
+      <DialogContent className="sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl">Terms & Consent</DialogTitle>
+          <DialogDescription>
+            Please review and accept the following terms to create your account.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="py-4">
+          <div className="bg-muted/50 rounded-lg p-4 mb-6">
+            <p className="text-sm text-muted-foreground mb-3">
+              By creating an account, I understand and agree to the following:
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span>Beyond Billable Hours (a trade name of BKG Consulting) uses my data in an anonymous way for benchmarking and market reviews</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span>I accept to receive marketing messaging from Beyond Billable Hours</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary mt-0.5">•</span>
+                <span>My data will be stored securely by Beyond Billable Hours</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div className="flex items-start space-x-3">
+            <Checkbox 
+              id="consent" 
+              checked={consentAccepted}
+              onCheckedChange={(checked) => setConsentAccepted(checked === true)}
+            />
+            <Label 
+              htmlFor="consent" 
+              className="text-sm font-medium leading-relaxed cursor-pointer"
+            >
+              I have read and agree to the above terms
+            </Label>
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => setShowConsentDialog(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSignup} 
+            disabled={!consentAccepted || loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Create Account
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     <div className="min-h-screen flex">
       {/* Left side - Branding with tech grid pattern */}
       <div className="hidden lg:flex lg:w-1/2 hero-tech items-center justify-center p-12">
@@ -243,7 +317,7 @@ export default function Auth() {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSignup} className="space-y-4">
+                  <form onSubmit={openConsentDialog} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signup-name">Full Name</Label>
                       <Input
@@ -302,5 +376,6 @@ export default function Auth() {
         </Card>
       </div>
     </div>
+    </>
   );
 }
