@@ -10,6 +10,7 @@ import { ExternalLink, Clock, User, ChevronLeft, ChevronRight, Sparkles, Heart }
 import useEmblaCarousel from "embla-carousel-react";
 import { AccessBadge } from "@/components/AccessBadge";
 import { useReactions } from "@/hooks/use-reactions";
+import { useRecommendations } from "@/hooks/use-recommendations";
 
 interface Resource {
   id: string;
@@ -32,6 +33,7 @@ interface TopicCategory {
   key: string;
   name: string;
 }
+
 const TYPE_COLORS: Record<string, string> = {
   article: "bg-blue-500/20 text-blue-700 dark:text-blue-300",
   webinar: "bg-purple-500/20 text-purple-700 dark:text-purple-300",
@@ -40,6 +42,7 @@ const TYPE_COLORS: Record<string, string> = {
   podcast: "bg-orange-500/20 text-orange-700 dark:text-orange-300",
   event: "bg-pink-500/20 text-pink-700 dark:text-pink-300"
 };
+
 const TYPE_GRADIENTS: Record<string, string> = {
   article: "from-blue-600/90 via-blue-700/80 to-blue-900/90",
   webinar: "from-purple-600/90 via-purple-700/80 to-purple-900/90",
@@ -48,6 +51,7 @@ const TYPE_GRADIENTS: Record<string, string> = {
   podcast: "from-orange-600/90 via-orange-700/80 to-orange-900/90",
   event: "from-pink-600/90 via-pink-700/80 to-pink-900/90"
 };
+
 export default function InsightsHub() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +66,8 @@ export default function InsightsHub() {
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
+  const { resources: recommendedResources, loading: recommendationsLoading } = useRecommendations();
+  
   const { isLiked, isLoading, toggleReaction } = useReactions({
     targetType: "resource",
     targetIds: resources.map(r => r.id),
@@ -82,11 +88,13 @@ export default function InsightsHub() {
     
     await toggleReaction(resourceId);
   };
+
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
   }, [emblaApi]);
+
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
@@ -97,6 +105,7 @@ export default function InsightsHub() {
       emblaApi.off("reInit", onSelect);
     };
   }, [emblaApi, onSelect]);
+
   useEffect(() => {
     const fetchData = async () => {
       // Fetch resources
@@ -134,7 +143,14 @@ export default function InsightsHub() {
     };
     fetchData();
   }, []);
+
   const featuredResources = resources.filter(r => r.featured);
+  
+  // Use personalized recommendations if available, otherwise fall back to featured
+  const hasPersonalizedRecommendations = recommendedResources.length > 0;
+  const carouselResources = hasPersonalizedRecommendations 
+    ? recommendedResources.map(rec => resources.find(r => r.id === rec.id)).filter((r): r is Resource => !!r)
+    : featuredResources;
   
   // Filter by type and/or topic category
   const filteredResources = resources.filter(r => {
@@ -145,19 +161,26 @@ export default function InsightsHub() {
   });
   
   const types = ["article", "webinar", "guide", "video", "podcast", "event"];
-  return <AppLayout>
+
+  return (
+    <AppLayout>
       <HeroBanner emoji="💡" title="Insights Hub" description="Curated knowledge to fuel your law firm's growth journey" />
 
       <div className="p-6 md:p-8 space-y-8">
-        {/* Featured Carousel */}
-        {loading ? <div className="space-y-4">
+        {/* Personalized/Featured Carousel */}
+        {(loading || recommendationsLoading) ? (
+          <div className="space-y-4">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-[320px] w-full rounded-2xl" />
-          </div> : featuredResources.length > 0 ? <section>
+          </div>
+        ) : carouselResources.length > 0 ? (
+          <section>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                <h2 className="text-xl font-semibold">Recommended Insights</h2>
+                <h2 className="text-xl font-semibold">
+                  {hasPersonalizedRecommendations ? "Recommended For You" : "Featured Insights"}
+                </h2>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="icon" onClick={() => emblaApi?.scrollPrev()} disabled={!canScrollPrev} className="h-8 w-8">
@@ -171,13 +194,17 @@ export default function InsightsHub() {
 
             <div className="overflow-hidden" ref={emblaRef}>
               <div className="flex gap-4">
-                {featuredResources.map(resource => <div key={resource.id} className="flex-[0_0_100%] min-w-0 md:flex-[0_0_calc(50%-8px)] lg:flex-[0_0_calc(33.333%-11px)]">
+                {carouselResources.map(resource => (
+                  <div key={resource.id} className="flex-[0_0_100%] min-w-0 md:flex-[0_0_calc(50%-8px)] lg:flex-[0_0_calc(33.333%-11px)]">
                     <a href={resource.url || "#"} target="_blank" rel="noopener noreferrer" className="block group">
-                      <div className={`relative h-[320px] rounded-2xl overflow-hidden bg-gradient-to-br ${TYPE_GRADIENTS[resource.type] || TYPE_GRADIENTS.article}`} style={resource.image_url ? {
-                  backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${resource.image_url})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center"
-                } : undefined}>
+                      <div 
+                        className={`relative h-[320px] rounded-2xl overflow-hidden bg-gradient-to-br ${TYPE_GRADIENTS[resource.type] || TYPE_GRADIENTS.article}`} 
+                        style={resource.image_url ? {
+                          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)), url(${resource.image_url})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center"
+                        } : undefined}
+                      >
                         <div className="absolute inset-0 p-6 flex flex-col justify-between">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-2">
@@ -193,18 +220,24 @@ export default function InsightsHub() {
                             <h3 className="text-xl font-bold text-white line-clamp-2 group-hover:underline">
                               {resource.title}
                             </h3>
-                            {resource.description && <p className="text-white/80 text-sm line-clamp-2">
+                            {resource.description && (
+                              <p className="text-white/80 text-sm line-clamp-2">
                                 {resource.description}
-                              </p>}
+                              </p>
+                            )}
                             <div className="flex items-center gap-4 text-white/70 text-sm">
-                              {resource.author && <span className="flex items-center gap-1">
+                              {resource.author && (
+                                <span className="flex items-center gap-1">
                                   <User className="h-3.5 w-3.5" />
                                   {resource.author}
-                                </span>}
-                              {resource.estimated_time && <span className="flex items-center gap-1">
+                                </span>
+                              )}
+                              {resource.estimated_time && (
+                                <span className="flex items-center gap-1">
                                   <Clock className="h-3.5 w-3.5" />
                                   {resource.estimated_time} min
-                                </span>}
+                                </span>
+                              )}
                               <button
                                 onClick={(e) => handleLike(e, resource.id)}
                                 disabled={isLoading(resource.id)}
@@ -222,10 +255,12 @@ export default function InsightsHub() {
                         </div>
                       </div>
                     </a>
-                  </div>)}
+                  </div>
+                ))}
               </div>
             </div>
-          </section> : null}
+          </section>
+        ) : null}
 
         {/* Filter Pills */}
         <section className="space-y-4">
@@ -288,14 +323,18 @@ export default function InsightsHub() {
             {selectedType ? `${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}s` : "All Insights"}
           </h2>
 
-          {loading ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}
-            </div> : filteredResources.length > 0 ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredResources.map(resource => <a key={resource.id} href={resource.url || "#"} target="_blank" rel="noopener noreferrer" className="group">
+            </div>
+          ) : filteredResources.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredResources.map(resource => (
+                <a key={resource.id} href={resource.url || "#"} target="_blank" rel="noopener noreferrer" className="group">
                   <Card className="h-full hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5 overflow-hidden">
-                    {resource.image_url && <div className="h-32 bg-cover bg-center" style={{
-                backgroundImage: `url(${resource.image_url})`
-              }} />}
+                    {resource.image_url && (
+                      <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${resource.image_url})` }} />
+                    )}
                     <CardContent className={resource.image_url ? "p-4" : "p-5"}>
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -325,27 +364,38 @@ export default function InsightsHub() {
                         {resource.title}
                       </h3>
 
-                      {resource.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {resource.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                           {resource.description}
-                        </p>}
+                        </p>
+                      )}
 
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {resource.author && <span className="flex items-center gap-1">
+                        {resource.author && (
+                          <span className="flex items-center gap-1">
                             <User className="h-3 w-3" />
                             {resource.author}
-                          </span>}
-                        {resource.estimated_time && <span className="flex items-center gap-1">
+                          </span>
+                        )}
+                        {resource.estimated_time && (
+                          <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {resource.estimated_time} min
-                          </span>}
+                          </span>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
-                </a>)}
-            </div> : <Card className="p-8 text-center">
+                </a>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
               <p className="text-muted-foreground">No insights found.</p>
-            </Card>}
+            </Card>
+          )}
         </section>
       </div>
-    </AppLayout>;
+    </AppLayout>
+  );
 }
