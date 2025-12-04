@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import bbhLogo from "@/assets/bbh-logo.jpg";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -123,17 +124,19 @@ export default function Auth() {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-foreground/20">
-            <p className="text-foreground/60 text-sm">
-              By{" "}
-              <a 
-                href="https://beyondbillablehours.io/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-foreground/80 hover:text-foreground underline underline-offset-2 transition-colors"
-              >
-                Beyond Billable Hours
-              </a>
-            </p>
+            <a 
+              href="https://beyondbillablehours.io/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-foreground/60 hover:text-foreground/80 transition-colors"
+            >
+              <img 
+                src={bbhLogo} 
+                alt="Beyond Billable Hours" 
+                className="w-6 h-6 rounded-full object-cover"
+              />
+              <span className="text-sm">By Beyond Billable Hours</span>
+            </a>
           </div>
         </div>
       </div>
