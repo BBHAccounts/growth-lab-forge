@@ -9,23 +9,28 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Save, Loader2, Send, Bell, UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 
 interface WelcomeNotificationSettings {
   title: string;
   message: string;
   link: string;
+  showAsPopup: boolean;
 }
 
 const defaultWelcomeSettings: WelcomeNotificationSettings = {
   title: 'Welcome to Growth Lab! 🎉',
   message: 'Get started by exploring our models and resources to accelerate your growth journey.',
   link: '/models',
+  showAsPopup: false,
 };
 
 export default function AdminNotifications() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   // Welcome notification settings
   const [welcomeSettings, setWelcomeSettings] = useState<WelcomeNotificationSettings>(defaultWelcomeSettings);
@@ -36,6 +41,7 @@ export default function AdminNotifications() {
     title: '',
     message: '',
     link: '',
+    showAsPopup: false,
   });
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
 
@@ -45,16 +51,17 @@ export default function AdminNotifications() {
         const { data, error } = await supabase
           .from('platform_settings')
           .select('key, value')
-          .in('key', ['welcome_notification_title', 'welcome_notification_message', 'welcome_notification_link']);
+          .in('key', ['welcome_notification_title', 'welcome_notification_message', 'welcome_notification_link', 'welcome_notification_show_as_popup']);
 
         if (error) throw error;
 
-        const settingsMap: Partial<WelcomeNotificationSettings> = {};
+        const settingsMap: Record<string, string | boolean> = {};
         (data || []).forEach((item) => {
           const keyMap: Record<string, keyof WelcomeNotificationSettings> = {
             welcome_notification_title: 'title',
             welcome_notification_message: 'message',
             welcome_notification_link: 'link',
+            welcome_notification_show_as_popup: 'showAsPopup',
           };
           const mappedKey = keyMap[item.key];
           if (mappedKey) {
@@ -69,7 +76,13 @@ export default function AdminNotifications() {
           }
         });
 
-        setWelcomeSettings({ ...defaultWelcomeSettings, ...settingsMap });
+        setWelcomeSettings({ 
+          ...defaultWelcomeSettings, 
+          title: (settingsMap.title as string) || defaultWelcomeSettings.title,
+          message: (settingsMap.message as string) || defaultWelcomeSettings.message,
+          link: (settingsMap.link as string) || defaultWelcomeSettings.link,
+          showAsPopup: settingsMap.showAsPopup === true,
+        });
       } catch (error) {
         console.error('Error fetching settings:', error);
       } finally {
@@ -87,6 +100,7 @@ export default function AdminNotifications() {
         { key: 'welcome_notification_title', value: JSON.stringify(welcomeSettings.title) },
         { key: 'welcome_notification_message', value: JSON.stringify(welcomeSettings.message) },
         { key: 'welcome_notification_link', value: JSON.stringify(welcomeSettings.link) },
+        { key: 'welcome_notification_show_as_popup', value: JSON.stringify(welcomeSettings.showAsPopup) },
       ];
 
       for (const update of updates) {
@@ -118,7 +132,7 @@ export default function AdminNotifications() {
     setSendingAnnouncement(true);
     try {
       const { error } = await supabase.rpc('notify_all_users', {
-        p_type: announcement.type,
+        p_type: announcement.showAsPopup ? `${announcement.type}_popup` : announcement.type,
         p_title: announcement.title,
         p_message: announcement.message || null,
         p_link: announcement.link || null,
@@ -128,7 +142,7 @@ export default function AdminNotifications() {
       if (error) throw error;
 
       toast({ title: 'Success', description: 'Announcement sent to all users' });
-      setAnnouncement({ type: 'admin_message', title: '', message: '', link: '' });
+      setAnnouncement({ type: 'admin_message', title: '', message: '', link: '', showAsPopup: false });
     } catch (error) {
       console.error('Error sending announcement:', error);
       toast({
@@ -138,6 +152,7 @@ export default function AdminNotifications() {
       });
     } finally {
       setSendingAnnouncement(false);
+      setShowConfirmDialog(false);
     }
   };
 
@@ -200,6 +215,20 @@ export default function AdminNotifications() {
                 />
               </div>
 
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="welcome-popup">Show as Pop-up</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display as a dismissible pop-up in addition to the notification menu
+                  </p>
+                </div>
+                <Switch
+                  id="welcome-popup"
+                  checked={welcomeSettings.showAsPopup}
+                  onCheckedChange={(checked) => setWelcomeSettings({ ...welcomeSettings, showAsPopup: checked })}
+                />
+              </div>
+
               {/* Preview */}
               <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Preview</p>
@@ -215,6 +244,9 @@ export default function AdminNotifications() {
                     )}
                   </div>
                 </div>
+                {welcomeSettings.showAsPopup && (
+                  <p className="text-xs text-muted-foreground">+ Will also show as a dismissible pop-up</p>
+                )}
               </div>
 
               <Button onClick={handleSaveWelcomeSettings} disabled={saving}>
@@ -285,8 +317,22 @@ export default function AdminNotifications() {
                 />
               </div>
 
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="announcement-popup">Show as Pop-up</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display as a dismissible pop-up in addition to the notification menu
+                  </p>
+                </div>
+                <Switch
+                  id="announcement-popup"
+                  checked={announcement.showAsPopup}
+                  onCheckedChange={(checked) => setAnnouncement({ ...announcement, showAsPopup: checked })}
+                />
+              </div>
+
               <Button 
-                onClick={handleSendAnnouncement} 
+                onClick={() => setShowConfirmDialog(true)} 
                 disabled={sendingAnnouncement || !announcement.title.trim()}
                 className="w-full md:w-auto"
               >
@@ -301,6 +347,16 @@ export default function AdminNotifications() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        title="Send Announcement?"
+        description={`Are you sure you want to send "${announcement.title}" to all users? This action cannot be undone.`}
+        confirmLabel="Yes, Send"
+        cancelLabel="Cancel"
+        onConfirm={handleSendAnnouncement}
+      />
     </AdminLayout>
   );
 }
