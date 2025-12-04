@@ -31,12 +31,6 @@ interface Resource {
   access_level: string;
 }
 
-interface CategoryItem {
-  id: string;
-  name: string;
-  linked: boolean;
-}
-
 interface TopicItem {
   id: string;
   name: string;
@@ -88,7 +82,6 @@ export default function AdminResourceForm() {
   const [uploading, setUploading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [topicCategories, setTopicCategories] = useState<TopicCategoryItem[]>([]);
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [creatorInfo, setCreatorInfo] = useState<{ name: string; email: string; createdAt: string } | null>(null);
@@ -240,9 +233,8 @@ export default function AdminResourceForm() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch all categories, topic categories, and topics in parallel
-      const [catsRes, topicCatsRes, topicsRes] = await Promise.all([
-        supabase.from('resource_categories').select('id, name').order('name'),
+      // Fetch topic categories and topics in parallel
+      const [topicCatsRes, topicsRes] = await Promise.all([
         supabase.from('topic_categories').select('id, key, name').order('order_index'),
         supabase.from('topics').select('id, name, category_key').eq('active', true).order('order_index'),
       ]);
@@ -284,22 +276,18 @@ export default function AdminResourceForm() {
           }
         }
 
-        // Fetch linked categories, topic categories, and topics
-        const [linkedCats, linkedTopicCats, linkedTopics] = await Promise.all([
-          supabase.from('resource_category_links').select('category_id').eq('resource_id', resourceId),
+        // Fetch linked topic categories and topics
+        const [linkedTopicCats, linkedTopics] = await Promise.all([
           supabase.from('resource_topic_categories').select('topic_category_id').eq('resource_id', resourceId),
           supabase.from('resource_topics').select('topic_id').eq('resource_id', resourceId),
         ]);
 
-        const linkedCatIds = new Set((linkedCats.data || []).map((l) => l.category_id));
         const linkedTopicCatIds = new Set((linkedTopicCats.data || []).map((l) => l.topic_category_id));
         const linkedTopicIds = new Set((linkedTopics.data || []).map((l) => l.topic_id));
 
-        setCategories((catsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: linkedCatIds.has(c.id) })));
         setTopicCategories((topicCatsRes.data || []).map((tc) => ({ id: tc.id, key: tc.key, name: tc.name, linked: linkedTopicCatIds.has(tc.id) })));
         setTopics((topicsRes.data || []).map((t) => ({ id: t.id, name: t.name, category_key: t.category_key, linked: linkedTopicIds.has(t.id) })));
       } else {
-        setCategories((catsRes.data || []).map((c) => ({ id: c.id, name: c.name, linked: false })));
         setTopicCategories((topicCatsRes.data || []).map((tc) => ({ id: tc.id, key: tc.key, name: tc.name, linked: false })));
         setTopics((topicsRes.data || []).map((t) => ({ id: t.id, name: t.name, category_key: t.category_key, linked: false })));
       }
@@ -345,13 +333,6 @@ export default function AdminResourceForm() {
       } else {
         const { error } = await supabase.from('resources').update(resourceData).eq('id', resourceId);
         if (error) throw error;
-      }
-
-      // Update linked categories
-      await supabase.from('resource_category_links').delete().eq('resource_id', savedResourceId);
-      const linkedCatIds = categories.filter((c) => c.linked).map((c) => ({ resource_id: savedResourceId, category_id: c.id }));
-      if (linkedCatIds.length > 0) {
-        await supabase.from('resource_category_links').insert(linkedCatIds);
       }
 
       // Update linked topic categories
@@ -401,12 +382,6 @@ export default function AdminResourceForm() {
       console.error('Error deleting resource:', error);
       toast({ title: 'Error', description: 'Failed to delete insight', variant: 'destructive' });
     }
-  };
-
-  const toggleCategory = (categoryId: string) => {
-    setCategories((prev) =>
-      prev.map((c) => (c.id === categoryId ? { ...c, linked: !c.linked } : c))
-    );
   };
 
   const toggleTopicCategory = (topicCategoryId: string) => {
@@ -704,31 +679,6 @@ export default function AdminResourceForm() {
                   onCheckedChange={(checked) => setResource({ ...resource, featured: checked })}
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Insight Categories */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Insight Categories</CardTitle>
-              <CardDescription>Select existing insight categories</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {categories.length > 0 ? (
-                <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                  {categories.map((category) => (
-                    <label key={category.id} className="flex items-center gap-2 cursor-pointer">
-                      <Checkbox
-                        checked={category.linked}
-                        onCheckedChange={() => toggleCategory(category.id)}
-                      />
-                      <span className="text-sm">{category.name}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No categories found.</p>
-              )}
             </CardContent>
           </Card>
 
