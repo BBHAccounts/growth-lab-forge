@@ -5,6 +5,143 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function toAbsoluteUrl(url: string | null, baseUrl: string): string | null {
+  if (!url) return null;
+  try {
+    // Already absolute
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // Protocol-relative
+    if (url.startsWith('//')) {
+      return 'https:' + url;
+    }
+    // Relative URL - convert to absolute
+    const base = new URL(baseUrl);
+    if (url.startsWith('/')) {
+      return `${base.origin}${url}`;
+    }
+    return `${base.origin}/${url}`;
+  } catch {
+    return null;
+  }
+}
+
+function extractImageFromMeta(html: string, baseUrl: string): string | null {
+  const metaPatterns = [
+    // og:image variations
+    /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+    /<meta[^>]*property=["']og:image:url["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image:url["']/i,
+    /<meta[^>]*property=["']og:image:secure_url["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image:secure_url["']/i,
+    // twitter:image variations
+    /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i,
+    /<meta[^>]*name=["']twitter:image:src["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image:src["']/i,
+    // Schema.org image
+    /<meta[^>]*itemprop=["']image["'][^>]*content=["']([^"']+)["']/i,
+    /<meta[^>]*content=["']([^"']+)["'][^>]*itemprop=["']image["']/i,
+    // image_src link tag
+    /<link[^>]*rel=["']image_src["'][^>]*href=["']([^"']+)["']/i,
+    /<link[^>]*href=["']([^"']+)["'][^>]*rel=["']image_src["']/i,
+  ];
+
+  for (const pattern of metaPatterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      const absoluteUrl = toAbsoluteUrl(match[1], baseUrl);
+      if (absoluteUrl) {
+        console.log("Found image from meta tag:", absoluteUrl);
+        return absoluteUrl;
+      }
+    }
+  }
+
+  return null;
+}
+
+function extractImageFromContent(html: string, baseUrl: string): string | null {
+  // Look for prominent images - skip small icons and tracking pixels
+  const imgPatterns = [
+    // Article/hero images (common class patterns)
+    /<img[^>]*class=["'][^"']*(?:hero|featured|main|article|post|content|lead)[^"']*["'][^>]*src=["']([^"']+)["']/i,
+    // Large images with width specified
+    /<img[^>]*width=["']?(\d+)["']?[^>]*src=["']([^"']+)["']/gi,
+    // First reasonable image in article/main content
+    /<(?:article|main|div[^>]*class=["'][^"']*content[^"']*["'])[^>]*>[\s\S]*?<img[^>]*src=["']([^"']+)["']/i,
+  ];
+
+  // Try class-based patterns first
+  const heroMatch = html.match(imgPatterns[0]);
+  if (heroMatch && heroMatch[1]) {
+    const url = toAbsoluteUrl(heroMatch[1], baseUrl);
+    if (url) {
+      console.log("Found hero/featured image:", url);
+      return url;
+    }
+  }
+
+  // Look for images with reasonable dimensions
+  const widthPattern = /<img[^>]*(?:width=["']?(\d+)["']?[^>]*src=["']([^"']+)["']|src=["']([^"']+)["'][^>]*width=["']?(\d+)["']?)/gi;
+  let match;
+  while ((match = widthPattern.exec(html)) !== null) {
+    const width = parseInt(match[1] || match[4], 10);
+    const src = match[2] || match[3];
+    if (width >= 200 && src) {
+      const url = toAbsoluteUrl(src, baseUrl);
+      if (url && !url.includes('icon') && !url.includes('logo') && !url.includes('avatar')) {
+        console.log("Found image with good dimensions:", url);
+        return url;
+      }
+    }
+  }
+
+  // Fallback: find first img in main content areas
+  const contentMatch = html.match(imgPatterns[2]);
+  if (contentMatch && contentMatch[1]) {
+    const url = toAbsoluteUrl(contentMatch[1], baseUrl);
+    if (url) {
+      console.log("Found image in content area:", url);
+      return url;
+    }
+  }
+
+  return null;
+}
+
+function extractLogoOrFavicon(html: string, baseUrl: string): string | null {
+  const patterns = [
+    // Apple touch icon (usually high quality)
+    /<link[^>]*rel=["']apple-touch-icon["'][^>]*href=["']([^"']+)["']/i,
+    // High-res favicon
+    /<link[^>]*rel=["']icon["'][^>]*sizes=["'](?:192|180|152|144|120|96|72)[^"']*["'][^>]*href=["']([^"']+)["']/i,
+    // Regular favicon
+    /<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match && match[1]) {
+      const url = toAbsoluteUrl(match[1], baseUrl);
+      if (url) {
+        console.log("Found logo/favicon:", url);
+        return url;
+      }
+    }
+  }
+
+  // Default favicon location
+  try {
+    const base = new URL(baseUrl);
+    return `${base.origin}/favicon.ico`;
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -27,17 +164,20 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Fetch the URL content first
+    // Fetch the URL content
+    let html = "";
     let pageContent = "";
     try {
       const pageResponse = await fetch(url, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; MetadataBot/1.0)",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
         },
       });
       if (pageResponse.ok) {
-        const html = await pageResponse.text();
-        // Extract text content (simplified)
+        html = await pageResponse.text();
+        // Extract text content for AI analysis
         pageContent = html
           .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
           .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
@@ -49,38 +189,63 @@ serve(async (req) => {
       console.log("Could not fetch page content:", fetchError);
     }
 
-    // Extract og:image or other image meta tags from HTML
-    let extractedImageUrl: string | null = null;
-    if (pageContent) {
-      // Try to get the original HTML for image extraction
+    // Step 1: Try meta tags (most reliable)
+    let extractedImageUrl = extractImageFromMeta(html, url);
+
+    // Step 2: Try content images
+    if (!extractedImageUrl && html) {
+      extractedImageUrl = extractImageFromContent(html, url);
+    }
+
+    // Step 3: Use AI to find image URL if still not found
+    if (!extractedImageUrl && html) {
+      console.log("Attempting AI-powered image extraction...");
+      
+      // Extract a sample of img tags for AI analysis
+      const imgTags = html.match(/<img[^>]+>/gi)?.slice(0, 20)?.join('\n') || '';
+      
+      const imagePrompt = `Analyze these img tags from a webpage and identify the URL of the most likely featured/hero image (not icons, logos, or avatars).
+
+IMG tags found:
+${imgTags}
+
+Return ONLY the image URL, nothing else. If no suitable image is found, return "NONE".`;
+
       try {
-        const pageResponse = await fetch(url, {
+        const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
           headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; MetadataBot/1.0)",
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: "You extract image URLs from HTML. Return only the URL, nothing else." },
+              { role: "user", content: imagePrompt },
+            ],
+          }),
         });
-        if (pageResponse.ok) {
-          const html = await pageResponse.text();
-          // Extract og:image
-          const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
-                              html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
-          if (ogImageMatch) {
-            extractedImageUrl = ogImageMatch[1];
-          }
-          // Fallback to twitter:image
-          if (!extractedImageUrl) {
-            const twitterImageMatch = html.match(/<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i) ||
-                                     html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
-            if (twitterImageMatch) {
-              extractedImageUrl = twitterImageMatch[1];
-            }
+
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          const aiImageUrl = imageData.choices?.[0]?.message?.content?.trim();
+          if (aiImageUrl && aiImageUrl !== "NONE" && aiImageUrl.includes('http')) {
+            extractedImageUrl = toAbsoluteUrl(aiImageUrl, url);
+            console.log("AI found image:", extractedImageUrl);
           }
         }
-      } catch (imgError) {
-        console.log("Could not extract image:", imgError);
+      } catch (aiImageError) {
+        console.log("AI image extraction failed:", aiImageError);
       }
     }
 
+    // Step 4: Fallback to logo/favicon
+    if (!extractedImageUrl && html) {
+      extractedImageUrl = extractLogoOrFavicon(html, url);
+    }
+
+    // Now get the rest of the metadata from AI
     const prompt = `Analyze this URL and extract metadata. URL: ${url}
 
 ${pageContent ? `Page content preview: ${pageContent}` : "Could not fetch page content, analyze based on URL only."}
@@ -138,7 +303,6 @@ Return ONLY valid JSON, no other text.`;
     // Parse JSON from response
     let metadata;
     try {
-      // Try to extract JSON from the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         metadata = JSON.parse(jsonMatch[0]);
@@ -158,6 +322,7 @@ Return ONLY valid JSON, no other text.`;
 
     // Add extracted image to metadata
     metadata.image_url = extractedImageUrl;
+    console.log("Final extracted image URL:", extractedImageUrl);
 
     return new Response(JSON.stringify(metadata), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
