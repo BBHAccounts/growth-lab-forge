@@ -122,6 +122,19 @@ export default function Auth() {
               <span>Exclusive research insights</span>
             </div>
           </div>
+          <div className="mt-12 pt-8 border-t border-foreground/20">
+            <p className="text-foreground/60 text-sm">
+              By{" "}
+              <a 
+                href="https://beyondbillablehours.io/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-foreground/80 hover:text-foreground underline underline-offset-2 transition-colors"
+              >
+                Beyond Billable Hours
+              </a>
+            </p>
+          </div>
         </div>
       </div>
 
