@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/use-admin";
 import { useProfile } from "@/hooks/use-profile";
 import { Badge } from "@/components/ui/badge";
-import bbhLogo from "@/assets/bbh-logo.jpg";
+import glLogoDark from "@/assets/gl-logo-dark.svg";
 const mainNavItems = [{
   title: "Home",
   url: "/",
@@ -66,9 +66,7 @@ export function AppSidebar() {
   return <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center shadow-sm">
-            <span className="text-secondary-foreground font-bold text-lg">G</span>
-          </div>
+          <img src={glLogoDark} alt="Growth Lab" className="w-10 h-10 rounded-xl" />
           <div>
             <h1 className="font-bold text-sidebar-foreground text-lg">Growth Lab</h1>
             <p className="text-xs text-muted-foreground">by Beyond Billable Hours</p>
@@ -130,7 +128,7 @@ export function AppSidebar() {
                   <NavLink to="/about" className={({
                 isActive
               }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
-                    <img src={bbhLogo} alt="BBH" className="h-5 w-5 rounded-sm object-cover" />
+                    <img src={glLogoDark} alt="BBH" className="h-5 w-5 rounded-sm object-cover" />
                     <span>About BBH</span>
                   </NavLink>
                 </SidebarMenuButton>
