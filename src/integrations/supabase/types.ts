@@ -76,6 +76,78 @@ export type Database = {
         }
         Relationships: []
       }
+      martech_category_topic_categories: {
+        Row: {
+          created_at: string
+          id: string
+          martech_category_id: string
+          topic_category_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          martech_category_id: string
+          topic_category_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          martech_category_id?: string
+          topic_category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "martech_category_topic_categories_martech_category_id_fkey"
+            columns: ["martech_category_id"]
+            isOneToOne: false
+            referencedRelation: "martech_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "martech_category_topic_categories_topic_category_id_fkey"
+            columns: ["topic_category_id"]
+            isOneToOne: false
+            referencedRelation: "topic_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      martech_category_topics: {
+        Row: {
+          created_at: string
+          id: string
+          martech_category_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          martech_category_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          martech_category_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "martech_category_topics_martech_category_id_fkey"
+            columns: ["martech_category_id"]
+            isOneToOne: false
+            referencedRelation: "martech_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "martech_category_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       model_categories: {
         Row: {
           created_at: string

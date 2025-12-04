@@ -5,7 +5,9 @@ import { DataTable, Column } from '@/components/admin/DataTable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -23,11 +25,23 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Link2 } from 'lucide-react';
 
 interface Category {
   id: string;
   name: string;
+}
+
+interface TopicCategory {
+  id: string;
+  key: string;
+  name: string;
+}
+
+interface Topic {
+  id: string;
+  name: string;
+  category_key: string | null;
 }
 
 interface Vendor {
@@ -47,6 +61,8 @@ export default function AdminMartech() {
   const { toast } = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -57,20 +73,30 @@ export default function AdminMartech() {
   const [categoryName, setCategoryName] = useState('');
   const [deleteCategoryDialog, setDeleteCategoryDialog] = useState<Category | null>(null);
 
+  // Link dialog state
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkingCategory, setLinkingCategory] = useState<Category | null>(null);
+  const [linkedTopicCategories, setLinkedTopicCategories] = useState<string[]>([]);
+  const [linkedTopics, setLinkedTopics] = useState<string[]>([]);
+  const [savingLinks, setSavingLinks] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, [categoryFilter]);
 
   const fetchData = async () => {
     try {
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('martech_categories')
-        .select('*')
-        .order('name');
+      // Fetch categories, topic categories, and topics in parallel
+      const [categoriesRes, topicCatsRes, topicsRes] = await Promise.all([
+        supabase.from('martech_categories').select('*').order('name'),
+        supabase.from('topic_categories').select('id, key, name').order('order_index'),
+        supabase.from('topics').select('id, name, category_key').eq('active', true).order('order_index'),
+      ]);
 
-      if (categoriesError) throw categoriesError;
-      setCategories(categoriesData || []);
+      if (categoriesRes.error) throw categoriesRes.error;
+      setCategories(categoriesRes.data || []);
+      setTopicCategories(topicCatsRes.data || []);
+      setTopics(topicsRes.data || []);
 
       // Fetch vendors with their categories
       let vendorsQuery = supabase.from('vendors').select('*').order('name');
@@ -162,6 +188,93 @@ export default function AdminMartech() {
     }
   };
 
+  const openLinkDialog = async (category: Category) => {
+    setLinkingCategory(category);
+    
+    // Fetch existing links
+    const [topicCatLinks, topicLinks] = await Promise.all([
+      supabase.from('martech_category_topic_categories').select('topic_category_id').eq('martech_category_id', category.id),
+      supabase.from('martech_category_topics').select('topic_id').eq('martech_category_id', category.id),
+    ]);
+
+    setLinkedTopicCategories((topicCatLinks.data || []).map(l => l.topic_category_id));
+    setLinkedTopics((topicLinks.data || []).map(l => l.topic_id));
+    setLinkDialogOpen(true);
+  };
+
+  const handleSaveLinks = async () => {
+    if (!linkingCategory) return;
+
+    setSavingLinks(true);
+    try {
+      // Delete existing links and insert new ones
+      await Promise.all([
+        supabase.from('martech_category_topic_categories').delete().eq('martech_category_id', linkingCategory.id),
+        supabase.from('martech_category_topics').delete().eq('martech_category_id', linkingCategory.id),
+      ]);
+
+      const insertPromises = [];
+
+      if (linkedTopicCategories.length > 0) {
+        insertPromises.push(
+          supabase.from('martech_category_topic_categories').insert(
+            linkedTopicCategories.map(tcId => ({
+              martech_category_id: linkingCategory.id,
+              topic_category_id: tcId,
+            }))
+          )
+        );
+      }
+
+      if (linkedTopics.length > 0) {
+        insertPromises.push(
+          supabase.from('martech_category_topics').insert(
+            linkedTopics.map(tId => ({
+              martech_category_id: linkingCategory.id,
+              topic_id: tId,
+            }))
+          )
+        );
+      }
+
+      await Promise.all(insertPromises);
+
+      toast({ title: 'Success', description: 'Links saved successfully' });
+      setLinkDialogOpen(false);
+      setLinkingCategory(null);
+    } catch (error) {
+      console.error('Error saving links:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save links',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingLinks(false);
+    }
+  };
+
+  const toggleTopicCategory = (id: string) => {
+    setLinkedTopicCategories(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleTopic = (id: string) => {
+    setLinkedTopics(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  // Filter topics by selected topic categories
+  const selectedTopicCategoryKeys = topicCategories
+    .filter(tc => linkedTopicCategories.includes(tc.id))
+    .map(tc => tc.key);
+  
+  const filteredTopics = selectedTopicCategoryKeys.length > 0 
+    ? topics.filter(t => t.category_key && selectedTopicCategoryKeys.includes(t.category_key))
+    : topics;
+
   const vendorColumns: Column<Vendor>[] = [
     {
       key: 'name',
@@ -215,7 +328,10 @@ export default function AdminMartech() {
         {/* Categories Section */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Categories</CardTitle>
+            <div>
+              <CardTitle className="text-lg">Categories</CardTitle>
+              <CardDescription>Manage martech categories and link them to topics for recommendations</CardDescription>
+            </div>
             <Button size="sm" onClick={() => {
               setEditingCategory(null);
               setCategoryName('');
@@ -233,6 +349,15 @@ export default function AdminMartech() {
                   className="flex items-center gap-1 px-3 py-1 rounded-full bg-muted"
                 >
                   <span className="text-sm">{category.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    title="Link to Topics"
+                    onClick={() => openLinkDialog(category)}
+                  >
+                    <Link2 className="w-3 h-3" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -317,6 +442,69 @@ export default function AdminMartech() {
               Cancel
             </Button>
             <Button onClick={handleSaveCategory}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Link Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Link "{linkingCategory?.name}" to Topics</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Topic Categories */}
+            <div className="space-y-3">
+              <Label>Topic Categories ({linkedTopicCategories.length} selected)</Label>
+              <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
+                {topicCategories.map((tc) => (
+                  <label key={tc.id} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={linkedTopicCategories.includes(tc.id)}
+                      onCheckedChange={() => toggleTopicCategory(tc.id)}
+                    />
+                    <span className="text-sm">{tc.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Topics */}
+            <div className="space-y-3">
+              <Label>
+                Topics ({linkedTopics.length} selected)
+                {selectedTopicCategoryKeys.length > 0 && (
+                  <span className="text-muted-foreground ml-2 text-xs">(filtered)</span>
+                )}
+              </Label>
+              <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
+                {filteredTopics.length > 0 ? (
+                  filteredTopics.map((t) => (
+                    <label key={t.id} className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={linkedTopics.includes(t.id)}
+                        onCheckedChange={() => toggleTopic(t.id)}
+                      />
+                      <span className="text-sm">{t.name}</span>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {selectedTopicCategoryKeys.length > 0 
+                      ? 'No topics in selected categories.' 
+                      : 'No active topics found.'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveLinks} disabled={savingLinks}>
+              {savingLinks ? 'Saving...' : 'Save Links'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
