@@ -11,6 +11,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import { AccessBadge } from "@/components/AccessBadge";
 import { useReactions } from "@/hooks/use-reactions";
 import { useRecommendations } from "@/hooks/use-recommendations";
+import { trackResourceView } from "@/hooks/use-reading-reminder";
 
 interface Resource {
   id: string;
@@ -72,6 +73,10 @@ export default function InsightsHub() {
     targetType: "resource",
     targetIds: resources.map(r => r.id),
   });
+
+  const handleResourceClick = (resourceId: string) => {
+    trackResourceView(resourceId);
+  };
 
   const handleLike = async (e: React.MouseEvent, resourceId: string) => {
     e.preventDefault();
@@ -196,7 +201,13 @@ export default function InsightsHub() {
               <div className="flex gap-4">
                 {carouselResources.map(resource => (
                   <div key={resource.id} className="flex-[0_0_100%] min-w-0 md:flex-[0_0_calc(50%-8px)] lg:flex-[0_0_calc(33.333%-11px)]">
-                    <a href={resource.url || "#"} target="_blank" rel="noopener noreferrer" className="block group">
+                    <a 
+                      href={resource.url || "#"} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block group"
+                      onClick={() => handleResourceClick(resource.id)}
+                    >
                       <div 
                         className={`relative h-[320px] rounded-2xl overflow-hidden bg-gradient-to-br ${TYPE_GRADIENTS[resource.type] || TYPE_GRADIENTS.article}`} 
                         style={resource.image_url ? {
@@ -330,7 +341,14 @@ export default function InsightsHub() {
           ) : filteredResources.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredResources.map(resource => (
-                <a key={resource.id} href={resource.url || "#"} target="_blank" rel="noopener noreferrer" className="group">
+                <a 
+                  key={resource.id} 
+                  href={resource.url || "#"} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="group"
+                  onClick={() => handleResourceClick(resource.id)}
+                >
                   <Card className="h-full hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5 overflow-hidden">
                     {resource.image_url && (
                       <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${resource.image_url})` }} />
