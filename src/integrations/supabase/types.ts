@@ -139,6 +139,7 @@ export type Database = {
           long_description: string | null
           name: string
           outcomes: string[] | null
+          owner_id: string | null
           short_description: string | null
           slug: string | null
           status: string | null
@@ -162,6 +163,7 @@ export type Database = {
           long_description?: string | null
           name: string
           outcomes?: string[] | null
+          owner_id?: string | null
           short_description?: string | null
           slug?: string | null
           status?: string | null
@@ -185,6 +187,7 @@ export type Database = {
           long_description?: string | null
           name?: string
           outcomes?: string[] | null
+          owner_id?: string | null
           short_description?: string | null
           slug?: string | null
           status?: string | null
