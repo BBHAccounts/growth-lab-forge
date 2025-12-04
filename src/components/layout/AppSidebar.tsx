@@ -98,20 +98,14 @@ export function AppSidebar() {
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
-            {profile && (
-              <div className="px-3 py-2 mb-2">
-                {profile.research_contributor ? (
-                  <Badge className="w-full justify-center gap-1.5 py-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground border-0">
+            {profile && <div className="px-3 py-2 mb-2">
+                {profile.research_contributor ? <Badge className="w-full justify-center gap-1.5 py-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground border-0">
                     <Award className="h-3 w-3" />
                     Research Contributor
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="w-full justify-center py-1 bg-muted text-muted-foreground border-border">
+                  </Badge> : <Badge variant="outline" className="w-full justify-center py-1 bg-muted text-muted-foreground border-border">
                     Member
-                  </Badge>
-                )}
-              </div>
-            )}
+                  </Badge>}
+              </div>}
             <SidebarMenu>
               {isAdmin && <SidebarMenuItem>
                   <SidebarMenuButton asChild>
@@ -126,9 +120,9 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/about" className={({
-                isActive
-              }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
-                    <img src={glLogoDark} alt="BBH" className="h-5 w-5 rounded-sm object-cover" />
+                  isActive
+                }) => `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+                    <img alt="BBH" className="h-5 w-5 rounded-sm object-cover" src="/lovable-uploads/413e85a8-5a7d-49e8-b0ca-9800486157e7.png" />
                     <span>About BBH</span>
                   </NavLink>
                 </SidebarMenuButton>
