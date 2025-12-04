@@ -23,7 +23,6 @@ interface Profile {
   firm_size: string | null;
   practice_area: string | null;
   research_contributor: boolean;
-  // New fields
   country: string | null;
   location_region: string | null;
   job_title: string | null;
@@ -34,18 +33,11 @@ interface Profile {
   firm_type: string | null;
 }
 
-const INTEREST_OPTIONS = [
-  'Growth Strategy',
-  'Business Development',
-  'Marketing',
-  'Technology',
-  'Client Relations',
-  'Thought Leadership',
-  'Data & Analytics',
-  'Innovation',
-  'Operations',
-  'Talent & Culture',
-];
+interface TopicCategory {
+  id: string;
+  name: string;
+  key: string;
+}
 
 export default function Account() {
   const { toast } = useToast();
@@ -53,6 +45,7 @@ export default function Account() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [topicCategories, setTopicCategories] = useState<TopicCategory[]>([]);
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -73,7 +66,18 @@ export default function Account() {
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
+      // Fetch topic categories
+      const { data: categories } = await supabase
+        .from("topic_categories")
+        .select("id, name, key")
+        .order("order_index");
+      
+      if (categories) {
+        setTopicCategories(categories);
+      }
+
+      // Fetch user and profile
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
 
@@ -108,7 +112,7 @@ export default function Account() {
       setLoading(false);
     };
 
-    fetchProfile();
+    fetchData();
   }, []);
 
   const handleSave = async () => {
@@ -269,18 +273,18 @@ export default function Account() {
         <Card>
           <CardHeader>
             <CardTitle>Interest Areas</CardTitle>
-            <CardDescription>Select topics you're interested in for personalized recommendations</CardDescription>
+            <CardDescription>Select topic categories you're interested in for personalized recommendations</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-2">
-              {INTEREST_OPTIONS.map((interest) => (
+              {topicCategories.map((category) => (
                 <Badge
-                  key={interest}
-                  variant={formData.interest_areas.includes(interest) ? "default" : "outline"}
+                  key={category.id}
+                  variant={formData.interest_areas.includes(category.key) ? "default" : "outline"}
                   className="cursor-pointer hover:bg-primary/80 transition-colors"
-                  onClick={() => toggleInterest(interest)}
+                  onClick={() => toggleInterest(category.key)}
                 >
-                  {interest}
+                  {category.name}
                 </Badge>
               ))}
             </div>
