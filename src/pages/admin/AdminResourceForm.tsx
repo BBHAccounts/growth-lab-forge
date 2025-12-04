@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Wand2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Wand2, Loader2, ImageOff, ExternalLink } from 'lucide-react';
 
 interface Resource {
   id?: string;
@@ -343,8 +343,42 @@ export default function AdminResourceForm() {
                 <Input
                   value={resource.image_url}
                   onChange={(e) => setResource({ ...resource, image_url: e.target.value })}
-                  placeholder="https://..."
+                  placeholder="https://... (auto-filled or enter manually)"
                 />
+                {resource.image_url ? (
+                  <div className="mt-2 relative group">
+                    <img 
+                      src={resource.image_url} 
+                      alt="Preview" 
+                      className="w-full h-32 object-cover rounded-md border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="hidden w-full h-32 bg-muted rounded-md border flex items-center justify-center">
+                      <div className="text-center text-muted-foreground">
+                        <ImageOff className="w-8 h-8 mx-auto mb-1" />
+                        <p className="text-xs">Image failed to load</p>
+                      </div>
+                    </div>
+                    <a 
+                      href={resource.image_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="absolute top-2 right-2 p-1.5 bg-background/80 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                ) : (
+                  <div className="mt-2 w-full h-32 bg-muted/50 rounded-md border border-dashed flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <ImageOff className="w-8 h-8 mx-auto mb-1" />
+                      <p className="text-xs">No image - use Auto-fill or enter URL manually</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
