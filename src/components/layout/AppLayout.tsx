@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
+import { NotificationPopup } from "@/components/NotificationPopup";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -97,5 +98,6 @@ export function AppLayout({
           </main>
         </div>
       </div>
+      <NotificationPopup />
     </SidebarProvider>;
 }
