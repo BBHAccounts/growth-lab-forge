@@ -21,6 +21,7 @@ import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
 import AdminOverview from "./pages/admin/AdminOverview";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminUserDetail from "./pages/admin/AdminUserDetail";
+import AdminUserForm from "./pages/admin/AdminUserForm";
 import AdminModels from "./pages/admin/AdminModels";
 import AdminModelForm from "./pages/admin/AdminModelForm";
 import AdminResearch from "./pages/admin/AdminResearch";
@@ -60,6 +61,7 @@ const App = () => (
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
           <Route path="/admin/users" element={<AdminRouteGuard><AdminUsers /></AdminRouteGuard>} />
+          <Route path="/admin/users/new" element={<AdminRouteGuard><AdminUserForm /></AdminRouteGuard>} />
           <Route path="/admin/users/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
           <Route path="/admin/models" element={<AdminRouteGuard><AdminModels /></AdminRouteGuard>} />
           <Route path="/admin/models/:modelId" element={<AdminRouteGuard><AdminModelForm /></AdminRouteGuard>} />
