@@ -17,7 +17,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Shield, FlaskConical } from 'lucide-react';
+import { ArrowLeft, Save, Shield, FlaskConical, Trash2 } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -77,6 +77,8 @@ export default function AdminUserDetail() {
   const [researchContributions, setResearchContributions] = useState<ResearchContribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -298,6 +300,36 @@ export default function AdminUserDetail() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userId) return;
+
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: 'Success',
+        description: 'User deleted successfully',
+      });
+      navigate('/admin/users');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete user',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -572,14 +604,24 @@ export default function AdminUserDetail() {
           </Card>
         </div>
 
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={() => navigate('/admin/users')}>
-            Cancel
+        <div className="flex justify-between">
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={deleting}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete User
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => navigate('/admin/users')}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -596,6 +638,17 @@ export default function AdminUserDetail() {
         confirmLabel={pendingAdminChange ? 'Grant Admin' : 'Remove Admin'}
         onConfirm={confirmAdminChange}
         variant={pendingAdminChange ? 'default' : 'destructive'}
+      />
+
+      {/* Delete User Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete User"
+        description={`Are you sure you want to permanently delete ${profile.full_name || profile.email}? This action cannot be undone and will remove all their data.`}
+        confirmLabel={deleting ? 'Deleting...' : 'Delete User'}
+        onConfirm={handleDeleteUser}
+        variant="destructive"
       />
     </AdminLayout>
   );
