@@ -223,7 +223,7 @@ export default function AdminUserForm() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="research_contributor">Research Contributor</Label>
-                  <p className="text-sm text-muted-foreground">Can contribute to research studies</p>
+                  <p className="text-sm text-muted-foreground">Grant Research Contributor badge</p>
                 </div>
                 <Switch
                   id="research_contributor"
