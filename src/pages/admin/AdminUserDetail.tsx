@@ -310,7 +310,7 @@ export default function AdminUserDetail() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Research Contributor</Label>
-                  <p className="text-sm text-muted-foreground">Can participate in research</p>
+                  <p className="text-sm text-muted-foreground">Has Research Contributor badge</p>
                 </div>
                 <Switch
                   checked={profile.research_contributor || false}
