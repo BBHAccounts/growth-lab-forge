@@ -62,24 +62,32 @@ export default function Auth() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const {
-      error
-    } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) {
+        console.error('Auth error:', error);
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully logged in."
+        });
+        navigate("/");
+      }
+    } catch (err: any) {
+      console.error('Network error details:', err);
       toast({
-        title: "Login failed",
-        description: error.message,
+        title: "Connection error",
+        description: "Unable to connect to authentication service. Please check your internet connection or try again later.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in."
-      });
-      navigate("/");
     }
     setLoading(false);
   };
