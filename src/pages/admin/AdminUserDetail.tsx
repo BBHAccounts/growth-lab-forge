@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -13,9 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Shield, FlaskConical } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -26,11 +28,16 @@ interface Profile {
   firm_name: string | null;
   firm_region: string | null;
   firm_size: string | null;
+  firm_type: string | null;
   practice_area: string | null;
   growth_priorities: string[] | null;
+  interest_areas: string[] | null;
   research_contributor: boolean | null;
   game_of_life_access: boolean | null;
   is_client: boolean | null;
+  data_maturity_level: number | null;
+  growth_maturity_level: number | null;
+  international_scope: boolean | null;
 }
 
 interface ActivatedModel {
@@ -42,13 +49,32 @@ interface ActivatedModel {
   model_name?: string;
 }
 
+interface Topic {
+  id: string;
+  name: string;
+  category_key: string | null;
+  isAutomatic: boolean;
+}
+
+interface ResearchContribution {
+  id: string;
+  study_id: string;
+  study_title: string;
+  completed: boolean;
+  created_at: string;
+}
+
 export default function AdminUserDetail() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pendingAdminChange, setPendingAdminChange] = useState<boolean | null>(null);
+  const [showAdminConfirm, setShowAdminConfirm] = useState(false);
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
+  const [linkedTopics, setLinkedTopics] = useState<Topic[]>([]);
+  const [researchContributions, setResearchContributions] = useState<ResearchContribution[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -85,6 +111,103 @@ export default function AdminUserDetail() {
           model_name: (m.models as { name: string } | null)?.name || 'Unknown',
         }));
         setActivatedModels(models);
+
+        // Fetch all topics to match with user's profile
+        const { data: topicsData } = await supabase
+          .from('topics')
+          .select('*')
+          .eq('active', true);
+
+        // Calculate matched topics based on user profile
+        if (topicsData && profileData) {
+          const matchedTopics: Topic[] = [];
+          
+          topicsData.forEach((topic) => {
+            let isMatch = false;
+            let isAutomatic = true;
+            
+            // Check interest area keywords match
+            if (topic.interest_area_keywords && profileData.interest_areas) {
+              const hasKeywordMatch = topic.interest_area_keywords.some(
+                (keyword: string) => profileData.interest_areas?.includes(keyword)
+              );
+              if (hasKeywordMatch) isMatch = true;
+            }
+            
+            // Check firm type match
+            if (topic.recommended_firm_types && profileData.firm_type) {
+              if (topic.recommended_firm_types.includes(profileData.firm_type)) {
+                isMatch = true;
+              }
+            }
+            
+            // Check firm size match
+            if (topic.recommended_firm_sizes && profileData.firm_size) {
+              if (topic.recommended_firm_sizes.includes(profileData.firm_size)) {
+                isMatch = true;
+              }
+            }
+            
+            // Check maturity levels
+            if (profileData.data_maturity_level !== null) {
+              const dataLevel = profileData.data_maturity_level;
+              if (
+                topic.min_data_maturity !== null &&
+                topic.max_data_maturity !== null &&
+                dataLevel >= topic.min_data_maturity &&
+                dataLevel <= topic.max_data_maturity
+              ) {
+                isMatch = true;
+              }
+            }
+            
+            if (profileData.growth_maturity_level !== null) {
+              const growthLevel = profileData.growth_maturity_level;
+              if (
+                topic.min_growth_maturity !== null &&
+                topic.max_growth_maturity !== null &&
+                growthLevel >= topic.min_growth_maturity &&
+                growthLevel <= topic.max_growth_maturity
+              ) {
+                isMatch = true;
+              }
+            }
+            
+            // Check international scope
+            if (topic.national_or_international && topic.national_or_international.length > 0) {
+              const scope = profileData.international_scope ? 'international' : 'national';
+              if (topic.national_or_international.includes(scope)) {
+                isMatch = true;
+              }
+            }
+            
+            if (isMatch) {
+              matchedTopics.push({
+                id: topic.id,
+                name: topic.name,
+                category_key: topic.category_key,
+                isAutomatic,
+              });
+            }
+          });
+          
+          setLinkedTopics(matchedTopics);
+        }
+
+        // Fetch research contributions
+        const { data: responsesData } = await supabase
+          .from('research_responses')
+          .select('*, research_studies(title)')
+          .eq('user_id', userId);
+
+        const contributions = (responsesData || []).map((r) => ({
+          id: r.id,
+          study_id: r.study_id,
+          study_title: (r.research_studies as { title: string } | null)?.title || 'Unknown Study',
+          completed: r.completed || false,
+          created_at: r.created_at,
+        }));
+        setResearchContributions(contributions);
       } catch (error) {
         console.error('Error fetching user:', error);
         toast({
@@ -99,6 +222,24 @@ export default function AdminUserDetail() {
 
     fetchUser();
   }, [userId, toast]);
+
+  const handleAdminToggle = (checked: boolean) => {
+    setPendingAdminChange(checked);
+    setShowAdminConfirm(true);
+  };
+
+  const confirmAdminChange = () => {
+    if (pendingAdminChange !== null) {
+      setIsAdmin(pendingAdminChange);
+    }
+    setShowAdminConfirm(false);
+    setPendingAdminChange(null);
+  };
+
+  const cancelAdminChange = () => {
+    setShowAdminConfirm(false);
+    setPendingAdminChange(null);
+  };
 
   const handleSave = async () => {
     if (!profile || !userId) return;
@@ -183,8 +324,22 @@ export default function AdminUserDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin/users')}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">{profile.full_name || 'Unnamed User'}</h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">{profile.full_name || 'Unnamed User'}</h1>
+              {isAdmin && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  Admin
+                </Badge>
+              )}
+              {profile.research_contributor && (
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <FlaskConical className="w-3 h-3" />
+                  Research Contributor
+                </Badge>
+              )}
+            </div>
             <p className="text-muted-foreground">{profile.email}</p>
           </div>
         </div>
@@ -285,15 +440,15 @@ export default function AdminUserDetail() {
           {/* Permissions */}
           <Card>
             <CardHeader>
-              <CardTitle>Permissions</CardTitle>
+              <CardTitle>Permissions & Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Admin</Label>
-                  <p className="text-sm text-muted-foreground">Full admin access</p>
+                  <p className="text-sm text-muted-foreground">Full admin access to the platform</p>
                 </div>
-                <Switch checked={isAdmin} onCheckedChange={setIsAdmin} />
+                <Switch checked={isAdmin} onCheckedChange={handleAdminToggle} />
               </div>
 
               <div className="flex items-center justify-between">
@@ -322,6 +477,70 @@ export default function AdminUserDetail() {
             </CardContent>
           </Card>
 
+          {/* Research Contributions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FlaskConical className="w-5 h-5" />
+                Research Contributions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {researchContributions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No research contributions yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {researchContributions.map((contribution) => (
+                    <div
+                      key={contribution.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <span className="font-medium">{contribution.study_title}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={contribution.completed ? 'default' : 'secondary'}>
+                          {contribution.completed ? 'Completed' : 'In Progress'}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(contribution.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Linked Topics */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Linked Topics</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Topics matched based on user profile and interests
+              </p>
+            </CardHeader>
+            <CardContent>
+              {linkedTopics.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No topics linked to this user</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {linkedTopics.map((topic) => (
+                    <Badge
+                      key={topic.id}
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
+                      {topic.name}
+                      {topic.isAutomatic && (
+                        <span className="text-xs text-muted-foreground">(auto)</span>
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Activated Models */}
           <Card className="md:col-span-2">
             <CardHeader>
@@ -340,7 +559,9 @@ export default function AdminUserDetail() {
                       <span className="font-medium">{model.model_name}</span>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span>Step {model.current_step}</span>
-                        <span>{model.completed ? 'Completed' : 'In Progress'}</span>
+                        <Badge variant={model.completed ? 'default' : 'secondary'}>
+                          {model.completed ? 'Completed' : 'In Progress'}
+                        </Badge>
                         <span>{new Date(model.updated_at).toLocaleDateString()}</span>
                       </div>
                     </div>
@@ -361,6 +582,21 @@ export default function AdminUserDetail() {
           </Button>
         </div>
       </div>
+
+      {/* Admin Confirmation Dialog */}
+      <ConfirmDialog
+        open={showAdminConfirm}
+        onOpenChange={setShowAdminConfirm}
+        title={pendingAdminChange ? 'Grant Admin Access' : 'Remove Admin Access'}
+        description={
+          pendingAdminChange
+            ? `Are you sure you want to grant admin access to ${profile.full_name || profile.email}? This will give them full control over the platform.`
+            : `Are you sure you want to remove admin access from ${profile.full_name || profile.email}?`
+        }
+        confirmLabel={pendingAdminChange ? 'Grant Admin' : 'Remove Admin'}
+        onConfirm={confirmAdminChange}
+        variant={pendingAdminChange ? 'default' : 'destructive'}
+      />
     </AdminLayout>
   );
 }
