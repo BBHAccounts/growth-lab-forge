@@ -25,10 +25,8 @@ export function generateModelPDF({ modelName, emoji, steps, formData }: PDFGener
   const pdf = new jsPDF();
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 15;
+  const margin = 20;
   const contentWidth = pageWidth - margin * 2;
-  const labelColWidth = 60;
-  const valueColWidth = contentWidth - labelColWidth;
   let y = margin;
 
   const checkNewPage = (requiredHeight: number) => {
@@ -40,172 +38,136 @@ export function generateModelPDF({ modelName, emoji, steps, formData }: PDFGener
     return false;
   };
 
-  const drawTableRow = (label: string, value: string, isHeader = false) => {
-    const rowHeight = Math.max(
-      pdf.splitTextToSize(label, labelColWidth - 6).length * 5,
-      pdf.splitTextToSize(value || "-", valueColWidth - 6).length * 5,
-      10
-    ) + 4;
-
-    checkNewPage(rowHeight);
-
-    // Background
-    if (isHeader) {
-      pdf.setFillColor(45, 55, 72);
-      pdf.setTextColor(255);
-    } else {
-      pdf.setFillColor(249, 250, 251);
-      pdf.setTextColor(0);
-    }
-    
-    pdf.rect(margin, y, contentWidth, rowHeight, "F");
-    
-    // Border
-    pdf.setDrawColor(200);
-    pdf.rect(margin, y, labelColWidth, rowHeight, "S");
-    pdf.rect(margin + labelColWidth, y, valueColWidth, rowHeight, "S");
-
-    // Text
-    pdf.setFontSize(9);
-    pdf.setFont("helvetica", isHeader ? "bold" : "normal");
-    
-    const labelLines = pdf.splitTextToSize(label, labelColWidth - 6);
-    const valueLines = pdf.splitTextToSize(value || "-", valueColWidth - 6);
-    
-    pdf.text(labelLines, margin + 3, y + 6);
-    
-    if (!isHeader) pdf.setTextColor(60);
-    pdf.text(valueLines, margin + labelColWidth + 3, y + 6);
-    pdf.setTextColor(0);
-
-    y += rowHeight;
-  };
-
   // Title
-  pdf.setFontSize(22);
+  pdf.setFontSize(24);
   pdf.setFont("helvetica", "bold");
-  pdf.text(modelName, pageWidth / 2, y + 5, { align: "center" });
-  y += 15;
+  const title = `${modelName}`;
+  pdf.text(title, pageWidth / 2, y, { align: "center" });
+  y += 12;
 
   // Subtitle
-  pdf.setFontSize(11);
+  pdf.setFontSize(12);
   pdf.setFont("helvetica", "normal");
   pdf.setTextColor(100);
-  pdf.text("Strategy Workbook", pageWidth / 2, y, { align: "center" });
+  pdf.text("Strategy Workbook Summary", pageWidth / 2, y, { align: "center" });
+  pdf.setTextColor(0);
   y += 8;
 
   // Date
-  pdf.setFontSize(9);
-  pdf.text(`Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`, pageWidth / 2, y, { align: "center" });
-  pdf.setTextColor(0);
-  y += 15;
+  pdf.setFontSize(10);
+  pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: "center" });
+  y += 20;
 
-  // Process each step
+  // Steps
   steps.forEach((step, stepIndex) => {
-    checkNewPage(25);
+    checkNewPage(30);
 
     // Step header
-    pdf.setFillColor(45, 55, 72);
-    pdf.rect(margin, y, contentWidth, 12, "F");
-    pdf.setFontSize(11);
+    pdf.setFontSize(14);
     pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(255);
-    pdf.text(`Step ${stepIndex + 1}: ${step.title}`, margin + 5, y + 8);
-    pdf.setTextColor(0);
-    y += 14;
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(margin, y - 5, contentWidth, 10, "F");
+    pdf.text(`Step ${stepIndex + 1}: ${step.title}`, margin + 3, y + 2);
+    y += 15;
 
-    // Fields as table rows
+    // Fields
     step.fields.forEach((field) => {
-      const value = formData[field.id];
+      checkNewPage(20);
+      
+      // Field label
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(60);
+      pdf.text(field.label, margin, y);
+      pdf.setTextColor(0);
+      y += 6;
 
-      if (field.type === "list") {
-        const listItems = (value as string[] | undefined)?.filter((item) => item?.trim()) || [];
-        const listValue = listItems.length > 0 
-          ? listItems.map((item, i) => `${i + 1}. ${item}`).join("\n")
-          : "Not filled in";
-        drawTableRow(field.label, listValue);
+      const value = formData[field.id];
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        pdf.setTextColor(150);
+        pdf.text("Not filled in yet", margin + 5, y);
+        pdf.setTextColor(0);
+        y += 8;
+      } else if (field.type === "list") {
+        const listItems = (value as string[]).filter((item) => item.trim());
+        listItems.forEach((item) => {
+          checkNewPage(8);
+          const lines = pdf.splitTextToSize(`• ${item}`, contentWidth - 10);
+          pdf.text(lines, margin + 5, y);
+          y += lines.length * 5 + 2;
+        });
+        if (listItems.length === 0) {
+          pdf.setTextColor(150);
+          pdf.text("Not filled in yet", margin + 5, y);
+          pdf.setTextColor(0);
+          y += 8;
+        }
       } else if (field.type === "table") {
-        const tableRows = (value as Record<string, string>[] | undefined) || [];
+        const tableRows = value as Record<string, string>[];
         const columns = field.columns || [];
         
         if (tableRows.length > 0 && columns.length > 0) {
-          // Draw field label as header
-          checkNewPage(15);
-          pdf.setFillColor(100, 116, 139);
-          pdf.rect(margin, y, contentWidth, 10, "F");
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(255);
-          pdf.text(field.label, margin + 3, y + 6);
-          pdf.setTextColor(0);
-          y += 12;
-
-          // Column headers
-          const colWidth = contentWidth / columns.length;
-          checkNewPage(12);
-          pdf.setFillColor(226, 232, 240);
-          pdf.rect(margin, y, contentWidth, 10, "F");
+          const colWidth = (contentWidth - 10) / columns.length;
           
+          // Table header
+          checkNewPage(15);
+          pdf.setFillColor(230, 230, 230);
+          pdf.rect(margin + 5, y - 4, contentWidth - 10, 8, "F");
+          pdf.setFont("helvetica", "bold");
           columns.forEach((col, colIndex) => {
-            pdf.setDrawColor(200);
-            pdf.rect(margin + colIndex * colWidth, y, colWidth, 10, "S");
-            pdf.setFontSize(8);
-            pdf.setFont("helvetica", "bold");
-            pdf.setTextColor(60);
-            const headerText = pdf.splitTextToSize(col.label, colWidth - 4)[0];
-            pdf.text(headerText, margin + colIndex * colWidth + 3, y + 6);
+            const x = margin + 5 + colIndex * colWidth;
+            const text = pdf.splitTextToSize(col.label, colWidth - 4)[0];
+            pdf.text(text, x + 2, y);
           });
-          pdf.setTextColor(0);
-          y += 10;
+          y += 8;
 
-          // Table data rows
+          // Table rows
+          pdf.setFont("helvetica", "normal");
           tableRows.forEach((row) => {
-            const maxLines = columns.reduce((max, col) => {
-              const cellText = row[col.id] || "-";
-              return Math.max(max, pdf.splitTextToSize(cellText, colWidth - 4).length);
-            }, 1);
-            const rowHeight = maxLines * 5 + 4;
-            
-            checkNewPage(rowHeight);
-            pdf.setFillColor(255, 255, 255);
-            pdf.rect(margin, y, contentWidth, rowHeight, "F");
-            
+            checkNewPage(12);
+            let maxLines = 1;
             columns.forEach((col, colIndex) => {
-              pdf.setDrawColor(200);
-              pdf.rect(margin + colIndex * colWidth, y, colWidth, rowHeight, "S");
-              pdf.setFontSize(8);
-              pdf.setFont("helvetica", "normal");
+              const x = margin + 5 + colIndex * colWidth;
               const cellText = row[col.id] || "-";
               const lines = pdf.splitTextToSize(cellText, colWidth - 4);
-              pdf.text(lines, margin + colIndex * colWidth + 3, y + 5);
+              maxLines = Math.max(maxLines, lines.length);
+              pdf.text(lines, x + 2, y);
             });
-            y += rowHeight;
+            y += maxLines * 5 + 4;
           });
-          y += 4;
         } else {
-          drawTableRow(field.label, "No entries");
+          pdf.setTextColor(150);
+          pdf.text("No entries yet", margin + 5, y);
+          pdf.setTextColor(0);
+          y += 8;
         }
       } else {
         // Text or textarea
-        const textValue = value ? String(value) : "Not filled in";
-        drawTableRow(field.label, textValue);
+        const text = String(value);
+        const lines = pdf.splitTextToSize(text, contentWidth - 10);
+        lines.forEach((line: string) => {
+          checkNewPage(6);
+          pdf.text(line, margin + 5, y);
+          y += 5;
+        });
+        y += 3;
       }
+
+      y += 5;
     });
 
-    y += 8;
+    y += 10;
   });
 
-  // Footer
-  const totalPages = pdf.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    pdf.setPage(i);
-    pdf.setFontSize(8);
-    pdf.setTextColor(150);
-    pdf.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 8, { align: "center" });
-    pdf.text("Growth Lab Strategy Workbook", margin, pageHeight - 8);
-  }
+  // Footer on last page
+  pdf.setFontSize(8);
+  pdf.setTextColor(150);
+  pdf.text("Generated by Growth Lab", pageWidth / 2, pageHeight - 10, { align: "center" });
 
   // Save
-  const fileName = `${modelName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_workbook_${new Date().toISOString().split("T")[0]}.pdf`;
+  const fileName = `${modelName.replace(/[^a-z0-9]/gi, "_").toLowerCase()}_${new Date().toISOString().split("T")[0]}.pdf`;
   pdf.save(fileName);
 }

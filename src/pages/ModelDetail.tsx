@@ -18,9 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Users, ThumbsUp, CheckCircle, ArrowLeft, Play, Trash2, Download, FileText } from "lucide-react";
-import { ModelSummary } from "@/components/ModelSummary";
-import { generateModelPDF } from "@/lib/pdf-generator";
+import { Clock, Users, ThumbsUp, CheckCircle, ArrowLeft, Play, Trash2 } from "lucide-react";
 
 interface ModelStep {
   id: string;
@@ -50,12 +48,6 @@ interface Model {
   steps: ModelStep[];
 }
 
-interface ActivatedModelData {
-  progress: Record<string, unknown>;
-  current_step: number;
-  completed: boolean;
-}
-
 export default function ModelDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -64,7 +56,6 @@ export default function ModelDetail() {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
-  const [activatedData, setActivatedData] = useState<ActivatedModelData | null>(null);
 
   useEffect(() => {
     const fetchModel = async () => {
@@ -94,24 +85,17 @@ export default function ModelDetail() {
       setModel(parsedModel);
       setLoading(false);
 
-      // Check if already activated and get progress
+      // Check if already activated
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: activated } = await supabase
           .from("activated_models")
-          .select("id, progress, current_step, completed")
+          .select("id")
           .eq("user_id", user.id)
           .eq("model_id", id)
           .single();
         
         setIsActivated(!!activated);
-        if (activated) {
-          setActivatedData({
-            progress: (activated.progress as Record<string, unknown>) || {},
-            current_step: activated.current_step || 0,
-            completed: activated.completed || false,
-          });
-        }
       }
     };
 
@@ -185,19 +169,7 @@ export default function ModelDetail() {
     } else {
       toast({ title: "Model deactivated" });
       setIsActivated(false);
-      setActivatedData(null);
     }
-  };
-
-  const handleDownloadPDF = () => {
-    if (!model || !activatedData) return;
-    generateModelPDF({
-      modelName: model.name,
-      emoji: model.emoji || "📚",
-      steps: model.steps,
-      formData: activatedData.progress,
-    });
-    toast({ title: "PDF Downloaded", description: "Your workbook has been downloaded." });
   };
 
   if (loading) {
@@ -397,36 +369,6 @@ export default function ModelDetail() {
             )}
           </div>
         </div>
-
-        {/* Progress Summary Section - only shown when activated */}
-        {isActivated && activatedData && model.steps.length > 0 && (
-          <div className="mt-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <CardTitle>Your Progress</CardTitle>
-                    <CardDescription>View your completed workbook answers</CardDescription>
-                  </div>
-                </div>
-                <Button onClick={handleDownloadPDF} variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <ModelSummary
-                  modelName={model.name}
-                  emoji={model.emoji || "📚"}
-                  steps={model.steps}
-                  formData={activatedData.progress}
-                  currentStep={activatedData.current_step}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
     </AppLayout>
   );
