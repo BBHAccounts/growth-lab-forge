@@ -57,17 +57,16 @@ export function generateModelPDF({ modelName, emoji, steps, formData }: PDFGener
   pdf.setTextColor(0);
   y = 40;
 
-  // Model Title - left aligned with proper wrapping
-  pdf.setFontSize(16);
+  // Model Title - left aligned with proper wrapping, no emoji
+  pdf.setFontSize(14);
   pdf.setFont("helvetica", "bold");
   pdf.setTextColor(40, 44, 52);
-  const title = `${emoji} ${modelName}`;
-  const titleLines = pdf.splitTextToSize(title, contentWidth);
+  const titleLines = pdf.splitTextToSize(modelName, contentWidth - 10);
   titleLines.forEach((line: string) => {
     pdf.text(line, margin, y);
-    y += 7;
+    y += 6;
   });
-  y += 2;
+  y += 4;
   pdf.setTextColor(0);
 
   // Subtitle
