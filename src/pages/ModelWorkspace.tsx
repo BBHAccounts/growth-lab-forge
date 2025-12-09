@@ -19,8 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, ArrowRight, Check, Save, X, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Save, X, Plus, Trash2, FileText, Download, PenLine } from "lucide-react";
+import { ModelSummary } from "@/components/ModelSummary";
+import { generateModelPDF } from "@/lib/pdf-generator";
 
 interface ModelField {
   id: string;
@@ -62,6 +65,7 @@ export default function ModelWorkspace() {
   const [saving, setSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [activeTab, setActiveTab] = useState("work");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -180,6 +184,17 @@ export default function ModelWorkspace() {
       toast({ title: "Model deactivated" });
       navigate(`/models/${id}`);
     }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!model) return;
+    generateModelPDF({
+      modelName: model.name,
+      emoji: model.emoji || "📚",
+      steps: model.steps,
+      formData,
+    });
+    toast({ title: "PDF Downloaded", description: "Your model summary has been downloaded." });
   };
 
   const updateFieldValue = (fieldId: string, value: unknown) => {
@@ -382,68 +397,103 @@ export default function ModelWorkspace() {
           </div>
         </div>
 
-        {/* Progress */}
-        <div className="mb-8">
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between mt-2">
-            {model.steps.map((s, i) => (
-              <button
-                key={s.id}
-                onClick={() => setCurrentStep(i)}
-                className={`text-xs px-2 py-1 rounded transition-colors ${
-                  i === currentStep
-                    ? "bg-primary text-primary-foreground"
-                    : i < currentStep
-                    ? "text-chart-4"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {i < currentStep && <Check className="h-3 w-3 inline mr-1" />}
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Tabs for Work and Summary */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="work" className="flex items-center gap-2">
+              <PenLine className="h-4 w-4" />
+              Work on Model
+            </TabsTrigger>
+            <TabsTrigger value="summary" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              View Summary
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Step Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">{step.title}</CardTitle>
-            <CardDescription className="text-base">{step.instruction}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {step.fields.map((field) => (
-              <div key={field.id} className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  {field.label}
-                  {field.optional && (
-                    <span className="text-xs text-muted-foreground">(optional)</span>
-                  )}
-                </Label>
-                {renderField(field)}
+          <TabsContent value="work" className="mt-6">
+            {/* Progress */}
+            <div className="mb-8">
+              <Progress value={progress} className="h-2" />
+              <div className="flex justify-between mt-2">
+                {model.steps.map((s, i) => (
+                  <button
+                    key={s.id}
+                    onClick={() => setCurrentStep(i)}
+                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                      i === currentStep
+                        ? "bg-primary text-primary-foreground"
+                        : i < currentStep
+                        ? "text-chart-4"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {i < currentStep && <Check className="h-3 w-3 inline mr-1" />}
+                    {i + 1}
+                  </button>
+                ))}
               </div>
-            ))}
-          </CardContent>
-        </Card>
+            </div>
 
-        {/* Navigation */}
-        <div className="flex justify-between mt-6">
-          <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Previous
-          </Button>
-          {currentStep === model.steps.length - 1 ? (
-            <Button onClick={handleComplete}>
-              <Check className="h-4 w-4 mr-2" />
-              Complete Model
-            </Button>
-          ) : (
-            <Button onClick={handleNext}>
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
-        </div>
+            {/* Step Content */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">{step.title}</CardTitle>
+                <CardDescription className="text-base">{step.instruction}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {step.fields.map((field) => (
+                  <div key={field.id} className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      {field.label}
+                      {field.optional && (
+                        <span className="text-xs text-muted-foreground">(optional)</span>
+                      )}
+                    </Label>
+                    {renderField(field)}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Navigation */}
+            <div className="flex justify-between mt-6">
+              <Button variant="outline" onClick={handlePrev} disabled={currentStep === 0}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              {currentStep === model.steps.length - 1 ? (
+                <Button onClick={handleComplete}>
+                  <Check className="h-4 w-4 mr-2" />
+                  Complete Model
+                </Button>
+              ) : (
+                <Button onClick={handleNext}>
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="summary" className="mt-6">
+            {/* PDF Download Button */}
+            <div className="flex justify-end mb-6">
+              <Button onClick={handleDownloadPDF} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+            </div>
+
+            {/* Summary View */}
+            <ModelSummary
+              modelName={model.name}
+              emoji={model.emoji || "📚"}
+              steps={model.steps}
+              formData={formData}
+              currentStep={currentStep}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
