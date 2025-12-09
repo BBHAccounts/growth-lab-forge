@@ -12,7 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus } from 'lucide-react';
+import { Plus, Key } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserProfile {
   id: string;
@@ -31,10 +32,41 @@ interface UserProfile {
 
 export default function AdminUsers() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settingPasswords, setSettingPasswords] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
+
+  const handleSetPasswords = async () => {
+    if (!confirm('Are you sure you want to set the default password for all @beyondbillablehours.io users?')) {
+      return;
+    }
+    
+    setSettingPasswords(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('set-user-passwords');
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: 'Passwords Updated',
+        description: data.message,
+      });
+    } catch (error) {
+      console.error('Error setting passwords:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to set passwords',
+        variant: 'destructive',
+      });
+    } finally {
+      setSettingPasswords(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -126,10 +158,20 @@ export default function AdminUsers() {
             <h1 className="text-2xl font-bold">Users</h1>
             <p className="text-muted-foreground">Manage users and access control</p>
           </div>
-          <Button onClick={() => navigate('/admin/users/new')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add User
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleSetPasswords}
+              disabled={settingPasswords}
+            >
+              <Key className="w-4 h-4 mr-2" />
+              {settingPasswords ? 'Setting...' : 'Set BBH Passwords'}
+            </Button>
+            <Button onClick={() => navigate('/admin/users/new')}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add User
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
