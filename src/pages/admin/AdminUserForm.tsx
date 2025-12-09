@@ -61,7 +61,10 @@ export default function AdminUserForm() {
 
     try {
       const { data, error } = await supabase.functions.invoke("invite-user", {
-        body: formData,
+        body: {
+          ...formData,
+          redirect_url: `${window.location.origin}/auth`,
+        },
       });
 
       if (error) throw error;
