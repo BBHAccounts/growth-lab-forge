@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const regions = [
   "North America",
@@ -28,10 +29,19 @@ const firmSizes = [
   "1000+",
 ];
 
+interface ExistingUserInfo {
+  email: string;
+  user_id: string;
+  status: string;
+  can_resend: boolean;
+}
+
 export default function AdminUserForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [existingUser, setExistingUser] = useState<ExistingUserInfo | null>(null);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -44,6 +54,44 @@ export default function AdminUserForm() {
     is_client: false,
     research_contributor: false,
   });
+
+  const handleResendInvite = async () => {
+    if (!existingUser) return;
+    
+    setResending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: existingUser.email,
+          resend_invite: true,
+          redirect_url: `${window.location.origin}/auth`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.error && data.error !== "user_exists") {
+        throw new Error(data.error);
+      }
+
+      toast({
+        title: "Invite resent",
+        description: `A new invitation has been sent to ${existingUser.email}`,
+      });
+
+      setExistingUser(null);
+      navigate("/admin/users");
+    } catch (error: any) {
+      console.error("Error resending invite:", error);
+      toast({
+        title: "Failed to resend invite",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,19 +106,32 @@ export default function AdminUserForm() {
     }
 
     setSaving(true);
+    setExistingUser(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke("invite-user", {
+      const response = await supabase.functions.invoke("invite-user", {
         body: {
           ...formData,
           redirect_url: `${window.location.origin}/auth`,
         },
       });
 
-      if (error) throw error;
+      // Check if it's a user_exists response (409 status)
+      if (response.data?.error === "user_exists") {
+        setExistingUser({
+          email: formData.email,
+          user_id: response.data.user_id,
+          status: response.data.status,
+          can_resend: response.data.can_resend,
+        });
+        setSaving(false);
+        return;
+      }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (response.error) throw response.error;
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
       }
 
       toast({
@@ -141,6 +202,55 @@ export default function AdminUserForm() {
               />
             </div>
           </div>
+
+          {existingUser && (
+            <Alert variant="destructive" className="border-amber-500 bg-amber-500/10">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <AlertTitle className="text-amber-500">User Already Exists</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>
+                  A user with email <strong>{existingUser.email}</strong> already exists with status: <strong className="capitalize">{existingUser.status}</strong>
+                </p>
+                {existingUser.can_resend ? (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResendInvite}
+                      disabled={resending}
+                    >
+                      {resending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      Resend Invite
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate(`/admin/users/${existingUser.user_id}`)}
+                    >
+                      View User
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/admin/users/${existingUser.user_id}`)}
+                    >
+                      View User Profile
+                    </Button>
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="rounded-lg border bg-card p-6 space-y-4">
             <h2 className="font-semibold">Firm Information</h2>

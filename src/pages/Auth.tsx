@@ -110,9 +110,15 @@ export default function Auth() {
       }
     });
     if (error) {
+      // Provide user-friendly messages for common errors
+      let errorMessage = error.message;
+      if (error.message.toLowerCase().includes('already registered') || 
+          error.message.toLowerCase().includes('already been registered')) {
+        errorMessage = "An account with this email already exists. Please sign in instead, or use the 'Forgot password' option if you need to reset your password.";
+      }
       toast({
         title: "Signup failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
     } else if (data.user && !data.session) {
