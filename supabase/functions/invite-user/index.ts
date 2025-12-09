@@ -80,6 +80,53 @@ serve(async (req) => {
     // Create admin client with service role key
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Check if user already exists
+    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+
+    if (existingUser) {
+      // Check if this is a resend request
+      if (body.resend_invite) {
+        // Generate a new invite/magic link for existing user
+        console.log(`Resending invite for existing user: ${email}`);
+        const { error: resendError } = await adminClient.auth.admin.generateLink({
+          type: 'invite',
+          email: email,
+          options: {
+            redirectTo: redirectTo,
+          }
+        });
+
+        if (resendError) {
+          console.error("Resend invite error:", resendError);
+          return new Response(
+            JSON.stringify({ error: resendError.message }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, userId: existingUser.id, resent: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // User exists but not a resend request - return friendly error with user info
+      const hasSignedIn = !!existingUser.last_sign_in_at;
+      const status = hasSignedIn ? 'active' : (existingUser.invited_at && !existingUser.email_confirmed_at ? 'invited' : 'unconfirmed');
+      
+      return new Response(
+        JSON.stringify({ 
+          error: "user_exists",
+          message: `A user with email ${email} already exists.`,
+          user_id: existingUser.id,
+          status: status,
+          can_resend: !hasSignedIn
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Invite the user
     console.log(`Inviting user: ${email} with redirect to: ${redirectTo}`);
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
