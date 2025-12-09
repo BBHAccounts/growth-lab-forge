@@ -38,12 +38,33 @@ export function generateModelPDF({ modelName, emoji, steps, formData }: PDFGener
     return false;
   };
 
-  // Title
-  pdf.setFontSize(24);
+  // Growth Lab branding header
+  pdf.setFillColor(40, 44, 52); // Dark background
+  pdf.rect(0, 0, pageWidth, 35, "F");
+  
+  // Growth Lab logo text
+  pdf.setFontSize(20);
   pdf.setFont("helvetica", "bold");
-  const title = `${modelName}`;
+  pdf.setTextColor(255, 211, 0); // Yellow color
+  pdf.text("GROWTH LAB", pageWidth / 2, 18, { align: "center" });
+  
+  // "by Beyond Billable Hours" tagline
+  pdf.setFontSize(10);
+  pdf.setFont("helvetica", "normal");
+  pdf.setTextColor(180, 180, 180);
+  pdf.text("by Beyond Billable Hours", pageWidth / 2, 28, { align: "center" });
+  
+  pdf.setTextColor(0);
+  y = 50;
+
+  // Model Title
+  pdf.setFontSize(22);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(40, 44, 52);
+  const title = `${emoji} ${modelName}`;
   pdf.text(title, pageWidth / 2, y, { align: "center" });
-  y += 12;
+  pdf.setTextColor(0);
+  y += 10;
 
   // Subtitle
   pdf.setFontSize(12);
@@ -51,7 +72,7 @@ export function generateModelPDF({ modelName, emoji, steps, formData }: PDFGener
   pdf.setTextColor(100);
   pdf.text("Strategy Workbook Summary", pageWidth / 2, y, { align: "center" });
   pdf.setTextColor(0);
-  y += 8;
+  y += 6;
 
   // Date
   pdf.setFontSize(10);
