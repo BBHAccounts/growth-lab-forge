@@ -14,6 +14,15 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { format, formatDistanceToNow } from 'date-fns';
+
+interface UserAuthInfo {
+  user_id: string;
+  email_confirmed_at: string | null;
+  last_sign_in_at: string | null;
+  created_at: string;
+  invited_at: string | null;
+}
 
 interface UserProfile {
   id: string;
@@ -28,6 +37,17 @@ interface UserProfile {
   game_of_life_access: boolean | null;
   is_client: boolean | null;
   is_admin?: boolean;
+  // Auth info
+  status?: 'active' | 'invited' | 'unconfirmed';
+  last_sign_in_at?: string | null;
+}
+
+function getUserStatus(authInfo: UserAuthInfo | undefined): 'active' | 'invited' | 'unconfirmed' {
+  if (!authInfo) return 'unconfirmed';
+  if (authInfo.last_sign_in_at) return 'active';
+  if (authInfo.invited_at && !authInfo.email_confirmed_at) return 'invited';
+  if (authInfo.email_confirmed_at) return 'active';
+  return 'unconfirmed';
 }
 
 export default function AdminUsers() {
@@ -71,6 +91,7 @@ export default function AdminUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        // Fetch profiles
         let query = supabase.from('profiles').select('*');
 
         if (roleFilter !== 'all') {
@@ -84,18 +105,36 @@ export default function AdminUsers() {
 
         if (error) throw error;
 
-        // Check admin status for each user
-        const usersWithAdminStatus = await Promise.all(
+        // Fetch auth info for all users
+        const { data: authData, error: authError } = await supabase.functions.invoke('get-users-auth-info');
+        
+        const authInfoMap = new Map<string, UserAuthInfo>();
+        if (!authError && authData?.users) {
+          authData.users.forEach((info: UserAuthInfo) => {
+            authInfoMap.set(info.user_id, info);
+          });
+        }
+
+        // Check admin status for each user and merge auth info
+        const usersWithStatus = await Promise.all(
           (profiles || []).map(async (profile) => {
             const { data: isAdmin } = await supabase.rpc('has_role', {
               _user_id: profile.user_id,
               _role: 'admin',
             });
-            return { ...profile, is_admin: isAdmin === true };
+            
+            const authInfo = authInfoMap.get(profile.user_id);
+            
+            return { 
+              ...profile, 
+              is_admin: isAdmin === true,
+              status: getUserStatus(authInfo),
+              last_sign_in_at: authInfo?.last_sign_in_at || null,
+            };
           })
         );
 
-        setUsers(usersWithAdminStatus);
+        setUsers(usersWithStatus);
       } catch (error) {
         console.error('Error fetching users:', error);
       } finally {
@@ -119,10 +158,32 @@ export default function AdminUsers() {
       sortable: true,
     },
     {
-      key: 'role_title',
-      header: 'Role',
+      key: 'status',
+      header: 'Status',
       sortable: true,
-      render: (user) => user.role_title || '-',
+      render: (user) => {
+        const statusConfig = {
+          active: { label: 'Active', variant: 'default' as const },
+          invited: { label: 'Invited', variant: 'secondary' as const },
+          unconfirmed: { label: 'Unconfirmed', variant: 'outline' as const },
+        };
+        const config = statusConfig[user.status || 'unconfirmed'];
+        return <Badge variant={config.variant}>{config.label}</Badge>;
+      },
+    },
+    {
+      key: 'last_sign_in_at',
+      header: 'Last Login',
+      sortable: true,
+      render: (user) => {
+        if (!user.last_sign_in_at) return <span className="text-muted-foreground">Never</span>;
+        const date = new Date(user.last_sign_in_at);
+        return (
+          <span title={format(date, 'PPpp')}>
+            {formatDistanceToNow(date, { addSuffix: true })}
+          </span>
+        );
+      },
     },
     {
       key: 'firm_name',
