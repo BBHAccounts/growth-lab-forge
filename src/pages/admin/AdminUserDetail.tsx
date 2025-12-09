@@ -17,7 +17,8 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Shield, FlaskConical, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Shield, FlaskConical, Trash2, Send, Loader2 } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface Profile {
   id: string;
@@ -38,6 +39,13 @@ interface Profile {
   data_maturity_level: number | null;
   growth_maturity_level: number | null;
   international_scope: boolean | null;
+}
+
+interface UserAuthInfo {
+  status: 'active' | 'invited' | 'unconfirmed';
+  last_sign_in_at: string | null;
+  created_at: string | null;
+  email_confirmed_at: string | null;
 }
 
 interface ActivatedModel {
@@ -69,6 +77,7 @@ export default function AdminUserDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [authInfo, setAuthInfo] = useState<UserAuthInfo | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pendingAdminChange, setPendingAdminChange] = useState<boolean | null>(null);
   const [showAdminConfirm, setShowAdminConfirm] = useState(false);
@@ -79,6 +88,7 @@ export default function AdminUserDetail() {
   const [saving, setSaving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resendingInvite, setResendingInvite] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -101,6 +111,25 @@ export default function AdminUserDetail() {
           _role: 'admin',
         });
         setIsAdmin(adminStatus === true);
+
+        // Fetch auth info
+        const { data: authData } = await supabase.functions.invoke('get-users-auth-info');
+        if (authData?.users) {
+          const userAuth = authData.users.find((u: any) => u.user_id === userId);
+          if (userAuth) {
+            let status: 'active' | 'invited' | 'unconfirmed' = 'unconfirmed';
+            if (userAuth.last_sign_in_at) status = 'active';
+            else if (userAuth.invited_at && !userAuth.email_confirmed_at) status = 'invited';
+            else if (userAuth.email_confirmed_at) status = 'active';
+            
+            setAuthInfo({
+              status,
+              last_sign_in_at: userAuth.last_sign_in_at,
+              created_at: userAuth.created_at,
+              email_confirmed_at: userAuth.email_confirmed_at,
+            });
+          }
+        }
 
         // Fetch activated models
         const { data: modelsData } = await supabase
@@ -303,6 +332,39 @@ export default function AdminUserDetail() {
     }
   };
 
+  const handleResendInvite = async () => {
+    if (!profile?.email || !userId) return;
+
+    setResendingInvite(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-invite-email', {
+        body: {
+          email: profile.email,
+          full_name: profile.full_name,
+          user_id: userId,
+          redirect_url: `${window.location.origin}/auth`,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({
+        title: 'Invite Sent',
+        description: `A new invitation email has been sent to ${profile.email}`,
+      });
+    } catch (error) {
+      console.error('Error sending invite:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send invite',
+        variant: 'destructive',
+      });
+    } finally {
+      setResendingInvite(false);
+    }
+  };
+
   const handleDeleteUser = async () => {
     if (!userId) return;
 
@@ -357,8 +419,15 @@ export default function AdminUserDetail() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold">{profile.full_name || 'Unnamed User'}</h1>
+              {authInfo && (
+                <Badge 
+                  variant={authInfo.status === 'active' ? 'default' : authInfo.status === 'invited' ? 'secondary' : 'outline'}
+                >
+                  {authInfo.status === 'active' ? 'Active' : authInfo.status === 'invited' ? 'Invited' : 'Unconfirmed'}
+                </Badge>
+              )}
               {isAdmin && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   <Shield className="w-3 h-3" />
@@ -372,8 +441,29 @@ export default function AdminUserDetail() {
                 </Badge>
               )}
             </div>
-            <p className="text-muted-foreground">{profile.email}</p>
+            <div className="flex items-center gap-4 text-muted-foreground">
+              <span>{profile.email}</span>
+              {authInfo?.last_sign_in_at && (
+                <span className="text-sm" title={format(new Date(authInfo.last_sign_in_at), 'PPpp')}>
+                  Last login: {formatDistanceToNow(new Date(authInfo.last_sign_in_at), { addSuffix: true })}
+                </span>
+              )}
+            </div>
           </div>
+          {authInfo?.status !== 'active' && (
+            <Button
+              variant="outline"
+              onClick={handleResendInvite}
+              disabled={resendingInvite}
+            >
+              {resendingInvite ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4 mr-2" />
+              )}
+              {resendingInvite ? 'Sending...' : 'Resend Invite'}
+            </Button>
+          )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
