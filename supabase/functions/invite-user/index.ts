@@ -64,7 +64,11 @@ serve(async (req) => {
       is_admin,
       is_client,
       research_contributor,
+      redirect_url,
     } = body;
+
+    // Use provided redirect URL or fall back to default
+    const redirectTo = redirect_url || "https://982c5ea6-f07a-4735-a49d-353dfa51e794.lovable.app/auth";
 
     if (!email) {
       return new Response(
@@ -77,11 +81,12 @@ serve(async (req) => {
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
     // Invite the user
-    console.log(`Inviting user: ${email}`);
+    console.log(`Inviting user: ${email} with redirect to: ${redirectTo}`);
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: {
         full_name: full_name || "",
       },
+      redirectTo: redirectTo,
     });
 
     if (inviteError) {
