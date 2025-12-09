@@ -140,7 +140,7 @@ export function NotificationDropdown() {
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-[400px]">
+        <ScrollArea className="h-[350px]">
           {loading ? (
             <div className="p-4 text-center text-muted-foreground text-sm">
               Loading...
