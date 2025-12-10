@@ -101,16 +101,39 @@ const handler = async (req: Request): Promise<Response> => {
         </html>
       `;
     } else if (type === "recovery") {
-      // For password recovery, use Supabase's built-in flow
-      const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        email,
-        options: { redirectTo: `${baseUrl}/reset-password` }
-      });
+      // Find user by email
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+      if (userError) throw userError;
+      
+      const user = userData.users.find(u => u.email === email);
+      if (!user) {
+        // Don't reveal if email exists or not for security
+        console.log("No user found for email, returning success anyway");
+        return new Response(
+          JSON.stringify({ success: true }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
 
-      if (error) throw error;
+      // Generate a unique token for password reset
+      const token = crypto.randomUUID();
+      const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
 
-      verificationUrl = data.properties?.action_link || `${baseUrl}/auth`;
+      // Store the token (reusing email_verification_tokens table)
+      const { error: tokenError } = await supabaseAdmin
+        .from("email_verification_tokens")
+        .insert({
+          user_id: user.id,
+          token,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (tokenError) {
+        console.error("Error storing token:", tokenError);
+        throw new Error("Failed to generate reset token");
+      }
+
+      verificationUrl = `${baseUrl}/reset-password?token=${token}`;
       subject = "Reset your Growth Lab password";
       htmlContent = `
         <!DOCTYPE html>
@@ -141,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             
             <p style="color: #888; font-size: 13px; text-align: center; margin-top: 30px;">
-              If you didn't request a password reset, you can safely ignore this email.
+              This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.
             </p>
           </div>
           

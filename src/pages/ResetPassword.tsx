@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,56 +15,18 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [sessionReady, setSessionReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  const token = searchParams.get('token');
 
   useEffect(() => {
-    // Check for recovery token in URL hash
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
-    const refreshToken = hashParams.get('refresh_token');
-
-    console.log("Reset password page loaded, type:", type);
-
-    if (type === 'recovery' && accessToken) {
-      // Set the session with the recovery token
-      supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken || '',
-      }).then(({ data, error }) => {
-        if (error) {
-          console.error("Error setting session:", error);
-          setError("Invalid or expired reset link. Please request a new one.");
-        } else if (data.session) {
-          console.log("Session set successfully for password reset");
-          setSessionReady(true);
-        }
-      });
-    } else {
-      // Check if we already have a session from the auth state change
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setSessionReady(true);
-        } else {
-          setError("Invalid or expired reset link. Please request a new one.");
-        }
-      });
+    if (!token) {
+      setError("Invalid reset link. Please request a new password reset.");
     }
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Auth event:", event);
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        setSessionReady(true);
-        setError(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  }, [token]);
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,30 +51,48 @@ export default function ResetPassword() {
 
     setLoading(true);
     
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-    
-    if (error) {
-      toast({
-        title: "Password update failed",
-        description: error.message,
-        variant: "destructive"
+    try {
+      const { data, error: resetError } = await supabase.functions.invoke("reset-password", {
+        body: {
+          token,
+          new_password: newPassword
+        }
       });
-    } else {
+      
+      if (resetError) {
+        toast({
+          title: "Password update failed",
+          description: resetError.message,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (data?.error) {
+        setError(data.error);
+        toast({
+          title: "Password update failed",
+          description: data.error,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+
       setSuccess(true);
       toast({
         title: "Password updated",
         description: "Your password has been successfully reset."
       });
+    } catch (err: any) {
+      toast({
+        title: "Password update failed",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
     }
     setLoading(false);
-  };
-
-  const handleGoToLogin = async () => {
-    // Sign out and redirect to login
-    await supabase.auth.signOut();
-    navigate("/auth");
   };
 
   return (
@@ -181,11 +161,11 @@ export default function ResetPassword() {
                     Your password has been updated. You can now sign in with your new password.
                   </p>
                 </div>
-                <Button onClick={handleGoToLogin} className="w-full mt-4">
+                <Button onClick={() => navigate("/auth")} className="w-full mt-4">
                   Sign In Now
                 </Button>
               </div>
-            ) : sessionReady ? (
+            ) : (
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
@@ -228,10 +208,6 @@ export default function ResetPassword() {
                   Update Password
                 </Button>
               </form>
-            ) : (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
             )}
           </CardContent>
         </Card>
