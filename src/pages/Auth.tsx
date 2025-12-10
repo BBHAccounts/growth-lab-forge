@@ -395,20 +395,31 @@ export default function Auth() {
 
                 <TabsContent value="signup">
                   {signupSuccess ? (
-                    <div className="text-center py-6 space-y-4">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                        <Mail className="h-8 w-8 text-primary" />
+                    <div className="text-center py-8 space-y-6">
+                      <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+                        <Mail className="h-10 w-10 text-green-600 dark:text-green-400" />
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          Check your email
+                      <div className="space-y-3">
+                        <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
+                          <CheckCircle className="h-6 w-6 text-green-500" />
+                          Almost there!
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          We've sent a verification link to <strong>{email}</strong>
+                        <p className="text-base text-foreground">
+                          We've sent a verification email to:
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Click the link in the email to complete your registration and sign in.
+                        <p className="text-base font-semibold text-primary">
+                          {email}
+                        </p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-4 text-left space-y-3">
+                        <p className="text-sm font-medium text-foreground">What to do next:</p>
+                        <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                          <li>Check your email inbox</li>
+                          <li>Click the verification link in the email</li>
+                          <li>Return here to sign in</li>
+                        </ol>
+                        <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+                          💡 Can't find the email? Check your spam or junk folder.
                         </p>
                       </div>
                       <Button variant="outline" className="mt-4" onClick={() => {
@@ -417,6 +428,7 @@ export default function Auth() {
                         setPassword("");
                         setFullName("");
                       }}>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to sign up
                       </Button>
                     </div>
