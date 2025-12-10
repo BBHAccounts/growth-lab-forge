@@ -105,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { data, error } = await supabaseAdmin.auth.admin.generateLink({
         type: "recovery",
         email,
-        options: { redirectTo: `${baseUrl}/auth` }
+        options: { redirectTo: `${baseUrl}/reset-password` }
       });
 
       if (error) throw error;
