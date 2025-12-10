@@ -96,6 +96,7 @@ serve(async (req) => {
     console.log(`Sending invite email to: ${email}`);
 
     // Send the custom email via Resend
+    // TODO: Update this to your verified domain, e.g., "Growth Lab <noreply@yourdomain.com>"
     const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Growth Lab <onboarding@resend.dev>",
       to: [email],
