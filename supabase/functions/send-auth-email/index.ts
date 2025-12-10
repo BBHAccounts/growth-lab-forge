@@ -48,10 +48,6 @@ const handler = async (req: Request): Promise<Response> => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://growthlab.beyondbillablehours.io/lovable-uploads/89dc4fa4-283a-40b4-aaf9-cd91cde9af43.png" alt="Growth Lab" style="width: 64px; height: 64px; border-radius: 12px;">
-          </div>
-          
           <h1 style="color: #1a1a1a; font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 20px;">
             Welcome to Growth Lab
           </h1>
@@ -91,10 +87,6 @@ const handler = async (req: Request): Promise<Response> => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://growthlab.beyondbillablehours.io/lovable-uploads/89dc4fa4-283a-40b4-aaf9-cd91cde9af43.png" alt="Growth Lab" style="width: 64px; height: 64px; border-radius: 12px;">
-          </div>
-          
           <h1 style="color: #1a1a1a; font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 20px;">
             Reset Your Password
           </h1>
@@ -134,10 +126,6 @@ const handler = async (req: Request): Promise<Response> => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://growthlab.beyondbillablehours.io/lovable-uploads/89dc4fa4-283a-40b4-aaf9-cd91cde9af43.png" alt="Growth Lab" style="width: 64px; height: 64px; border-radius: 12px;">
-          </div>
-          
           <h1 style="color: #1a1a1a; font-size: 24px; font-weight: 600; text-align: center; margin-bottom: 20px;">
             Confirm Your New Email
           </h1>
@@ -171,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send the email via Resend
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: "Growth Lab <noreply@growthlab.beyondbillablehours.io>",
+      from: "Growth Lab <notifications@growthlab.beyondbillablehours.io>",
       to: [email],
       subject,
       html: htmlContent,
