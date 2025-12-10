@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface VerifyEmailRequest {
   token: string;
+  password?: string; // For invited users setting their password
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -16,7 +17,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { token }: VerifyEmailRequest = await req.json();
+    const { token, password }: VerifyEmailRequest = await req.json();
 
     if (!token) {
       return new Response(
@@ -59,9 +60,60 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if token is expired
     if (new Date(tokenData.expires_at) < new Date()) {
       return new Response(
-        JSON.stringify({ error: "Verification link has expired. Please sign up again." }),
+        JSON.stringify({ error: "Verification link has expired. Please request a new invitation." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Get user info to check if they were invited (never signed in)
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
+
+    if (authError || !authUser.user) {
+      console.error("User lookup error:", authError);
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const isInvitedUser = !authUser.user.last_sign_in_at;
+
+    // If invited user and no password provided, return needs_password flag
+    if (isInvitedUser && !password) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          needs_password: true,
+          user_email: authUser.user.email,
+          message: "Please set a password to complete your account setup" 
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // If invited user with password, update their password
+    if (isInvitedUser && password) {
+      if (password.length < 6) {
+        return new Response(
+          JSON.stringify({ error: "Password must be at least 6 characters" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        tokenData.user_id,
+        { password }
+      );
+
+      if (updateError) {
+        console.error("Password update error:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Failed to set password" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
+      console.log("Password set for invited user:", tokenData.user_id);
     }
 
     // Mark token as used
@@ -87,7 +139,10 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Email verified successfully for user:", tokenData.user_id);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Email verified successfully" }),
+      JSON.stringify({ 
+        success: true, 
+        message: isInvitedUser ? "Account setup complete" : "Email verified successfully" 
+      }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
