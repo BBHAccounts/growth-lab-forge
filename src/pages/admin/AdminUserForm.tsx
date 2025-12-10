@@ -96,10 +96,10 @@ export default function AdminUserForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.email) {
+    if (!formData.email || !formData.full_name.trim()) {
       toast({
-        title: "Email required",
-        description: "Please enter an email address to invite the user.",
+        title: "Required fields missing",
+        description: "Please enter both email and full name to invite the user.",
         variant: "destructive",
       });
       return;
@@ -182,12 +182,13 @@ export default function AdminUserForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name</Label>
+                <Label htmlFor="full_name">Full Name *</Label>
                 <Input
                   id="full_name"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   placeholder="John Doe"
+                  required
                 />
               </div>
             </div>
