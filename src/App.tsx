@@ -15,6 +15,7 @@ import About from "./pages/About";
 import Account from "./pages/Account";
 import InsightsHub from "./pages/InsightsHub";
 import NotFound from "./pages/NotFound";
+import EmailVerified from "./pages/EmailVerified";
 
 // Admin pages
 import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/account" element={<Account />} />
           <Route path="/insights-hub" element={<InsightsHub />} />
+          <Route path="/email-verified" element={<EmailVerified />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
