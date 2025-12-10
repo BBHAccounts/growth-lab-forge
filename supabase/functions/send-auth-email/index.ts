@@ -37,8 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
     let htmlContent = "";
 
     if (type === "signup") {
-      // For signup confirmation
-      verificationUrl = `${baseUrl}/auth?token_hash=${token_hash}&type=signup`;
+      // For signup confirmation - redirect to email-verified page
+      verificationUrl = `${baseUrl}/email-verified?token_hash=${token_hash}&type=signup`;
       subject = "Confirm your Growth Lab account";
       htmlContent = `
         <!DOCTYPE html>
