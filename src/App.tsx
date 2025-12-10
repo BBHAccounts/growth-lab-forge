@@ -16,6 +16,7 @@ import Account from "./pages/Account";
 import InsightsHub from "./pages/InsightsHub";
 import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
+import ResetPassword from "./pages/ResetPassword";
 
 // Admin pages
 import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/account" element={<Account />} />
           <Route path="/insights-hub" element={<InsightsHub />} />
           <Route path="/email-verified" element={<EmailVerified />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
