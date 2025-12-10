@@ -132,8 +132,8 @@ export function NotificationPopup() {
               {notification.title}
             </h3>
             {notification.message && (
-              <p className="text-sm text-muted-foreground">
-                {notification.message}
+              <p className="text-sm text-muted-foreground whitespace-pre-line">
+                {notification.message.replace(/\\n/g, '\n')}
               </p>
             )}
           </div>
