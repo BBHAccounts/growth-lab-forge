@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const EmailVerified = () => {
@@ -13,28 +13,34 @@ const EmailVerified = () => {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      const tokenHash = searchParams.get("token_hash");
-      const type = searchParams.get("type");
+      const token = searchParams.get("token");
 
-      if (tokenHash && type === "signup") {
-        try {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: "signup",
-          });
-
-          if (error) {
-            setError(error.message);
-          } else {
-            setIsVerified(true);
-          }
-        } catch (err: any) {
-          setError(err.message || "Verification failed");
-        }
-      } else {
-        // No token hash, assume already verified or direct access
-        setIsVerified(true);
+      if (!token) {
+        setError("Invalid verification link. No token provided.");
+        setIsVerifying(false);
+        return;
       }
+
+      try {
+        const { data, error: verifyError } = await supabase.functions.invoke("verify-email", {
+          body: { token },
+        });
+
+        if (verifyError) {
+          console.error("Verification error:", verifyError);
+          setError(verifyError.message || "Verification failed. Please try again.");
+        } else if (data?.error) {
+          setError(data.error);
+        } else if (data?.success) {
+          setIsVerified(true);
+        } else {
+          setError("Verification failed. Please try again.");
+        }
+      } catch (err: any) {
+        console.error("Verification error:", err);
+        setError(err.message || "Verification failed. Please try again.");
+      }
+
       setIsVerifying(false);
     };
 
@@ -57,7 +63,7 @@ const EmailVerified = () => {
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="max-w-md w-full text-center">
           <div className="bg-destructive/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl">⚠️</span>
+            <XCircle className="h-12 w-12 text-destructive" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-4">
             Verification Failed
