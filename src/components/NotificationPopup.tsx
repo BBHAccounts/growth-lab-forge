@@ -129,11 +129,11 @@ export function NotificationPopup() {
           </div>
           <div className="flex-1 space-y-2">
             <h3 className="text-lg font-semibold leading-none tracking-tight">
-              {notification.title}
+              {notification.title.replace(/\\"/g, '"').replace(/\\\\/g, '').replace(/\\$/g, '')}
             </h3>
             {notification.message && (
               <p className="text-sm text-muted-foreground whitespace-pre-line">
-                {notification.message.replace(/\\n/g, '\n')}
+                {notification.message.replace(/\\"/g, '"').replace(/\\\\/g, '').replace(/\\$/g, '').replace(/\\n/g, '\n')}
               </p>
             )}
           </div>
