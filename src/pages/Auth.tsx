@@ -27,6 +27,7 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -41,20 +42,20 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsResettingPassword(true);
-      } else if (session?.user && !isResettingPassword && !isLoggingIn) {
-        // Only auto-navigate if not in the middle of a manual login check
+      } else if (session?.user && !isResettingPassword && !isLoggingIn && !isSigningUp) {
+        // Only auto-navigate if not in the middle of a manual login/signup check
         navigate("/");
       }
     });
     
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && !isResettingPassword && !isLoggingIn) {
+      if (session?.user && !isResettingPassword && !isLoggingIn && !isSigningUp) {
         navigate("/");
       }
     });
     
     return () => subscription.unsubscribe();
-  }, [navigate, isResettingPassword, isLoggingIn]);
+  }, [navigate, isResettingPassword, isLoggingIn, isSigningUp]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +123,7 @@ export default function Auth() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIsSigningUp(true);
     
     // Sign up with auto-confirm enabled (user is created immediately)
     const { error, data } = await supabase.auth.signUp({
