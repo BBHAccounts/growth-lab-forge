@@ -26,6 +26,7 @@ export default function Auth() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -40,23 +41,25 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsResettingPassword(true);
-      } else if (session?.user && !isResettingPassword) {
+      } else if (session?.user && !isResettingPassword && !isLoggingIn) {
+        // Only auto-navigate if not in the middle of a manual login check
         navigate("/");
       }
     });
     
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && !isResettingPassword) {
+      if (session?.user && !isResettingPassword && !isLoggingIn) {
         navigate("/");
       }
     });
     
     return () => subscription.unsubscribe();
-  }, [navigate, isResettingPassword]);
+  }, [navigate, isResettingPassword, isLoggingIn]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIsLoggingIn(true);
     
     try {
       const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -72,6 +75,7 @@ export default function Auth() {
           variant: "destructive"
         });
         setLoading(false);
+        setIsLoggingIn(false);
         return;
       }
 
@@ -92,6 +96,7 @@ export default function Auth() {
             variant: "destructive"
           });
           setLoading(false);
+          setIsLoggingIn(false);
           return;
         }
       }
@@ -100,6 +105,7 @@ export default function Auth() {
         title: "Welcome back!",
         description: "You've successfully logged in."
       });
+      setIsLoggingIn(false);
       navigate("/");
     } catch (err: any) {
       console.error('Network error details:', err);
@@ -108,6 +114,7 @@ export default function Auth() {
         description: "Unable to connect to authentication service. Please check your internet connection or try again later.",
         variant: "destructive"
       });
+      setIsLoggingIn(false);
     }
     setLoading(false);
   };
@@ -167,10 +174,6 @@ export default function Auth() {
           });
         } else {
           setSignupSuccess(true);
-          toast({
-            title: "Check your email",
-            description: "We've sent you a verification link to complete your registration."
-          });
         }
       } catch (err) {
         console.error("Error sending verification email:", err);
