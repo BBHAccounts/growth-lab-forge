@@ -64,7 +64,7 @@ export default function AdminUserForm() {
         body: {
           email: existingUser.email,
           resend_invite: true,
-          redirect_url: `${window.location.origin}/auth`,
+          redirect_url: window.location.origin,
         },
       });
 
@@ -112,7 +112,7 @@ export default function AdminUserForm() {
       const response = await supabase.functions.invoke("invite-user", {
         body: {
           ...formData,
-          redirect_url: `${window.location.origin}/auth`,
+          redirect_url: window.location.origin,
         },
       });
 
