@@ -487,6 +487,176 @@ export type Database = {
         }
         Relationships: []
       }
+      program_participants: {
+        Row: {
+          access_code: string
+          created_at: string
+          email: string | null
+          id: string
+          invited_at: string | null
+          last_accessed_at: string | null
+          name: string | null
+          program_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          access_code: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          invited_at?: string | null
+          last_accessed_at?: string | null
+          name?: string | null
+          program_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_code?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          invited_at?: string | null
+          last_accessed_at?: string | null
+          name?: string | null
+          program_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_participants_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_responses: {
+        Row: {
+          auto_saved_at: string | null
+          created_at: string
+          current_step: number | null
+          id: string
+          participant_id: string
+          responses: Json | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_saved_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          participant_id: string
+          responses?: Json | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_saved_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          participant_id?: string
+          responses?: Json | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_responses_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "program_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_uploads: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_uploads_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "program_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          allow_pdf_upload: boolean | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          model_id: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          allow_pdf_upload?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          model_id?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_pdf_upload?: boolean | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          model_id?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programs_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reactions: {
         Row: {
           created_at: string
