@@ -137,7 +137,7 @@ export default function ProgramWorkspace() {
     const { error } = await supabase
       .from("program_responses")
       .update({
-        responses: data as unknown as Record<string, unknown>,
+        responses: data as unknown as null,
         current_step: step,
         auto_saved_at: new Date().toISOString(),
       })
