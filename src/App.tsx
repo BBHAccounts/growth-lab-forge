@@ -38,6 +38,16 @@ import AdminTopicForm from "./pages/admin/AdminTopicForm";
 import AdminResources from "./pages/admin/AdminResources";
 import AdminResourceForm from "./pages/admin/AdminResourceForm";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminPrograms from "./pages/admin/AdminPrograms";
+import AdminProgramForm from "./pages/admin/AdminProgramForm";
+import AdminProgramResponses from "./pages/admin/AdminProgramResponses";
+import AdminProgramCompare from "./pages/admin/AdminProgramCompare";
+
+// Program pages (participant-facing)
+import ProgramLanding from "./pages/program/ProgramLanding";
+import ProgramWorkspace from "./pages/program/ProgramWorkspace";
+import ProgramReview from "./pages/program/ProgramReview";
+import ProgramComplete from "./pages/program/ProgramComplete";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +91,16 @@ const App = () => (
           <Route path="/admin/topics/:topicId" element={<AdminRouteGuard><AdminTopicForm /></AdminRouteGuard>} />
           <Route path="/admin/insights-hub" element={<AdminRouteGuard><AdminResources /></AdminRouteGuard>} />
           <Route path="/admin/insights-hub/:resourceId" element={<AdminRouteGuard><AdminResourceForm /></AdminRouteGuard>} />
+          <Route path="/admin/programs" element={<AdminRouteGuard><AdminPrograms /></AdminRouteGuard>} />
+          <Route path="/admin/programs/:programId" element={<AdminRouteGuard><AdminProgramForm /></AdminRouteGuard>} />
+          <Route path="/admin/programs/:programId/responses" element={<AdminRouteGuard><AdminProgramResponses /></AdminRouteGuard>} />
+          <Route path="/admin/programs/:programId/compare" element={<AdminRouteGuard><AdminProgramCompare /></AdminRouteGuard>} />
+          
+          {/* Program Routes (public, participant-facing) */}
+          <Route path="/program/:code" element={<ProgramLanding />} />
+          <Route path="/program/:code/workspace" element={<ProgramWorkspace />} />
+          <Route path="/program/:code/review" element={<ProgramReview />} />
+          <Route path="/program/:code/complete" element={<ProgramComplete />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
