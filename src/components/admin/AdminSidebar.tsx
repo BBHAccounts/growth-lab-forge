@@ -9,7 +9,8 @@ import {
   ArrowLeft,
   Tags,
   FileText,
-  Bell
+  Bell,
+  ClipboardList
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
@@ -30,6 +31,7 @@ const adminNavItems = [
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Topics', url: '/admin/topics', icon: Tags },
   { title: 'Models', url: '/admin/models', icon: Box },
+  { title: 'Programs', url: '/admin/programs', icon: ClipboardList },
   { title: 'Insights Hub', url: '/admin/insights-hub', icon: FileText },
   { title: 'Research Lab', url: '/admin/research', icon: FlaskConical },
   { title: 'Martech Map', url: '/admin/martech', icon: MapPin },
