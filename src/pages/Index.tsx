@@ -117,23 +117,8 @@ const Index = () => {
           setTodos(todoItems);
         }
 
-        // Fetch followed vendors (liked by user)
-        const { data: reactionsData } = await supabase
-          .from("reactions")
-          .select("target_id")
-          .eq("user_id", user.id)
-          .eq("target_type", "vendor");
 
-        if (reactionsData && reactionsData.length > 0) {
-          const vendorIds = reactionsData.map(r => r.target_id);
-          const { data: vendorsData } = await supabase
-            .from("vendors")
-            .select("id, name, description, logo_url, website_url")
-            .in("id", vendorIds)
-            .limit(4);
 
-          setFollowedVendors(vendorsData || []);
-        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
