@@ -26,10 +26,13 @@ interface Participant {
   status: string;
 }
 
-interface Model {
+interface ProgramModelInfo {
+  model_id: string;
+  order_index: number;
+  deadline: string | null;
   name: string;
   emoji: string | null;
-  steps: unknown[];
+  stepCount: number;
 }
 
 export default function ProgramLanding() {
