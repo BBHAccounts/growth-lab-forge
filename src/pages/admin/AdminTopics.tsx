@@ -26,7 +26,7 @@ interface Topic {
   created_at: string;
   updated_at: string;
   model_cat_count?: number;
-  vendor_cat_count?: number;
+  
 }
 
 export default function AdminTopics() {
