@@ -31,6 +31,7 @@ interface ProgramModelInfo {
   name: string;
   emoji: string | null;
   stepCount: number;
+  deadline: string | null;
 }
 
 export default function ProgramLanding() {
