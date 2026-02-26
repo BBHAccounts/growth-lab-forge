@@ -155,12 +155,12 @@ export default function Auth() {
       case "success":
         return (
           <div className="space-y-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-              <Mail className="h-8 w-8 text-green-600" />
+            <div className="w-16 h-16 rounded-full bg-secondary/20 flex items-center justify-center mx-auto">
+              <Mail className="h-8 w-8 text-secondary-foreground" />
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-secondary" />
                 Check your email
               </h3>
               <p className="text-muted-foreground">
