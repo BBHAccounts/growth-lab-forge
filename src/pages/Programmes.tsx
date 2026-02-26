@@ -156,7 +156,7 @@ export default function Programmes() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "submitted":
-        return <Badge className="bg-green-500/15 text-green-700 dark:text-green-400 border-0">Submitted</Badge>;
+        return <Badge className="bg-secondary text-secondary-foreground border-0">Submitted</Badge>;
       case "in_progress":
         return <Badge variant="secondary">In Progress</Badge>;
       default:
