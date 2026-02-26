@@ -235,6 +235,15 @@ export default function ProgramLanding() {
   return (
     <ProgramLayout programName={program.name}>
       <div className="max-w-2xl mx-auto p-6 md:p-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-4 -ml-2"
+          onClick={() => navigate("/programmes")}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Programmes
+        </Button>
         <Card className="border-2">
           <CardHeader className="text-center pb-2">
             {programModels.length === 1 && programModels[0].emoji && (
