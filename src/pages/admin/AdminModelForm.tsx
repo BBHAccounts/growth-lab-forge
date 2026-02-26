@@ -626,6 +626,33 @@ export default function AdminModelForm() {
             </CardContent>
           </Card>
 
+          {/* AI Assistant */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                AI Field Assistant
+              </CardTitle>
+              <CardDescription>
+                Provide model-specific context for the AI coaching assistant that helps users fill in fields
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label>Model-Specific AI Prompt</Label>
+                <Textarea
+                  value={model.ai_assistant_prompt}
+                  onChange={(e) => setModel({ ...model, ai_assistant_prompt: e.target.value })}
+                  placeholder="e.g., This model helps law firms build a positioning strategy. When coaching, reference examples from legal marketing such as thought leadership, client alerts, and practice area branding. Encourage users to think about their unique differentiators vs. competitor firms."
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This is combined with the global AI prompt from Settings. Include domain-specific examples, terminology, and coaching angles relevant to this model.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Steps */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">

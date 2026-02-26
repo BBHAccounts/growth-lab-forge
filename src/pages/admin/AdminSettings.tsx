@@ -199,6 +199,28 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
+          {/* AI Assistant */}
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Field Assistant</CardTitle>
+              <CardDescription>Global coaching prompt used across all model workspaces</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Global Coaching Prompt</Label>
+                <Textarea
+                  value={settings.ai_assistant_global_prompt}
+                  onChange={(e) => setSettings({ ...settings, ai_assistant_global_prompt: e.target.value })}
+                  placeholder="e.g., Always encourage users to think about their competitive positioning. Reference legal marketing best practices. Keep a professional but approachable tone."
+                  rows={6}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This prompt is combined with per-model instructions and sent to the AI coach. Use it for general tone, audience context, and coaching guidelines.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Feature Flags */}
           <Card>
             <CardHeader>

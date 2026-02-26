@@ -449,6 +449,14 @@ export default function ModelWorkspace() {
                       {field.optional && (
                         <span className="text-xs text-muted-foreground">(optional)</span>
                       )}
+                      <FieldAssistant
+                        modelId={model.id}
+                        stepTitle={step.title}
+                        stepInstruction={step.instruction}
+                        fieldLabel={field.label}
+                        currentValue={formData[field.id]}
+                        allProgress={formData}
+                      />
                     </Label>
                     {renderField(field)}
                   </div>
