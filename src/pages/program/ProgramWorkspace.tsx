@@ -36,6 +36,7 @@ interface Program {
   allow_pdf_upload: boolean;
 }
 
+
 interface Participant {
   id: string;
   name: string | null;
