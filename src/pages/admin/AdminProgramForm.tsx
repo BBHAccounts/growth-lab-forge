@@ -37,12 +37,20 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ArrowDown, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search, GripVertical } from 'lucide-react';
 
 interface Model {
   id: string;
   name: string;
   emoji: string | null;
+}
+
+interface ProgramModel {
+  id?: string;
+  model_id: string;
+  order_index: number;
+  deadline: string | null;
+  model?: Model;
 }
 
 interface Participant {
@@ -60,10 +68,10 @@ interface Program {
   id: string;
   name: string;
   description: string | null;
-  model_id: string | null;
   deadline: string | null;
   status: string;
   allow_pdf_upload: boolean;
+  sequential: boolean;
 }
 
 export default function AdminProgramForm() {
@@ -74,7 +82,8 @@ export default function AdminProgramForm() {
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [models, setModels] = useState<Model[]>([]);
+  const [allModels, setAllModels] = useState<Model[]>([]);
+  const [programModels, setProgramModels] = useState<ProgramModel[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [showAddParticipant, setShowAddParticipant] = useState(false);
   const [newParticipant, setNewParticipant] = useState({ email: '', name: '' });
@@ -90,10 +99,10 @@ export default function AdminProgramForm() {
     id: '',
     name: '',
     description: '',
-    model_id: null,
     deadline: null,
     status: 'draft',
     allow_pdf_upload: false,
+    sequential: true,
   });
 
   useEffect(() => {
@@ -105,7 +114,7 @@ export default function AdminProgramForm() {
         .eq('status', 'active')
         .order('name');
       
-      setModels(modelsData || []);
+      setAllModels(modelsData || []);
 
       if (!isNew && programId) {
         // Fetch program
@@ -125,11 +134,27 @@ export default function AdminProgramForm() {
           id: program.id,
           name: program.name,
           description: program.description,
-          model_id: program.model_id,
           deadline: program.deadline ? program.deadline.split('T')[0] : null,
           status: program.status,
           allow_pdf_upload: program.allow_pdf_upload || false,
+          sequential: program.sequential ?? true,
         });
+
+        // Fetch program models
+        const { data: pmData } = await supabase
+          .from('program_models')
+          .select('id, model_id, order_index, deadline')
+          .eq('program_id', programId)
+          .order('order_index');
+
+        if (pmData && pmData.length > 0 && modelsData) {
+          const modelsMap = Object.fromEntries((modelsData || []).map(m => [m.id, m]));
+          setProgramModels(pmData.map(pm => ({
+            ...pm,
+            deadline: pm.deadline ? pm.deadline.split('T')[0] : null,
+            model: modelsMap[pm.model_id],
+          })));
+        }
 
         // Fetch participants
         const { data: participantsData } = await supabase
@@ -146,6 +171,34 @@ export default function AdminProgramForm() {
 
     fetchData();
   }, [programId, isNew, navigate, toast]);
+
+  // --- Model management ---
+  const addModelToProgram = (modelId: string) => {
+    if (programModels.some(pm => pm.model_id === modelId)) return;
+    const model = allModels.find(m => m.id === modelId);
+    setProgramModels(prev => [
+      ...prev,
+      { model_id: modelId, order_index: prev.length, deadline: null, model },
+    ]);
+  };
+
+  const removeModelFromProgram = (index: number) => {
+    setProgramModels(prev => prev.filter((_, i) => i !== index).map((pm, i) => ({ ...pm, order_index: i })));
+  };
+
+  const moveModel = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= programModels.length) return;
+    const updated = [...programModels];
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    setProgramModels(updated.map((pm, i) => ({ ...pm, order_index: i })));
+  };
+
+  const updateModelDeadline = (index: number, deadline: string | null) => {
+    setProgramModels(prev => prev.map((pm, i) => i === index ? { ...pm, deadline } : pm));
+  };
+
+  const availableModels = allModels.filter(m => !programModels.some(pm => pm.model_id === m.id));
 
   const generateAccessCode = () => {
     const prefix = formData.name.slice(0, 4).toLowerCase().replace(/[^a-z]/g, '') || 'prog';
@@ -167,7 +220,6 @@ export default function AdminProgramForm() {
         .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
         .limit(10);
       
-      // Filter out users already in participants
       const existingUserIds = participants.filter(p => p.user_id).map(p => p.user_id);
       setSearchResults((data || []).filter(u => !existingUserIds.includes(u.user_id)));
     } catch (error) {
@@ -223,12 +275,15 @@ export default function AdminProgramForm() {
       const programData = {
         name: formData.name,
         description: formData.description,
-        model_id: formData.model_id,
+        model_id: programModels.length > 0 ? programModels[0].model_id : null, // keep backward compat
         deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
         status: formData.status,
         allow_pdf_upload: formData.allow_pdf_upload,
+        sequential: formData.sequential,
         created_by: user?.id,
       };
+
+      let savedProgramId = programId;
 
       if (isNew) {
         const { data, error } = await supabase
@@ -238,8 +293,7 @@ export default function AdminProgramForm() {
           .single();
 
         if (error) throw error;
-        toast({ title: 'Program created' });
-        navigate(`/admin/programs/${data.id}`);
+        savedProgramId = data.id;
       } else {
         const { error } = await supabase
           .from('programs')
@@ -247,7 +301,33 @@ export default function AdminProgramForm() {
           .eq('id', programId);
 
         if (error) throw error;
-        toast({ title: 'Program updated' });
+      }
+
+      // Save program_models: delete existing and re-insert
+      if (savedProgramId) {
+        await supabase
+          .from('program_models')
+          .delete()
+          .eq('program_id', savedProgramId);
+
+        if (programModels.length > 0) {
+          const { error: pmError } = await supabase
+            .from('program_models')
+            .insert(
+              programModels.map((pm, i) => ({
+                program_id: savedProgramId!,
+                model_id: pm.model_id,
+                order_index: i,
+                deadline: pm.deadline ? new Date(pm.deadline).toISOString() : null,
+              }))
+            );
+          if (pmError) throw pmError;
+        }
+      }
+
+      toast({ title: isNew ? 'Program created' : 'Program updated' });
+      if (isNew) {
+        navigate(`/admin/programs/${savedProgramId}`);
       }
     } catch (error: any) {
       toast({ title: 'Error saving program', description: error.message, variant: 'destructive' });
@@ -300,7 +380,6 @@ export default function AdminProgramForm() {
       if (error) throw error;
 
       if (sendEmail && newParticipant.email) {
-        // Send invite email
         const { error: emailError } = await supabase.functions.invoke('send-program-invite', {
           body: {
             email: newParticipant.email,
@@ -377,7 +456,6 @@ export default function AdminProgramForm() {
     navigator.clipboard.writeText(link);
     toast({ title: 'Shareable link created and copied!' });
 
-    // Refresh participants
     const { data } = await supabase
       .from('program_participants')
       .select('*')
@@ -472,26 +550,6 @@ export default function AdminProgramForm() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Linked Model</Label>
-                <Select
-                  value={formData.model_id || 'none'}
-                  onValueChange={(v) => setFormData({ ...formData, model_id: v === 'none' ? null : v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No model linked</SelectItem>
-                    {models.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.emoji} {model.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
                   value={formData.status}
@@ -507,11 +565,9 @@ export default function AdminProgramForm() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="deadline">Deadline (optional)</Label>
+                <Label htmlFor="deadline">Programme Deadline (optional)</Label>
                 <Input
                   id="deadline"
                   type="date"
@@ -519,7 +575,9 @@ export default function AdminProgramForm() {
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                 />
               </div>
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="block mb-3">Settings</Label>
                 <div className="flex items-center gap-2">
@@ -530,7 +588,115 @@ export default function AdminProgramForm() {
                   <span className="text-sm">Allow PDF uploads</span>
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label className="block mb-3">Task Order</Label>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.sequential}
+                    onCheckedChange={(checked) => setFormData({ ...formData, sequential: checked })}
+                  />
+                  <span className="text-sm">{formData.sequential ? 'Sequential (must complete in order)' : 'Flexible (any order)'}</span>
+                </div>
+              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Models / Tasks */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Tasks (Models)</CardTitle>
+                <CardDescription>
+                  Add models as tasks in this programme. {programModels.length} task{programModels.length !== 1 ? 's' : ''} added.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Existing models list */}
+            {programModels.length > 0 && (
+              <div className="space-y-2">
+                {programModels.map((pm, index) => (
+                  <div
+                    key={pm.model_id}
+                    className="flex items-center gap-3 p-3 border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={index === 0}
+                        onClick={() => moveModel(index, 'up')}
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        disabled={index === programModels.length - 1}
+                        onClick={() => moveModel(index, 'down')}
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    <Badge variant="outline" className="shrink-0 font-mono text-xs">
+                      {index + 1}
+                    </Badge>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">
+                        {pm.model?.emoji} {pm.model?.name || 'Unknown model'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Input
+                        type="date"
+                        value={pm.deadline || ''}
+                        onChange={(e) => updateModelDeadline(index, e.target.value || null)}
+                        className="w-40 text-xs"
+                        placeholder="Deadline"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeModelFromProgram(index)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add model */}
+            {availableModels.length > 0 ? (
+              <div className="flex items-center gap-2">
+                <Select onValueChange={(v) => addModelToProgram(v)}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Add a model as task..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableModels.map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.emoji} {model.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : programModels.length > 0 ? (
+              <p className="text-sm text-muted-foreground">All available models have been added.</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">No active models available. Create models first.</p>
+            )}
           </CardContent>
         </Card>
 
