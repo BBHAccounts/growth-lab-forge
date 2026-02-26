@@ -352,6 +352,73 @@ const Index = () => {
           </section>
         </div>
 
+        {/* Active Programmes */}
+        {enrolledPrograms.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <GraduationCap className="h-4.5 w-4.5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">My Programmes</h2>
+                  <p className="text-sm text-muted-foreground">Active assignments and pre-work</p>
+                </div>
+              </div>
+              <Link to="/programmes">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  View all <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {enrolledPrograms.slice(0, 3).map((prog) => {
+                const deadlineDays = prog.deadline ? differenceInDays(new Date(prog.deadline), new Date()) : null;
+                const overdue = prog.deadline ? isPast(new Date(prog.deadline)) : false;
+
+                return (
+                  <Link key={prog.participant_id} to={`/program/${prog.access_code}${prog.status !== "invited" ? "/workspace" : ""}`}>
+                    <Card className="group h-full hover:shadow-lg transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5">
+                      <CardContent className="p-5">
+                        <div className="flex items-start gap-3 mb-3">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">
+                            {prog.model_emoji || "📋"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                              {prog.program_name}
+                            </h3>
+                            {prog.model_name && (
+                              <p className="text-xs text-muted-foreground truncate">{prog.model_name}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={
+                              prog.status === "submitted" ? "default" :
+                              prog.status === "in_progress" ? "secondary" : "outline"
+                            } className="text-xs">
+                              {prog.status === "in_progress" ? "In Progress" : prog.status === "submitted" ? "Submitted" : "Not Started"}
+                            </Badge>
+                            {overdue && <Badge variant="destructive" className="text-xs">Overdue</Badge>}
+                            {!overdue && deadlineDays !== null && deadlineDays <= 7 && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />{deadlineDays}d left
+                              </span>
+                            )}
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Latest News & Insights */}
         <section>
           <div className="flex items-center justify-between mb-5">
