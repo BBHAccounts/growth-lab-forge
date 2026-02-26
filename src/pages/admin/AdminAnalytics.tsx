@@ -262,29 +262,8 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          {/* Top Vendors */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Most Liked Vendors</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.vendorStats.topLiked.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No data yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {data.vendorStats.topLiked.map((vendor, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground text-sm w-4">{i + 1}.</span>
-                        <span className="text-sm">{vendor.name}</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{vendor.likes} ❤️</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+
         </div>
       </div>
     </AdminLayout>
