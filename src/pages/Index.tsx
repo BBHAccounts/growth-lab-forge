@@ -2,17 +2,21 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { HeroBanner } from "@/components/ui/hero-banner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, FlaskConical, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info, Lightbulb } from "lucide-react";
+import {
+  BookOpen, FlaskConical, ArrowRight, CheckCircle2, Circle,
+  ExternalLink, Sparkles, Info, Lightbulb, Clock, Newspaper,
+  TrendingUp, Calendar
+} from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
 import { ReadingReminderCard } from "@/components/ReadingReminderCard";
+import { format } from "date-fns";
 
 interface Profile {
   full_name: string | null;
@@ -41,9 +45,6 @@ interface ActivatedModel {
   model: Model;
 }
 
-
-
-
 interface TodoItem {
   id: string;
   modelName: string;
@@ -53,12 +54,27 @@ interface TodoItem {
   modelId: string;
 }
 
+interface NewsItem {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  url: string | null;
+  emoji: string | null;
+  author: string | null;
+  estimated_time: number | null;
+  published_date: string | null;
+  image_url: string | null;
+}
+
 const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [newsLoading, setNewsLoading] = useState(true);
+
   const recommendations = useRecommendations(5);
 
   useEffect(() => {
@@ -67,7 +83,6 @@ const Index = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Fetch profile
         const { data: profileData } = await supabase
           .from("profiles")
           .select("full_name, onboarding_completed")
@@ -76,7 +91,6 @@ const Index = () => {
 
         setProfile(profileData);
 
-        // Fetch activated models with model details
         const { data: activatedData } = await supabase
           .from("activated_models")
           .select("id, model_id, current_step, completed")
@@ -95,7 +109,6 @@ const Index = () => {
           }));
           setActivatedModels(activatedWithModels as ActivatedModel[]);
 
-          // Generate todos from model steps
           const todoItems: TodoItem[] = [];
           activatedWithModels.forEach((am: any) => {
             if (!am.completed && am.model?.steps) {
@@ -115,9 +128,6 @@ const Index = () => {
           });
           setTodos(todoItems);
         }
-
-
-
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -125,7 +135,25 @@ const Index = () => {
       }
     };
 
+    const fetchNews = async () => {
+      try {
+        const { data } = await supabase
+          .from("resources")
+          .select("id, title, description, type, url, emoji, author, estimated_time, published_date, image_url")
+          .eq("status", "active")
+          .order("published_date", { ascending: false, nullsFirst: false })
+          .limit(6);
+
+        setNews((data || []) as NewsItem[]);
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+
     fetchDashboardData();
+    fetchNews();
   }, []);
 
   const getGreeting = () => {
@@ -136,64 +164,67 @@ const Index = () => {
   };
 
   const firstName = profile?.full_name?.split(" ")[0] || "there";
-
-  const quickAccessCards = [
-    {
-      title: "Toolbox",
-      description: "Interactive frameworks to grow your practice",
-      icon: BookOpen,
-      href: "/models",
-      emoji: "📚",
-    },
-    {
-      title: "Research Lab",
-      description: "Participate in studies, unlock rewards",
-      icon: FlaskConical,
-      href: "/research",
-      emoji: "🧪",
-    },
-    {
-      title: "Insights Hub",
-      description: "Curated articles and resources",
-      icon: Lightbulb,
-      href: "/insights-hub",
-      emoji: "💡",
-    },
-  ];
-
   const hasRecommendations = recommendations.models.length > 0 || recommendations.resources.length > 0;
+
+  const completedCount = activatedModels.filter(am => am.completed).length;
+  const inProgressCount = activatedModels.filter(am => !am.completed).length;
 
   return (
     <AppLayout>
-      <HeroBanner
-        title={`${getGreeting()}, ${firstName}!`}
-        description="Welcome to Growth Lab — your command center for law firm growth strategies."
-      />
+      {/* Compact Welcome Header */}
+      <div className="border-b border-border bg-card">
+        <div className="px-6 md:px-8 py-6 md:py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                {getGreeting()}, {firstName} 👋
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Here's what's happening in your Growth Lab today.
+              </p>
+            </div>
+            {/* Quick Stats */}
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">{inProgressCount}</p>
+                <p className="text-xs text-muted-foreground">In Progress</p>
+              </div>
+              <div className="w-px h-8 bg-border" />
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">{completedCount}</p>
+                <p className="text-xs text-muted-foreground">Completed</p>
+              </div>
+              <div className="w-px h-8 bg-border" />
+              <div className="text-center">
+                <p className="text-2xl font-bold text-foreground">{todos.length}</p>
+                <p className="text-xs text-muted-foreground">To-Dos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="p-6 md:p-8 space-y-8">
-        {/* AI Assistant + To-Dos Row */}
+        {/* Top Row: Navigator + To-Dos */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* AI Assistant */}
           <section className="lg:col-span-2">
             <NavigatorChat />
           </section>
 
-          {/* Your To-Dos */}
           <section className="lg:col-span-1">
-            <div className="rounded-2xl border border-border/60 bg-card overflow-hidden h-full">
-              <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-5 py-4 border-b border-border/40">
+            <Card className="h-full border-border/60">
+              <CardHeader className="pb-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-border/40">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
-                    <CheckCircle2 className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                    <CheckCircle2 className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold">Your To-Dos</h3>
-                    <p className="text-sm text-muted-foreground">Next steps to complete</p>
+                    <CardTitle className="text-base">Your To-Dos</CardTitle>
+                    <CardDescription className="text-xs">Next steps to complete</CardDescription>
                   </div>
                 </div>
-              </div>
-              
-              <div className="p-5">
+              </CardHeader>
+              <CardContent className="pt-4">
                 {loading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((i) => (
@@ -201,16 +232,13 @@ const Index = () => {
                     ))}
                   </div>
                 ) : (
-                  <ul className="space-y-3">
-                    {/* Reading Reminder - shows if no article read in 2 weeks */}
+                  <ul className="space-y-2">
                     <ReadingReminderCard />
-                    
-                    {/* Active model tasks */}
                     {todos.slice(0, 3).map((todo) => (
                       <li key={todo.id}>
                         <Link
                           to={`/models/${todo.modelId}/workspace`}
-                          className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                          className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group"
                         >
                           <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
                           <div className="flex-1 min-w-0">
@@ -221,15 +249,10 @@ const Index = () => {
                         </Link>
                       </li>
                     ))}
-                    
-                    {/* Getting started items if no todos */}
                     {todos.length === 0 && (
                       <>
                         <li>
-                          <Link
-                            to="/account"
-                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                          >
+                          <Link to="/account" className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
                             {profile?.onboarding_completed ? (
                               <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                             ) : (
@@ -240,10 +263,7 @@ const Index = () => {
                           </Link>
                         </li>
                         <li>
-                          <Link
-                            to="/models"
-                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                          >
+                          <Link to="/models" className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
                             {activatedModels.length > 0 ? (
                               <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                             ) : (
@@ -254,10 +274,7 @@ const Index = () => {
                           </Link>
                         </li>
                         <li>
-                          <Link
-                            to="/insights-hub"
-                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                          >
+                          <Link to="/insights-hub" className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
                             <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
                             <span className="text-sm font-medium flex-1 group-hover:text-primary transition-colors">Browse the Insights Hub</span>
                             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
@@ -265,18 +282,117 @@ const Index = () => {
                         </li>
                       </>
                     )}
-                    
                     {todos.length > 3 && (
-                      <li className="text-center">
+                      <li className="text-center pt-1">
                         <span className="text-xs text-muted-foreground">+{todos.length - 3} more tasks</span>
                       </li>
                     )}
                   </ul>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </section>
         </div>
+
+        {/* Latest News & Insights */}
+        <section>
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Newspaper className="h-4.5 w-4.5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Latest News & Insights</h2>
+                <p className="text-sm text-muted-foreground">Fresh content curated for you</p>
+              </div>
+            </div>
+            <Link to="/insights-hub">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                View all <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          {newsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardContent className="p-5">
+                    <Skeleton className="h-4 w-16 mb-3" />
+                    <Skeleton className="h-5 w-full mb-2" />
+                    <Skeleton className="h-4 w-3/4 mb-4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : news.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {news.slice(0, 6).map((item, index) => (
+                <a
+                  key={item.id}
+                  href={item.url || `/insights-hub`}
+                  target={item.url ? "_blank" : undefined}
+                  rel={item.url ? "noopener noreferrer" : undefined}
+                >
+                  <Card className={`group h-full hover:shadow-lg transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5 ${index === 0 ? "md:col-span-2 lg:col-span-1" : ""}`}>
+                    {item.image_url && (
+                      <div className="h-36 overflow-hidden rounded-t-lg">
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    <CardContent className={`${item.image_url ? "p-4" : "p-5"}`}>
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <Badge variant="secondary" className="text-xs capitalize font-normal">
+                          {item.type}
+                        </Badge>
+                        {item.estimated_time && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {item.estimated_time} min
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-sm leading-snug mb-1.5 group-hover:text-primary transition-colors line-clamp-2">
+                        {item.emoji && <span className="mr-1.5">{item.emoji}</span>}
+                        {item.title}
+                      </h3>
+                      {item.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{item.author || "Growth Lab"}</span>
+                        {item.published_date && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(item.published_date), "MMM d")}
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-muted/30">
+              <CardContent className="p-8 text-center">
+                <Newspaper className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">New insights and articles will appear here.</p>
+                <Link to="/insights-hub" className="mt-3 inline-block">
+                  <Button variant="outline" size="sm">Browse Insights Hub</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </section>
 
         {/* Personalized Recommendations */}
         {!recommendations.loading && hasRecommendations && (
@@ -284,12 +400,12 @@ const Index = () => {
             <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent px-6 py-4 border-b border-border/40">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                    <Sparkles className="h-5 w-5 text-primary" />
+                  <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center">
+                    <Sparkles className="h-4.5 w-4.5 text-primary" />
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold">Recommended For You</h2>
-                    <p className="text-sm text-muted-foreground">Curated based on your profile and interests</p>
+                    <p className="text-sm text-muted-foreground">Based on your profile and interests</p>
                   </div>
                 </div>
                 <Tooltip>
@@ -299,71 +415,62 @@ const Index = () => {
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="left" className="max-w-xs">
-                    <p className="text-sm">These recommendations are personalized based on your role, firm type, interests, and maturity levels. Update your profile to refine them.</p>
+                    <p className="text-sm">Personalized based on your role, firm type, interests, and maturity levels.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
             </div>
-            
             <div className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recommended Models */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {recommendations.models.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">📚</span>
-                      <h3 className="font-medium">Growth Models</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Growth Models</h3>
                     </div>
-                    <div className="space-y-3">
-                      {recommendations.models.slice(0, 3).map((model) => (
-                        <Link key={model.id} to={`/models/${model.id}`}>
-                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
-                            <CardContent className="p-4 flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">
-                                {model.emoji || "📚"}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate group-hover:text-primary transition-colors">{model.name}</p>
-                                <p className="text-sm text-muted-foreground truncate">{model.short_description}</p>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
+                    {recommendations.models.slice(0, 3).map((model) => (
+                      <Link key={model.id} to={`/models/${model.id}`}>
+                        <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">
+                              {model.emoji || "📚"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">{model.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{model.short_description}</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
                   </div>
                 )}
-
-
-                {/* Recommended Insights */}
                 {recommendations.resources.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">💡</span>
-                      <h3 className="font-medium">Insights Hub</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Lightbulb className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Insights</h3>
                     </div>
-                    <div className="space-y-3">
-                      {recommendations.resources.slice(0, 3).map((resource) => (
-                        <a key={resource.id} href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
-                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
-                            <CardContent className="p-4 flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-lg bg-accent/50 flex items-center justify-center text-xl shrink-0">
-                                {resource.emoji || "📄"}
+                    {recommendations.resources.slice(0, 3).map((resource) => (
+                      <a key={resource.id} href={resource.url || '#'} target="_blank" rel="noopener noreferrer">
+                        <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5">
+                          <CardContent className="p-4 flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-accent/50 flex items-center justify-center text-xl shrink-0">
+                              {resource.emoji || "📄"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">{resource.title}</p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Badge variant="secondary" className="text-xs capitalize">{resource.type}</Badge>
+                                {resource.author && <span className="truncate">by {resource.author}</span>}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate group-hover:text-primary transition-colors">{resource.title}</p>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Badge variant="secondary" className="text-xs capitalize">{resource.type}</Badge>
-                                  {resource.author && <span className="truncate">by {resource.author}</span>}
-                                </div>
-                              </div>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
-                            </CardContent>
-                          </Card>
-                        </a>
-                      ))}
-                    </div>
+                            </div>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                          </CardContent>
+                        </Card>
+                      </a>
+                    ))}
                   </div>
                 )}
               </div>
@@ -371,99 +478,107 @@ const Index = () => {
           </section>
         )}
 
-        {/* Quick Access Cards */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {quickAccessCards.map((card) => (
-              <Link key={card.title} to={card.href}>
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{card.emoji}</span>
-                      <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                        {card.title}
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription>{card.description}</CardDescription>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* My Activated Models */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">My Activated Models</h2>
-            {activatedModels.length > 0 && (
-              <Link to="/models">
-                <Button variant="ghost" size="sm">
-                  View All <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            )}
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2].map((i) => (
-                <Card key={i}>
-                  <CardContent className="p-6">
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2 mb-4" />
-                    <Skeleton className="h-2 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : activatedModels.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {activatedModels.map((am) => (
-                <Card key={am.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">{am.model?.emoji || "📚"}</span>
-                        <div>
-                          <h3 className="font-medium">{am.model?.name || "Model"}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {am.completed ? "Completed" : `Step ${am.current_step + 1}`}
-                          </p>
-                        </div>
+        {/* Quick Access + Active Models Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Quick Access */}
+          <section className="lg:col-span-2">
+            <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
+            <div className="space-y-3">
+              {[
+                { title: "Toolbox", desc: "Interactive frameworks to grow your practice", icon: BookOpen, href: "/models", emoji: "📚" },
+                { title: "Research Lab", desc: "Participate in studies, unlock rewards", icon: FlaskConical, href: "/research", emoji: "🧪" },
+                { title: "Insights Hub", desc: "Curated articles and resources", icon: Lightbulb, href: "/insights-hub", emoji: "💡" },
+              ].map((card) => (
+                <Link key={card.title} to={card.href}>
+                  <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center text-2xl shrink-0">
+                        {card.emoji}
                       </div>
-                      <Link to={`/models/${am.model_id}/workspace`}>
-                        <Button size="sm" variant={am.completed ? "outline" : "default"}>
-                          {am.completed ? "Review" : "Continue"}
-                        </Button>
-                      </Link>
-                    </div>
-                    <Progress value={am.completed ? 100 : Math.min((am.current_step / 5) * 100, 90)} className="h-2" />
-                  </CardContent>
-                </Card>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm group-hover:text-primary transition-colors">{card.title}</p>
+                        <p className="text-xs text-muted-foreground">{card.desc}</p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
-          ) : (
-            <Card className="bg-muted/50">
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground mb-4">
-                  You haven't started any models yet. Browse our collection and start growing your practice!
-                </p>
+          </section>
+
+          {/* Active Models */}
+          <section className="lg:col-span-3">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">My Active Models</h2>
+              {activatedModels.length > 0 && (
                 <Link to="/models">
-                  <Button>
-                    Browse Models <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                    View All <ArrowRight className="ml-1 h-4 w-4" />
                   </Button>
                 </Link>
-              </CardContent>
-            </Card>
-          )}
-        </section>
+              )}
+            </div>
 
-
-
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[1, 2].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="p-5">
+                      <Skeleton className="h-5 w-3/4 mb-2" />
+                      <Skeleton className="h-4 w-1/2 mb-4" />
+                      <Skeleton className="h-2 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : activatedModels.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {activatedModels.map((am) => {
+                  const totalSteps = (am.model?.steps as ModelStep[] | undefined)?.length || 5;
+                  const progressPct = am.completed ? 100 : Math.min((am.current_step / totalSteps) * 100, 95);
+                  return (
+                    <Card key={am.id} className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
+                      <CardContent className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-xl">{am.model?.emoji || "📚"}</span>
+                            <div>
+                              <h3 className="font-medium text-sm">{am.model?.name || "Model"}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                {am.completed ? "✅ Completed" : `Step ${am.current_step + 1} of ${totalSteps}`}
+                              </p>
+                            </div>
+                          </div>
+                          <Link to={`/models/${am.model_id}/workspace`}>
+                            <Button size="sm" variant={am.completed ? "outline" : "default"} className="text-xs h-8">
+                              {am.completed ? "Review" : "Continue"}
+                            </Button>
+                          </Link>
+                        </div>
+                        <Progress value={progressPct} className="h-1.5" />
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <Card className="bg-muted/30 border-dashed">
+                <CardContent className="p-8 text-center">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Start a growth model and track your progress here.
+                  </p>
+                  <Link to="/models">
+                    <Button size="sm">
+                      Browse Models <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+        </div>
       </div>
     </AppLayout>
   );
