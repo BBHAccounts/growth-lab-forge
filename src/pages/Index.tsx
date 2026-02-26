@@ -463,59 +463,7 @@ const Index = () => {
           )}
         </section>
 
-        {/* Followed Vendors */}
-        {followedVendors.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Your Followed Vendors</h2>
-              <Link to="/martech">
-                <Button variant="ghost" size="sm">
-                  View All <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {followedVendors.map((vendor) => (
-                <Card key={vendor.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      {vendor.logo_url ? (
-                        <img
-                          src={vendor.logo_url}
-                          alt={vendor.name}
-                          className="h-8 w-8 rounded object-contain"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                          <span className="text-xs font-bold">{vendor.name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <h3 className="font-medium truncate">{vendor.name}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {vendor.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="text-xs">
-                        <Heart className="h-3 w-3 mr-1 fill-current" /> Following
-                      </Badge>
-                      {vendor.website_url && (
-                        <a
-                          href={vendor.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Visit
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+
 
       </div>
     </AppLayout>
