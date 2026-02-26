@@ -350,7 +350,7 @@ export default function Programmes() {
                         )}
                         {getDeadlineBadge(item.program.deadline)}
                       </div>
-                      <Link to={`/program/${item.access_code}${item.status !== "invited" ? "/workspace" : ""}`}>
+                      <Link to={`/program/${item.access_code}`}>
                         <Button size="sm" variant={item.status === "submitted" ? "outline" : "default"}>
                           {item.status === "submitted" ? "Review" : item.status === "in_progress" ? "Continue" : "Start"}
                           <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
