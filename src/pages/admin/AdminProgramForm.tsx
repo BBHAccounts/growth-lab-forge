@@ -152,6 +152,62 @@ export default function AdminProgramForm() {
     return `${prefix}-${random}`;
   };
 
+  const handleSearchUsers = async (query: string) => {
+    setUserSearch(query);
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .limit(10);
+      
+      // Filter out users already in participants
+      const existingUserIds = participants.filter(p => p.user_id).map(p => p.user_id);
+      setSearchResults((data || []).filter(u => !existingUserIds.includes(u.user_id)));
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleAddExistingUser = async () => {
+    if (!programId || !selectedUser) return;
+    setSendingInvite(true);
+    try {
+      const accessCode = generateAccessCode();
+      const { data: participant, error } = await supabase
+        .from('program_participants')
+        .insert({
+          program_id: programId,
+          user_id: selectedUser.user_id,
+          email: selectedUser.email,
+          name: selectedUser.full_name,
+          access_code: accessCode,
+          status: 'invited',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setParticipants([participant, ...participants]);
+      setSelectedUser(null);
+      setUserSearch('');
+      setSearchResults([]);
+      setShowAddParticipant(false);
+      toast({ title: 'User added to program' });
+    } catch (error: any) {
+      toast({ title: 'Error adding user', description: error.message, variant: 'destructive' });
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.name.trim()) {
       toast({ title: 'Name is required', variant: 'destructive' });
