@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Check, Save, Plus, Trash2, X } from "lucide-react";
+import { FieldAssistant } from "@/components/FieldAssistant";
 
 interface ModelField {
   id: string;
