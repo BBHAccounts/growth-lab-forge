@@ -174,15 +174,15 @@ const Index = () => {
       emoji: "🧪",
     },
     {
-      title: "Martech Map",
-      description: "Explore legal marketing technology",
-      icon: Map,
-      href: "/martech",
-      emoji: "🗺️",
+      title: "Insights Hub",
+      description: "Curated articles and resources",
+      icon: Lightbulb,
+      href: "/insights-hub",
+      emoji: "💡",
     },
   ];
 
-  const hasRecommendations = recommendations.models.length > 0 || recommendations.martechCategories.length > 0 || recommendations.resources.length > 0;
+  const hasRecommendations = recommendations.models.length > 0 || recommendations.resources.length > 0;
 
   return (
     <AppLayout>
