@@ -33,7 +33,6 @@ const adminNavItems = [
   { title: 'Programs', url: '/admin/programs', icon: ClipboardList },
   { title: 'Insights Hub', url: '/admin/insights-hub', icon: FileText },
   { title: 'Research Lab', url: '/admin/research', icon: FlaskConical },
-  { title: 'Martech Map', url: '/admin/martech', icon: MapPin },
   { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
   { title: 'Notifications', url: '/admin/notifications', icon: Bell },
   { title: 'Settings', url: '/admin/settings', icon: Settings },

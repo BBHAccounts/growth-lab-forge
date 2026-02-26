@@ -20,18 +20,9 @@ const mainNavItems = [{
   url: "/research",
   icon: FlaskConical
 }, {
-  title: "Martech Map",
-  url: "/martech",
-  icon: Map
-}, {
   title: "Insights Hub",
   url: "/insights-hub",
   icon: Lightbulb
-}, {
-  title: "Expert Network",
-  url: "/expert-network",
-  icon: Users,
-  comingSoon: true
 }];
 const secondaryNavItems = [{
   title: "My Account",
