@@ -8,13 +8,13 @@ import { useProfile } from "@/hooks/use-profile";
 import { Badge } from "@/components/ui/badge";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
 const mainNavItems = [{
+  title: "Dashboard",
+  url: "/",
+  icon: Home
+}, {
   title: "Programmes",
   url: "/programmes",
   icon: GraduationCap
-}, {
-  title: "Home",
-  url: "/",
-  icon: Home
 }, {
   title: "Toolbox",
   url: "/models",
