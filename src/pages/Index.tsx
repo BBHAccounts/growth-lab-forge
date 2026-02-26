@@ -67,11 +67,23 @@ interface NewsItem {
   image_url: string | null;
 }
 
+interface EnrolledProgram {
+  participant_id: string;
+  access_code: string;
+  status: string;
+  program_name: string;
+  program_description: string | null;
+  deadline: string | null;
+  model_emoji: string | null;
+  model_name: string | null;
+}
+
 const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [enrolledPrograms, setEnrolledPrograms] = useState<EnrolledProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
 
