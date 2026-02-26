@@ -287,7 +287,15 @@ export default function ProgramLanding() {
                       <span className="text-sm">
                         {m.emoji} {m.name}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-auto">{m.stepCount} steps</span>
+                      <div className="ml-auto flex items-center gap-3">
+                        {m.deadline && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(m.deadline).toLocaleDateString()}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">{m.stepCount} steps</span>
+                      </div>
                     </div>
                   ))}
                 </div>
