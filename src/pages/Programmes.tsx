@@ -286,7 +286,7 @@ export default function Programmes() {
                       </p>
                     )}
 
-                    {/* Models with deadlines */}
+                    {/* Models list */}
                     {item.models.length > 0 && (
                       <div className="space-y-1.5 mb-4">
                         {item.models.map((m, i) => {
@@ -313,13 +313,6 @@ export default function Programmes() {
                               <span className={isCompleted ? "text-chart-4" : "text-foreground"}>
                                 {m.emoji} {m.name}
                               </span>
-                              {m.deadline && (
-                                <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
-                                  {format(new Date(m.deadline), "MMM d")}
-                                </span>
-                              )}
-                              {getDeadlineBadge(m.deadline)}
                             </div>
                           );
                         })}
@@ -340,16 +333,7 @@ export default function Programmes() {
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {item.program.deadline && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>{format(new Date(item.program.deadline), "MMM d, yyyy")}</span>
-                          </div>
-                        )}
-                        {getDeadlineBadge(item.program.deadline)}
-                      </div>
+                    <div className="flex items-center justify-end">
                       <Link to={`/program/${item.access_code}`}>
                         <Button size="sm" variant={item.status === "submitted" ? "outline" : "default"}>
                           {item.status === "submitted" ? "Review" : item.status === "in_progress" ? "Continue" : "Start"}
