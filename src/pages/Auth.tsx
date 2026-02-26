@@ -4,23 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, CheckCircle, ArrowLeft, Eye, EyeOff, Star } from "lucide-react";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
 
-type AuthMode = "signin" | "signup" | "success" | "password" | "forgot" | "reset-sent" | "resetting";
+type AuthMode = "main" | "success" | "password" | "forgot" | "reset-sent" | "resetting";
 
 export default function Auth() {
-  const [mode, setMode] = useState<AuthMode>("signin");
+  const [mode, setMode] = useState<AuthMode>("main");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [consentAccepted, setConsentAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
@@ -32,16 +29,27 @@ export default function Auth() {
       setMode("resetting");
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setMode("resetting");
       } else if (session?.user && mode !== "resetting") {
         // Mark email as verified on magic link login
-        supabase.from('profiles')
+        await supabase.from('profiles')
           .update({ email_verified: true })
+          .eq('user_id', session.user.id);
+
+        // Check if profile needs onboarding (no name set)
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name, onboarding_completed')
           .eq('user_id', session.user.id)
-          .then(() => {});
-        navigate("/");
+          .single();
+
+        if (!profile?.full_name || profile.full_name.trim() === '') {
+          navigate("/onboarding");
+        } else {
+          navigate("/");
+        }
       }
     });
 
@@ -54,12 +62,12 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, mode]);
 
-  const handleSendMagicLink = async (e: React.FormEvent) => {
+  const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       const response = await supabase.functions.invoke("send-auth-email", {
-        body: { email, type: "magiclink", site_url: window.location.origin }
+        body: { email, type: "auto", site_url: window.location.origin }
       });
       if (response.error) throw response.error;
       const data = response.data;
@@ -70,26 +78,6 @@ export default function Auth() {
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to send sign-in link", variant: "destructive" });
-    }
-    setLoading(false);
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await supabase.functions.invoke("send-auth-email", {
-        body: { email, type: "signup_magiclink", full_name: fullName, site_url: window.location.origin }
-      });
-      if (response.error) throw response.error;
-      const data = response.data;
-      if (data?.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
-      } else {
-        setMode("success");
-      }
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to create account", variant: "destructive" });
     }
     setLoading(false);
   };
@@ -105,16 +93,20 @@ export default function Auth() {
         return;
       }
       if (authData.user) {
-        const { data: profile } = await supabase.from("profiles").select("email_verified").eq("user_id", authData.user.id).maybeSingle();
+        const { data: profile } = await supabase.from("profiles").select("email_verified, full_name").eq("user_id", authData.user.id).maybeSingle();
         if (profile && !profile.email_verified) {
           await supabase.auth.signOut();
           toast({ title: "Email not verified", description: "Please check your email for a verification link.", variant: "destructive" });
           setLoading(false);
           return;
         }
+        if (!profile?.full_name || profile.full_name.trim() === '') {
+          navigate("/onboarding");
+        } else {
+          navigate("/");
+        }
       }
       toast({ title: "Welcome back!", description: "You've successfully logged in." });
-      navigate("/");
     } catch (err: any) {
       toast({ title: "Connection error", description: "Unable to connect. Please try again.", variant: "destructive" });
     }
@@ -144,7 +136,7 @@ export default function Auth() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Password updated", description: "Your password has been successfully reset." });
-      setMode("signin");
+      setMode("main");
       navigate("/");
     }
     setLoading(false);
@@ -173,8 +165,8 @@ export default function Auth() {
             <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
               💡 Can't find the email? Check your spam or junk folder.
             </div>
-            <Button variant="outline" onClick={() => { setMode("signin"); setEmail(""); }}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to sign in
+            <Button variant="outline" onClick={() => { setMode("main"); setEmail(""); }}>
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back
             </Button>
           </div>
         );
@@ -220,8 +212,8 @@ export default function Auth() {
                 We've sent a password reset link to <strong>{email}</strong>
               </p>
             </div>
-            <Button variant="outline" onClick={() => { setMode("signin"); setEmail(""); }}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back to sign in
+            <Button variant="outline" onClick={() => { setMode("main"); setEmail(""); }}>
+              <ArrowLeft className="h-4 w-4 mr-2" /> Back
             </Button>
           </div>
         );
@@ -242,8 +234,8 @@ export default function Auth() {
                 {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Send Reset Link
               </Button>
-              <Button type="button" variant="ghost" className="w-full" onClick={() => { setMode("signin"); setEmail(""); }}>
-                <ArrowLeft className="h-4 w-4 mr-2" /> Back to sign in
+              <Button type="button" variant="ghost" className="w-full" onClick={() => { setMode("main"); setEmail(""); }}>
+                <ArrowLeft className="h-4 w-4 mr-2" /> Back
               </Button>
             </form>
           </div>
@@ -279,86 +271,38 @@ export default function Auth() {
                 {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Sign In
               </Button>
-              <button type="button" onClick={() => setMode("signin")} className="w-full text-sm text-muted-foreground hover:text-foreground text-center">
+              <button type="button" onClick={() => setMode("main")} className="w-full text-sm text-muted-foreground hover:text-foreground text-center">
                 ← Back to magic link sign in
               </button>
             </form>
           </div>
         );
 
-      case "signup":
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Create your account</h2>
-              <p className="text-muted-foreground mt-1">
-                Join Growth Lab and access strategic frameworks for legal business development.
-              </p>
-            </div>
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-name">Full Name</Label>
-                <Input id="signup-name" type="text" placeholder="Jane Smith" value={fullName} onChange={e => setFullName(e.target.value)} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Work Email</Label>
-                <Input id="signup-email" type="email" placeholder="you@lawfirm.com" value={email} onChange={e => setEmail(e.target.value)} required />
-              </div>
-              <div className="flex items-start space-x-3 pt-2">
-                <Checkbox id="consent" checked={consentAccepted} onCheckedChange={checked => setConsentAccepted(checked === true)} className="mt-0.5" />
-                <Label htmlFor="consent" className="text-sm leading-relaxed cursor-pointer text-muted-foreground">
-                  I agree to the{" "}
-                  <button type="button" onClick={() => setShowTerms(true)} className="text-primary underline hover:no-underline">
-                    Terms of Use and Privacy Notice
-                  </button>
-                  . I understand that Growth Lab is part of BeyondBillableHours, that anonymised data may be used for industry insights, and that I may receive platform communications.
-                </Label>
-              </div>
-              <Button type="submit" className="w-full" disabled={!consentAccepted || loading}>
-                {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Create Account
-              </Button>
-              <p className="text-sm text-center text-muted-foreground">
-                Already have an account?{" "}
-                <button type="button" onClick={() => setMode("signin")} className="text-primary hover:underline font-medium">
-                  Sign in
-                </button>
-              </p>
-            </form>
-          </div>
-        );
-
-      case "signin":
+      case "main":
       default:
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>
+              <h2 className="text-2xl font-bold text-foreground">Sign in or create account</h2>
               <p className="text-muted-foreground mt-1">
-                Enter your email and we'll send you a sign-in link — no password needed.
+                Enter your work email — we'll send you a sign-in link. If you're new, we'll create your account automatically.
               </p>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-              Accounts are for legal professionals looking to drive growth and build a stronger business.
+              For legal professionals looking to drive growth and build a stronger business.
             </div>
-            <form onSubmit={handleSendMagicLink} className="space-y-4">
+            <form onSubmit={handleContinue} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="signin-email">Work Email</Label>
-                <Input id="signin-email" type="email" placeholder="you@lawfirm.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                <Label htmlFor="email">Work Email</Label>
+                <Input id="email" type="email" placeholder="you@lawfirm.com" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 <Mail className="h-4 w-4 mr-2" />
-                Send Sign-In Link
+                Continue with Email
               </Button>
             </form>
-            <div className="space-y-3 text-center">
-              <p className="text-sm text-muted-foreground">
-                New to Growth Lab?{" "}
-                <button type="button" onClick={() => setMode("signup")} className="text-primary hover:underline font-medium">
-                  Create account
-                </button>
-              </p>
+            <div className="text-center">
               <button type="button" onClick={() => setMode("password")} className="text-xs text-muted-foreground hover:text-foreground">
                 Or sign in with password
               </button>
