@@ -168,13 +168,6 @@ export default function Auth() {
                 <Mail className="h-4 w-4 mr-2" />
                 Continue with Email
               </Button>
-            </form>
-            <div className="text-center">
-              <button type="button" onClick={() => setMode("password")} className="text-xs text-muted-foreground hover:text-foreground">
-                Or sign in with password
-              </button>
-            </div>
-          </div>
         );
     }
   };
