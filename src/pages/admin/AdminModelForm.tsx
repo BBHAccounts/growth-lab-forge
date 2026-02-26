@@ -151,6 +151,7 @@ export default function AdminModelForm() {
             tags: modelRes.data.tags || [],
             outcomes: modelRes.data.outcomes || [],
             suggested_actions: modelRes.data.suggested_actions || [],
+            ai_assistant_prompt: modelRes.data.ai_assistant_prompt || '',
           });
           
           setOwnerId(modelRes.data.owner_id || null);
