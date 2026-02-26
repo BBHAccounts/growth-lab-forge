@@ -60,8 +60,17 @@ const handler = async (req: Request): Promise<Response> => {
     const baseUrl = site_url || redirect_to || "https://growthlab.beyondbillablehours.io";
     let subject = "";
     let htmlContent = "";
+    let resolvedType = type;
 
-    if (type === "magiclink") {
+    // Auto-detect: check if user exists, then route to magiclink or signup_magiclink
+    if (type === "auto") {
+      const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = userData?.users?.find(u => u.email === email);
+      resolvedType = existingUser ? "magiclink" : "signup_magiclink";
+      console.log(`Auto-detected type: ${resolvedType} for ${email}`);
+    }
+
+    if (resolvedType === "magiclink") {
       // Generate magic link for existing user
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
