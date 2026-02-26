@@ -148,7 +148,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
+    const { url, topicCategories, topics } = await req.json();
 
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
