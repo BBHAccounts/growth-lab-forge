@@ -148,7 +148,7 @@ export default function Programmes() {
       return <Badge className="text-xs bg-destructive/15 text-destructive border-0">{daysLeft}d left</Badge>;
     }
     if (daysLeft <= 7) {
-      return <Badge className="text-xs bg-amber-500/15 text-amber-700 dark:text-amber-400 border-0">{daysLeft}d left</Badge>;
+      return <Badge className="text-xs bg-accent text-accent-foreground border-0">{daysLeft}d left</Badge>;
     }
     return null;
   };
