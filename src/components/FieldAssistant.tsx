@@ -1,9 +1,48 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+function renderMarkdown(text: string) {
+  // Split into lines, then process inline markdown
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+
+  lines.forEach((line, lineIdx) => {
+    if (lineIdx > 0) elements.push(<br key={`br-${lineIdx}`} />);
+
+    // Process inline: bold (**text**), italic (*text*), bullet points
+    const isBullet = /^\s*[\*\-]\s+/.test(line);
+    const cleanLine = isBullet ? line.replace(/^\s*[\*\-]\s+/, "") : line;
+
+    // Split by **bold** and *italic* patterns
+    const parts = cleanLine.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    const inlineElements = parts.map((part, partIdx) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={partIdx}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
+        return <em key={partIdx}>{part.slice(1, -1)}</em>;
+      }
+      return <span key={partIdx}>{part}</span>;
+    });
+
+    if (isBullet) {
+      elements.push(
+        <span key={`line-${lineIdx}`} className="flex gap-1.5 items-start">
+          <span className="text-muted-foreground mt-0.5">•</span>
+          <span>{inlineElements}</span>
+        </span>
+      );
+    } else {
+      elements.push(<span key={`line-${lineIdx}`}>{inlineElements}</span>);
+    }
+  });
+
+  return elements;
+}
 
 interface FieldAssistantProps {
   modelId: string;
