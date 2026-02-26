@@ -15,10 +15,6 @@ interface AnalyticsData {
     totalActivations: number;
     topActivated: { name: string; count: number }[];
   };
-  vendorStats: {
-    total: number;
-    topLiked: { name: string; likes: number }[];
-  };
   researchStats: {
     totalStudies: number;
     totalResponses: number;
