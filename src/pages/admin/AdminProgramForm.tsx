@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Copy, Plus, Send, Trash2, Users, Link2, Mail } from 'lucide-react';
+import { ArrowLeft, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search } from 'lucide-react';
 
 interface Model {
   id: string;
@@ -53,6 +53,7 @@ interface Participant {
   status: string;
   invited_at: string | null;
   last_accessed_at: string | null;
+  user_id: string | null;
 }
 
 interface Program {
@@ -79,6 +80,11 @@ export default function AdminProgramForm() {
   const [newParticipant, setNewParticipant] = useState({ email: '', name: '' });
   const [sendingInvite, setSendingInvite] = useState(false);
   const [shareableLink, setShareableLink] = useState('');
+  const [addMode, setAddMode] = useState<'new' | 'existing'>('new');
+  const [userSearch, setUserSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<{ user_id: string; full_name: string | null; email: string | null }[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ user_id: string; full_name: string | null; email: string | null } | null>(null);
 
   const [formData, setFormData] = useState<Program>({
     id: '',
@@ -145,6 +151,62 @@ export default function AdminProgramForm() {
     const prefix = formData.name.slice(0, 4).toLowerCase().replace(/[^a-z]/g, '') || 'prog';
     const random = Math.random().toString(36).substring(2, 10);
     return `${prefix}-${random}`;
+  };
+
+  const handleSearchUsers = async (query: string) => {
+    setUserSearch(query);
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .limit(10);
+      
+      // Filter out users already in participants
+      const existingUserIds = participants.filter(p => p.user_id).map(p => p.user_id);
+      setSearchResults((data || []).filter(u => !existingUserIds.includes(u.user_id)));
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleAddExistingUser = async () => {
+    if (!programId || !selectedUser) return;
+    setSendingInvite(true);
+    try {
+      const accessCode = generateAccessCode();
+      const { data: participant, error } = await supabase
+        .from('program_participants')
+        .insert({
+          program_id: programId,
+          user_id: selectedUser.user_id,
+          email: selectedUser.email,
+          name: selectedUser.full_name,
+          access_code: accessCode,
+          status: 'invited',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      setParticipants([participant, ...participants]);
+      setSelectedUser(null);
+      setUserSearch('');
+      setSearchResults([]);
+      setShowAddParticipant(false);
+      toast({ title: 'User added to program' });
+    } catch (error: any) {
+      toast({ title: 'Error adding user', description: error.message, variant: 'destructive' });
+    } finally {
+      setSendingInvite(false);
+    }
   };
 
   const handleSave = async () => {
@@ -499,51 +561,117 @@ export default function AdminProgramForm() {
                         Add Participant
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle>Add Participant</DialogTitle>
                         <DialogDescription>
-                          Add a participant and optionally send them an email invite.
+                          Add an existing user or a new participant.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="participant-email">Email</Label>
-                          <Input
-                            id="participant-email"
-                            type="email"
-                            value={newParticipant.email}
-                            onChange={(e) => setNewParticipant({ ...newParticipant, email: e.target.value })}
-                            placeholder="participant@example.com"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="participant-name">Name</Label>
-                          <Input
-                            id="participant-name"
-                            value={newParticipant.name}
-                            onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
-                            placeholder="John Doe"
-                          />
-                        </div>
+                      
+                      {/* Mode Toggle */}
+                      <div className="flex gap-2 border-b pb-3">
+                        <Button
+                          variant={addMode === 'existing' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => { setAddMode('existing'); setSelectedUser(null); }}
+                        >
+                          <Search className="h-4 w-4 mr-1.5" />
+                          Existing User
+                        </Button>
+                        <Button
+                          variant={addMode === 'new' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setAddMode('new')}
+                        >
+                          <Plus className="h-4 w-4 mr-1.5" />
+                          New Participant
+                        </Button>
                       </div>
-                      <DialogFooter className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => handleAddParticipant(false)}
-                          disabled={sendingInvite}
-                        >
-                          <Link2 className="h-4 w-4 mr-2" />
-                          Add (share link later)
-                        </Button>
-                        <Button
-                          onClick={() => handleAddParticipant(true)}
-                          disabled={sendingInvite || !newParticipant.email}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          {sendingInvite ? 'Sending...' : 'Send Email Invite'}
-                        </Button>
-                      </DialogFooter>
+
+                      {addMode === 'existing' ? (
+                        <div className="space-y-4 py-2">
+                          <div className="space-y-2">
+                            <Label>Search by name or email</Label>
+                            <Input
+                              value={userSearch}
+                              onChange={(e) => handleSearchUsers(e.target.value)}
+                              placeholder="Type to search..."
+                            />
+                          </div>
+                          {searchLoading && <p className="text-sm text-muted-foreground">Searching...</p>}
+                          {searchResults.length > 0 && (
+                            <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-1">
+                              {searchResults.map(user => (
+                                <button
+                                  key={user.user_id}
+                                  onClick={() => setSelectedUser(user)}
+                                  className={`w-full text-left p-2.5 rounded-md text-sm transition-colors ${
+                                    selectedUser?.user_id === user.user_id
+                                      ? 'bg-primary/10 border border-primary/30'
+                                      : 'hover:bg-muted'
+                                  }`}
+                                >
+                                  <p className="font-medium">{user.full_name || 'No name'}</p>
+                                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {userSearch.length >= 2 && !searchLoading && searchResults.length === 0 && (
+                            <p className="text-sm text-muted-foreground">No users found.</p>
+                          )}
+                          <DialogFooter>
+                            <Button
+                              onClick={handleAddExistingUser}
+                              disabled={!selectedUser || sendingInvite}
+                            >
+                              {sendingInvite ? 'Adding...' : 'Add to Program'}
+                            </Button>
+                          </DialogFooter>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-4 py-2">
+                            <div className="space-y-2">
+                              <Label htmlFor="participant-email">Email</Label>
+                              <Input
+                                id="participant-email"
+                                type="email"
+                                value={newParticipant.email}
+                                onChange={(e) => setNewParticipant({ ...newParticipant, email: e.target.value })}
+                                placeholder="participant@example.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="participant-name">Name</Label>
+                              <Input
+                                id="participant-name"
+                                value={newParticipant.name}
+                                onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
+                                placeholder="John Doe"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleAddParticipant(false)}
+                              disabled={sendingInvite}
+                            >
+                              <Link2 className="h-4 w-4 mr-2" />
+                              Add (share link later)
+                            </Button>
+                            <Button
+                              onClick={() => handleAddParticipant(true)}
+                              disabled={sendingInvite || !newParticipant.email}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              {sendingInvite ? 'Sending...' : 'Send Email Invite'}
+                            </Button>
+                          </DialogFooter>
+                        </>
+                      )}
                     </DialogContent>
                   </Dialog>
                 </div>

@@ -42,6 +42,7 @@ import AdminProgramResponses from "./pages/admin/AdminProgramResponses";
 import AdminProgramCompare from "./pages/admin/AdminProgramCompare";
 
 // Program pages (participant-facing)
+import Programmes from "./pages/Programmes";
 import ProgramLanding from "./pages/program/ProgramLanding";
 import ProgramWorkspace from "./pages/program/ProgramWorkspace";
 import ProgramReview from "./pages/program/ProgramReview";
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/email-verified" element={<EmailVerified />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/programmes" element={<Programmes />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
