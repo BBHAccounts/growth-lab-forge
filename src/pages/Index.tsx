@@ -41,13 +41,8 @@ interface ActivatedModel {
   model: Model;
 }
 
-interface Vendor {
-  id: string;
-  name: string;
-  description: string | null;
-  logo_url: string | null;
-  website_url: string | null;
-}
+
+
 
 interface TodoItem {
   id: string;
