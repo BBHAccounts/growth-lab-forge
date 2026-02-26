@@ -82,6 +82,7 @@ const defaultModel: Model = {
   video_url: '',
   suggested_actions: [],
   steps: [],
+  ai_assistant_prompt: '',
 };
 
 export default function AdminModelForm() {
