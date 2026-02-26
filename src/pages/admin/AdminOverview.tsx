@@ -8,11 +8,8 @@ interface Stats {
   totalUsers: number;
   activeUsers: number;
   totalModels: number;
-  totalMartechCategories: number;
-  totalVendors: number;
   topModels: { name: string; count: number }[];
   topLikedModels: { name: string; likes: number }[];
-  topVendors: { name: string; likes: number }[];
   researchParticipation: { title: string; responses: number }[];
 }
 
@@ -21,11 +18,8 @@ export default function AdminOverview() {
     totalUsers: 0,
     activeUsers: 0,
     totalModels: 0,
-    totalMartechCategories: 0,
-    totalVendors: 0,
     topModels: [],
     topLikedModels: [],
-    topVendors: [],
     researchParticipation: [],
   });
   const [loading, setLoading] = useState(true);
@@ -33,7 +27,6 @@ export default function AdminOverview() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch counts in parallel
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -41,14 +34,10 @@ export default function AdminOverview() {
           { count: totalUsers },
           { count: activeUsers },
           { count: totalModels },
-          { count: totalMartechCategories },
-          { count: totalVendors },
         ] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', thirtyDaysAgo.toISOString()),
           supabase.from('models').select('*', { count: 'exact', head: true }),
-          supabase.from('martech_categories').select('*', { count: 'exact', head: true }),
-          supabase.from('vendors').select('*', { count: 'exact', head: true }),
         ]);
 
         // Top activated models
@@ -81,18 +70,6 @@ export default function AdminOverview() {
           likes: m.likes_count || 0,
         })) || [];
 
-        // Top liked vendors
-        const { data: likedVendors } = await supabase
-          .from('vendors')
-          .select('name, likes_count')
-          .order('likes_count', { ascending: false })
-          .limit(5);
-
-        const topVendors = likedVendors?.map((v) => ({
-          name: v.name,
-          likes: v.likes_count || 0,
-        })) || [];
-
         // Research participation
         const { data: studies } = await supabase
           .from('research_studies')
@@ -112,11 +89,8 @@ export default function AdminOverview() {
           totalUsers: totalUsers || 0,
           activeUsers: activeUsers || 0,
           totalModels: totalModels || 0,
-          totalMartechCategories: totalMartechCategories || 0,
-          totalVendors: totalVendors || 0,
           topModels,
           topLikedModels,
-          topVendors,
           researchParticipation,
         });
       } catch (error) {
@@ -138,7 +112,7 @@ export default function AdminOverview() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -171,26 +145,6 @@ export default function AdminOverview() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Martech Categories</CardTitle>
-              <Box className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{loading ? '...' : stats.totalMartechCategories}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Vendors</CardTitle>
-              <Box className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{loading ? '...' : stats.totalVendors}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Research Studies</CardTitle>
               <FlaskConical className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -201,7 +155,7 @@ export default function AdminOverview() {
         </div>
 
         {/* Top Lists */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Top Activated Models</CardTitle>
@@ -241,30 +195,6 @@ export default function AdminOverview() {
                     <li key={i} className="flex justify-between text-sm">
                       <span>{model.name}</span>
                       <span className="text-muted-foreground">{model.likes} likes</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Heart className="h-4 w-4" /> Top Vendors
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              ) : stats.topVendors.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No data yet</p>
-              ) : (
-                <ul className="space-y-2">
-                  {stats.topVendors.map((vendor, i) => (
-                    <li key={i} className="flex justify-between text-sm">
-                      <span>{vendor.name}</span>
-                      <span className="text-muted-foreground">{vendor.likes} likes</span>
                     </li>
                   ))}
                 </ul>
