@@ -371,6 +371,7 @@ export default function Auth() {
                 <p className="text-2xl">💡</p>
                 <p className="text-xs text-primary-foreground/50 mt-1">Insights Hub</p>
               </div>
+              <div>
                 <p className="text-2xl">🧪</p>
                 <p className="text-xs text-primary-foreground/50 mt-1">Research Lab</p>
               </div>

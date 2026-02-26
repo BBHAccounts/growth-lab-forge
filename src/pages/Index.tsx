@@ -356,36 +356,6 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Recommended Martech Categories */}
-                {recommendations.martechCategories.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🗺️</span>
-                      <h3 className="font-medium">Martech Map</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {recommendations.martechCategories.slice(0, 3).map((category) => (
-                        <Link key={category.id} to={`/martech?category=${encodeURIComponent(category.name)}`}>
-                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
-                            <CardContent className="p-4 flex items-center gap-3">
-                              <div 
-                                className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 text-white font-semibold"
-                                style={{ backgroundColor: `hsl(${category.name.charCodeAt(0) * 7 % 360}, 60%, 50%)` }}
-                              >
-                                {category.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate group-hover:text-primary transition-colors">{category.name}</p>
-                                <p className="text-sm text-muted-foreground">Explore vendors</p>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Recommended Insights */}
                 {recommendations.resources.length > 0 && (
