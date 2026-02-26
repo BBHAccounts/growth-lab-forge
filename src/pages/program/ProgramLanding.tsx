@@ -119,19 +119,20 @@ export default function ProgramLanding() {
 
           if (modelsData) {
             // Maintain order from program_models
-            const orderedIds = pmData && pmData.length > 0
-              ? pmData.map(pm => pm.model_id)
-              : modelIds;
-
+            const orderedPms = pmData && pmData.length > 0 ? pmData : modelIds.map(id => ({ model_id: id, deadline: null }));
             const modelsMap = Object.fromEntries(modelsData.map(m => [m.id, m]));
-            const ordered: ProgramModelInfo[] = orderedIds
-              .map(id => modelsMap[id])
-              .filter(Boolean)
-              .map(m => ({
-                name: m.name,
-                emoji: m.emoji,
-                stepCount: Array.isArray(m.steps) ? m.steps.length : 0,
-              }));
+            const ordered: ProgramModelInfo[] = orderedPms
+              .map(pm => {
+                const m = modelsMap[pm.model_id];
+                if (!m) return null;
+                return {
+                  name: m.name,
+                  emoji: m.emoji,
+                  stepCount: Array.isArray(m.steps) ? m.steps.length : 0,
+                  deadline: pm.deadline || null,
+                };
+              })
+              .filter(Boolean) as ProgramModelInfo[];
             setProgramModels(ordered);
           }
         }
