@@ -79,6 +79,11 @@ export default function AdminProgramForm() {
   const [newParticipant, setNewParticipant] = useState({ email: '', name: '' });
   const [sendingInvite, setSendingInvite] = useState(false);
   const [shareableLink, setShareableLink] = useState('');
+  const [addMode, setAddMode] = useState<'new' | 'existing'>('new');
+  const [userSearch, setUserSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<{ user_id: string; full_name: string | null; email: string | null }[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ user_id: string; full_name: string | null; email: string | null } | null>(null);
 
   const [formData, setFormData] = useState<Program>({
     id: '',
