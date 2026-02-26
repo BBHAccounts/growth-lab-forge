@@ -8,7 +8,6 @@ import Auth from "./pages/Auth";
 import Models from "./pages/Models";
 import ModelDetail from "./pages/ModelDetail";
 import ModelWorkspace from "./pages/ModelWorkspace";
-import Martech from "./pages/Martech";
 import Research from "./pages/Research";
 import ResearchSurvey from "./pages/ResearchSurvey";
 import About from "./pages/About";
