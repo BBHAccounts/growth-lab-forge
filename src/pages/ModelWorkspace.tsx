@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Check, Save, X, Plus, Trash2, FileText, Download, PenLine } from "lucide-react";
 import { ModelSummary } from "@/components/ModelSummary";
 import { generateModelPDF } from "@/lib/pdf-generator";
+import { FieldAssistant } from "@/components/FieldAssistant";
 
 interface ModelField {
   id: string;
