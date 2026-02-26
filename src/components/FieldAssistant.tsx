@@ -234,10 +234,10 @@ export function FieldAssistant({
               className={`text-sm ${
                 msg.role === "user"
                   ? "bg-muted rounded-lg px-3 py-2"
-                  : "text-foreground whitespace-pre-wrap"
+                  : "text-foreground leading-relaxed"
               }`}
             >
-              {msg.content}
+              {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
             </div>
           ))}
           {loading && messages.length > 0 && messages[messages.length - 1]?.role === "user" && (
