@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, CheckCircle, ArrowLeft, Eye, EyeOff, BookOpen, FlaskConical, Lightbulb, ArrowRight, Sparkles } from "lucide-react";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
 
-type AuthMode = "main" | "success" | "password" | "forgot" | "reset-sent" | "resetting";
+type AuthMode = "main" | "success" | "resetting";
 
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>("main");
