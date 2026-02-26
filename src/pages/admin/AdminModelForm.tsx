@@ -49,6 +49,7 @@ interface Model {
   video_url: string;
   suggested_actions: string[];
   steps: Step[];
+  ai_assistant_prompt: string;
 }
 
 interface TopicItem {
