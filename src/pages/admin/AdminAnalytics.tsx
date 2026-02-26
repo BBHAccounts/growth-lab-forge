@@ -74,21 +74,8 @@ export default function AdminAnalytics() {
           .sort((a, b) => b.count - a.count)
           .slice(0, 10);
 
-        // Vendor stats
-        const { count: totalVendors } = await supabase
-          .from('vendors')
-          .select('*', { count: 'exact', head: true });
 
-        const { data: likedVendors } = await supabase
-          .from('vendors')
-          .select('name, likes_count')
-          .order('likes_count', { ascending: false })
-          .limit(10);
 
-        const topLiked = (likedVendors || []).map((v) => ({
-          name: v.name,
-          likes: v.likes_count || 0,
-        }));
 
         // Research stats
         const { count: totalStudies } = await supabase
