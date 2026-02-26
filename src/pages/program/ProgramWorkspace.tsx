@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, ArrowRight, Check, Save, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Save, Plus, Trash2, X, LogOut } from "lucide-react";
 import { FieldAssistant } from "@/components/FieldAssistant";
 
 interface ModelField {
@@ -222,6 +222,12 @@ export default function ProgramWorkspace() {
     navigate(`/program/${code}/review`);
   };
 
+  const handleExit = async () => {
+    await saveProgress(formData, currentStep);
+    toast({ title: "Progress saved" });
+    navigate("/programmes");
+  };
+
   const updateFieldValue = (fieldId: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
   };
@@ -384,6 +390,10 @@ export default function ProgramWorkspace() {
             <Button variant="outline" size="sm" onClick={handleManualSave} disabled={saving}>
               <Save className="h-4 w-4 mr-1" />
               Save
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleExit} disabled={saving}>
+              <LogOut className="h-4 w-4 mr-1" />
+              Exit
             </Button>
           </div>
         </div>

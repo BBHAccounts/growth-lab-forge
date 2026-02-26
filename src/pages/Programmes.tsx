@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Calendar, Clock, FileText, GraduationCap } from "lucide-react";
+import { ArrowRight, Calendar, GraduationCap, CheckCircle, Circle } from "lucide-react";
 import { format, isPast, differenceInDays } from "date-fns";
 
 interface ProgramModelInfo {
   name: string;
   emoji: string | null;
   stepCount: number;
+  deadline: string | null;
+  modelId: string;
 }
 
 interface EnrolledProgram {
@@ -27,8 +29,10 @@ interface EnrolledProgram {
     deadline: string | null;
   };
   models: ProgramModelInfo[];
-  currentStep: number;
-  totalSteps: number;
+  completedModels: number;
+  totalModels: number;
+  formData: Record<string, unknown>;
+  steps: Array<{ fields: Array<{ id: string }>; _modelId?: string }>;
 }
 
 export default function Programmes() {
@@ -41,7 +45,6 @@ export default function Programmes() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Fetch participant records for this user
         const { data: participants } = await supabase
           .from("program_participants")
           .select("id, access_code, status, program_id")
@@ -53,8 +56,7 @@ export default function Programmes() {
         }
 
         const programIds = participants.map(p => p.program_id);
-        
-        // Fetch programs
+
         const { data: programsData } = await supabase
           .from("programs")
           .select("id, name, description, deadline, status")
@@ -66,20 +68,18 @@ export default function Programmes() {
           return;
         }
 
-        // Fetch program_models for all programs
+        // Fetch program_models with deadlines
         const { data: pmData } = await supabase
           .from("program_models")
-          .select("program_id, model_id, order_index")
+          .select("program_id, model_id, order_index, deadline")
           .in("program_id", programsData.map(p => p.id))
           .order("order_index");
 
-        // Also check legacy model_id from programs
-        const legacyModelIds = programsData.filter(p => (p as any).model_id).map(p => (p as any).model_id);
         const pmModelIds = pmData?.map(pm => pm.model_id) || [];
-        const allModelIds = [...new Set([...pmModelIds, ...legacyModelIds])];
+        const allModelIds = [...new Set(pmModelIds)];
 
         let modelsMap: Record<string, { name: string; emoji: string | null; steps: unknown[] }> = {};
-        
+
         if (allModelIds.length > 0) {
           const { data: modelsData } = await supabase
             .from("models")
@@ -99,41 +99,78 @@ export default function Programmes() {
 
         // Build program -> models mapping
         const programModelsMap: Record<string, ProgramModelInfo[]> = {};
+        const programStepsMap: Record<string, Array<{ fields: Array<{ id: string }>; _modelId?: string }>> = {};
         if (pmData) {
           for (const pm of pmData) {
-            if (!programModelsMap[pm.program_id]) programModelsMap[pm.program_id] = [];
+            if (!programModelsMap[pm.program_id]) {
+              programModelsMap[pm.program_id] = [];
+              programStepsMap[pm.program_id] = [];
+            }
             const model = modelsMap[pm.model_id];
             if (model) {
               programModelsMap[pm.program_id].push({
                 name: model.name,
                 emoji: model.emoji,
                 stepCount: model.steps.length,
+                deadline: pm.deadline,
+                modelId: pm.model_id,
               });
+              // Build steps with model reference
+              for (const step of model.steps as any[]) {
+                programStepsMap[pm.program_id].push({
+                  fields: step.fields || [],
+                  _modelId: pm.model_id,
+                });
+              }
             }
           }
         }
 
-        // Fetch responses for progress
+        // Fetch responses
         const participantIds = participants.map(p => p.id);
         const { data: responses } = await supabase
           .from("program_responses")
-          .select("participant_id, current_step")
+          .select("participant_id, current_step, responses")
           .in("participant_id", participantIds);
 
-        const responsesMap: Record<string, number> = {};
+        const responsesMap: Record<string, { currentStep: number; responses: Record<string, unknown> }> = {};
         responses?.forEach(r => {
-          responsesMap[r.participant_id] = r.current_step || 0;
+          responsesMap[r.participant_id] = {
+            currentStep: r.current_step || 0,
+            responses: (r.responses as Record<string, unknown>) || {},
+          };
         });
 
-        // Combine
+        // Helper: check if a model is completed based on form data
+        const isModelCompleted = (
+          modelId: string,
+          steps: Array<{ fields: Array<{ id: string }>; _modelId?: string }>,
+          formData: Record<string, unknown>
+        ) => {
+          const modelSteps = steps.filter(s => s._modelId === modelId);
+          if (modelSteps.length === 0) return false;
+          return modelSteps.every(step =>
+            step.fields.some(field => {
+              const value = formData[field.id];
+              if (!value) return false;
+              if (Array.isArray(value)) return value.length > 0 && value.some(v => v && String(v).trim());
+              return String(value).trim().length > 0;
+            })
+          );
+        };
+
         const enrolled: EnrolledProgram[] = [];
         participants.forEach(participant => {
           const program = programsData.find(p => p.id === participant.program_id);
           if (!program) return;
 
           const models = programModelsMap[program.id] || [];
-          const totalSteps = models.reduce((sum, m) => sum + m.stepCount, 0);
-          const currentStep = responsesMap[participant.id] || 0;
+          const steps = programStepsMap[program.id] || [];
+          const responseInfo = responsesMap[participant.id] || { currentStep: 0, responses: {} };
+
+          const completedModels = models.filter(m =>
+            isModelCompleted(m.modelId, steps, responseInfo.responses)
+          ).length;
 
           enrolled.push({
             participant_id: participant.id,
@@ -146,8 +183,10 @@ export default function Programmes() {
               deadline: program.deadline,
             },
             models,
-            currentStep,
-            totalSteps,
+            completedModels,
+            totalModels: models.length,
+            formData: responseInfo.responses,
+            steps,
           });
         });
 
@@ -193,7 +232,6 @@ export default function Programmes() {
   return (
     <AppLayout>
       <div className="p-6 md:p-8 space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-3">
             <GraduationCap className="h-7 w-7 text-primary" />
@@ -204,7 +242,6 @@ export default function Programmes() {
           </p>
         </div>
 
-        {/* Programs List */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2].map(i => (
@@ -221,7 +258,7 @@ export default function Programmes() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {programs.map((item) => {
               const progressPct = item.status === "submitted" ? 100 :
-                item.totalSteps > 0 ? Math.min((item.currentStep / item.totalSteps) * 100, 95) : 0;
+                item.totalModels > 0 ? Math.round((item.completedModels / item.totalModels) * 100) : 0;
 
               return (
                 <Card key={item.participant_id} className="group hover:shadow-lg transition-all duration-200 hover:border-primary/40">
@@ -238,9 +275,6 @@ export default function Programmes() {
                           {item.models.length === 1 && (
                             <p className="text-sm text-muted-foreground">{item.models[0].name}</p>
                           )}
-                          {item.models.length > 1 && (
-                            <p className="text-sm text-muted-foreground">{item.models.length} tasks</p>
-                          )}
                         </div>
                       </div>
                       {getStatusBadge(item.status)}
@@ -252,14 +286,54 @@ export default function Programmes() {
                       </p>
                     )}
 
+                    {/* Models with deadlines */}
+                    {item.models.length > 0 && (
+                      <div className="space-y-1.5 mb-4">
+                        {item.models.map((m, i) => {
+                          const isCompleted = (() => {
+                            const modelSteps = item.steps.filter(s => s._modelId === m.modelId);
+                            if (modelSteps.length === 0) return false;
+                            return modelSteps.every(step =>
+                              step.fields.some(field => {
+                                const value = item.formData[field.id];
+                                if (!value) return false;
+                                if (Array.isArray(value)) return value.length > 0 && value.some(v => v && String(v).trim());
+                                return String(value).trim().length > 0;
+                              })
+                            );
+                          })();
+
+                          return (
+                            <div key={i} className="flex items-center gap-2 text-sm">
+                              {isCompleted ? (
+                                <CheckCircle className="h-4 w-4 text-chart-4 shrink-0" />
+                              ) : (
+                                <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                              )}
+                              <span className={isCompleted ? "text-chart-4" : "text-foreground"}>
+                                {m.emoji} {m.name}
+                              </span>
+                              {m.deadline && (
+                                <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Calendar className="h-3 w-3" />
+                                  {format(new Date(m.deadline), "MMM d")}
+                                </span>
+                              )}
+                              {getDeadlineBadge(m.deadline)}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {/* Progress */}
-                    {item.totalSteps > 0 && (
+                    {item.totalModels > 0 && (
                       <div className="mb-4">
                         <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                           <span>
-                            {item.status === "submitted" ? "Completed" : `Step ${item.currentStep} of ${item.totalSteps}`}
+                            {item.status === "submitted" ? "Completed" : `${item.completedModels} of ${item.totalModels} tasks completed`}
                           </span>
-                          <span>{Math.round(progressPct)}%</span>
+                          <span>{progressPct}%</span>
                         </div>
                         <Progress value={progressPct} className="h-1.5" />
                       </div>
