@@ -286,7 +286,7 @@ export default function Programmes() {
                       </p>
                     )}
 
-                    {/* Models with deadlines */}
+                    {/* Models list */}
                     {item.models.length > 0 && (
                       <div className="space-y-1.5 mb-4">
                         {item.models.map((m, i) => {
@@ -313,13 +313,6 @@ export default function Programmes() {
                               <span className={isCompleted ? "text-chart-4" : "text-foreground"}>
                                 {m.emoji} {m.name}
                               </span>
-                              {m.deadline && (
-                                <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
-                                  {format(new Date(m.deadline), "MMM d")}
-                                </span>
-                              )}
-                              {getDeadlineBadge(m.deadline)}
                             </div>
                           );
                         })}
