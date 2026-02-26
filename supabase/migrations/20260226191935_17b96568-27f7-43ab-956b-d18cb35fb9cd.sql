@@ -1,0 +1,1 @@
+ALTER TABLE public.models ADD COLUMN ai_assistant_prompt text;

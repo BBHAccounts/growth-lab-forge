@@ -18,7 +18,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User, Bell } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User, Bell, Sparkles } from 'lucide-react';
 
 interface Step {
   title: string;
@@ -49,6 +49,7 @@ interface Model {
   video_url: string;
   suggested_actions: string[];
   steps: Step[];
+  ai_assistant_prompt: string;
 }
 
 interface TopicItem {
@@ -81,6 +82,7 @@ const defaultModel: Model = {
   video_url: '',
   suggested_actions: [],
   steps: [],
+  ai_assistant_prompt: '',
 };
 
 export default function AdminModelForm() {
@@ -149,6 +151,7 @@ export default function AdminModelForm() {
             tags: modelRes.data.tags || [],
             outcomes: modelRes.data.outcomes || [],
             suggested_actions: modelRes.data.suggested_actions || [],
+            ai_assistant_prompt: modelRes.data.ai_assistant_prompt || '',
           });
           
           setOwnerId(modelRes.data.owner_id || null);
@@ -208,6 +211,7 @@ export default function AdminModelForm() {
         suggested_actions: model.suggested_actions,
         steps: JSON.parse(JSON.stringify(model.steps)),
         owner_id: ownerId,
+        ai_assistant_prompt: model.ai_assistant_prompt || null,
       };
 
       let savedModelId = modelId;
@@ -618,6 +622,33 @@ export default function AdminModelForm() {
                     </p>
                   )}
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Assistant */}
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                AI Field Assistant
+              </CardTitle>
+              <CardDescription>
+                Provide model-specific context for the AI coaching assistant that helps users fill in fields
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label>Model-Specific AI Prompt</Label>
+                <Textarea
+                  value={model.ai_assistant_prompt}
+                  onChange={(e) => setModel({ ...model, ai_assistant_prompt: e.target.value })}
+                  placeholder="e.g., This model helps law firms build a positioning strategy. When coaching, reference examples from legal marketing such as thought leadership, client alerts, and practice area branding. Encourage users to think about their unique differentiators vs. competitor firms."
+                  rows={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This is combined with the global AI prompt from Settings. Include domain-specific examples, terminology, and coaching angles relevant to this model.
+                </p>
               </div>
             </CardContent>
           </Card>

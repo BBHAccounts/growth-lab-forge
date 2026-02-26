@@ -16,6 +16,7 @@ interface Settings {
   welcome_modal_text: string;
   support_email: string;
   support_url: string;
+  ai_assistant_global_prompt: string;
   enable_feed: boolean;
   enable_comments: boolean;
   enable_member_directory: boolean;
@@ -28,6 +29,7 @@ const defaultSettings: Settings = {
   welcome_modal_text: 'Welcome to Growth Lab!',
   support_email: 'support@bbh.com',
   support_url: 'https://bbh.com/contact',
+  ai_assistant_global_prompt: '',
   enable_feed: false,
   enable_comments: false,
   enable_member_directory: false,
@@ -193,6 +195,28 @@ export default function AdminSettings() {
                     placeholder="https://..."
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* AI Assistant */}
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Field Assistant</CardTitle>
+              <CardDescription>Global coaching prompt used across all model workspaces</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Global Coaching Prompt</Label>
+                <Textarea
+                  value={settings.ai_assistant_global_prompt}
+                  onChange={(e) => setSettings({ ...settings, ai_assistant_global_prompt: e.target.value })}
+                  placeholder="e.g., Always encourage users to think about their competitive positioning. Reference legal marketing best practices. Keep a professional but approachable tone."
+                  rows={6}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This prompt is combined with per-model instructions and sent to the AI coach. Use it for general tone, audience context, and coaching guidelines.
+                </p>
               </div>
             </CardContent>
           </Card>

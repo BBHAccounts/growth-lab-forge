@@ -265,6 +265,7 @@ export type Database = {
       models: {
         Row: {
           access_level: string | null
+          ai_assistant_prompt: string | null
           audience: string[] | null
           created_at: string
           emoji: string | null
@@ -289,6 +290,7 @@ export type Database = {
         }
         Insert: {
           access_level?: string | null
+          ai_assistant_prompt?: string | null
           audience?: string[] | null
           created_at?: string
           emoji?: string | null
@@ -313,6 +315,7 @@ export type Database = {
         }
         Update: {
           access_level?: string | null
+          ai_assistant_prompt?: string | null
           audience?: string[] | null
           created_at?: string
           emoji?: string | null

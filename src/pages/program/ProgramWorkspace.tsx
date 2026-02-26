@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Check, Save, Plus, Trash2, X } from "lucide-react";
+import { FieldAssistant } from "@/components/FieldAssistant";
 
 interface ModelField {
   id: string;
@@ -34,6 +35,7 @@ interface Program {
   model_id: string | null;
   allow_pdf_upload: boolean;
 }
+
 
 interface Participant {
   id: string;
@@ -408,6 +410,16 @@ export default function ProgramWorkspace() {
                   {field.label}
                   {field.optional && (
                     <span className="text-xs text-muted-foreground">(optional)</span>
+                  )}
+                  {program.model_id && (
+                    <FieldAssistant
+                      modelId={program.model_id}
+                      stepTitle={step.title}
+                      stepInstruction={step.instruction}
+                      fieldLabel={field.label}
+                      currentValue={formData[field.id]}
+                      allProgress={formData}
+                    />
                   )}
                 </Label>
                 {renderField(field)}

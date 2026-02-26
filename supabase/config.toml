@@ -17,6 +17,8 @@ project_id = "pavcfkubatwuwgrtwqlr"
     verify_jwt = true
   [functions.reset-password]
     verify_jwt = false
+  [functions.model-assistant]
+    verify_jwt = false
   [functions.send-auth-email]
     verify_jwt = false
   [functions.send-invite-email]
