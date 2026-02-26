@@ -88,6 +88,8 @@ export default function AdminResourceForm() {
   const [notifyUsers, setNotifyUsers] = useState(false);
   const [suggestedTopicCategories, setSuggestedTopicCategories] = useState<string[]>([]);
   const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
+  const [urlStep, setUrlStep] = useState(isNew);
+  const [urlInput, setUrlInput] = useState('');
 
   const handleExtractMetadata = async () => {
     if (!resource.url) {
