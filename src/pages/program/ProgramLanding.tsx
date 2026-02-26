@@ -100,7 +100,7 @@ export default function ProgramLanding() {
         // Fetch models from program_models table
         const { data: pmData } = await supabase
           .from("program_models")
-          .select("model_id, order_index")
+          .select("model_id, order_index, deadline")
           .eq("program_id", programData.id)
           .order("order_index");
 
