@@ -53,6 +53,7 @@ interface Participant {
   status: string;
   invited_at: string | null;
   last_accessed_at: string | null;
+  user_id: string | null;
 }
 
 interface Program {
