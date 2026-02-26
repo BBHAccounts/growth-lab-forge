@@ -3,7 +3,6 @@ import {
   Users, 
   Box, 
   FlaskConical, 
-  MapPin, 
   BarChart3, 
   Settings,
   ArrowLeft,
