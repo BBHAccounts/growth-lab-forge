@@ -148,7 +148,7 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json();
+    const { url, topicCategories, topics } = await req.json();
 
     if (!url) {
       return new Response(JSON.stringify({ error: "URL is required" }), {
@@ -245,6 +245,22 @@ Return ONLY the image URL, nothing else. If no suitable image is found, return "
       extractedImageUrl = extractLogoOrFavicon(html, url);
     }
 
+    // Build topic matching context
+    let topicContext = "";
+    if (topicCategories?.length > 0 || topics?.length > 0) {
+      topicContext = `\n\nAlso suggest which of these topic categories and topics are most relevant to this content.
+
+Available topic categories (return matching IDs):
+${(topicCategories || []).map((tc: any) => `- ${tc.id}: ${tc.name} (key: ${tc.key})`).join('\n')}
+
+Available topics (return matching IDs):
+${(topics || []).map((t: any) => `- ${t.id}: ${t.name} (category: ${t.category_key})`).join('\n')}
+
+Add these fields to the JSON:
+- suggested_topic_categories: array of matching topic category IDs (strings)
+- suggested_topics: array of matching topic IDs (strings)`;
+    }
+
     // Now get the rest of the metadata from AI
     const prompt = `Analyze this URL and extract metadata. URL: ${url}
 
@@ -256,6 +272,7 @@ Extract and return a JSON object with these fields:
 - author: The author if identifiable (string or null)
 - type: One of "article", "webinar", "guide", "video", "podcast", "event" based on content type (string)
 - estimated_time: Reading/watching time in minutes as a number (number or null)
+${topicContext}
 
 Return ONLY valid JSON, no other text.`;
 
