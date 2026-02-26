@@ -58,7 +58,6 @@ const Index = () => {
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
   
   const recommendations = useRecommendations(5);
 
