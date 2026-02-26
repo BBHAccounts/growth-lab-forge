@@ -134,12 +134,6 @@ export default function AdminTopics() {
       render: (topic) => topic.model_cat_count || 0,
     },
     {
-      key: 'vendor_cat_count',
-      header: 'Vendor Cats',
-      sortable: true,
-      render: (topic) => topic.vendor_cat_count || 0,
-    },
-    {
       key: 'active',
       header: 'Status',
       sortable: true,
