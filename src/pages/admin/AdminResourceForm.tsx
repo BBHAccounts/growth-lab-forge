@@ -91,6 +91,71 @@ export default function AdminResourceForm() {
   const [urlStep, setUrlStep] = useState(isNew);
   const [urlInput, setUrlInput] = useState('');
 
+  const handleUrlStepSubmit = async () => {
+    const url = urlInput.trim();
+    if (!url) {
+      // Skip URL step, go straight to manual form
+      setUrlStep(false);
+      return;
+    }
+
+    setResource(prev => ({ ...prev, url }));
+    setExtracting(true);
+    setSuggestedTopicCategories([]);
+    setSuggestedTopics([]);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-url-metadata', {
+        body: {
+          url,
+          topicCategories: topicCategories.map(tc => ({ id: tc.id, key: tc.key, name: tc.name })),
+          topics: topics.map(t => ({ id: t.id, name: t.name, category_key: t.category_key })),
+        },
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        setResource(prev => ({
+          ...prev,
+          url,
+          title: data.title || prev.title,
+          description: data.description || prev.description,
+          author: data.author || prev.author,
+          type: data.type || prev.type,
+          emoji: RESOURCE_TYPES.find(t => t.value === data.type)?.emoji || prev.emoji,
+          estimated_time: data.estimated_time || prev.estimated_time,
+          image_url: data.image_url || prev.image_url,
+        }));
+
+        if (data.suggested_topic_categories?.length > 0) {
+          setSuggestedTopicCategories(data.suggested_topic_categories);
+          // Auto-apply suggested topic categories
+          setTopicCategories(prev => prev.map(tc => ({
+            ...tc,
+            linked: tc.linked || data.suggested_topic_categories.includes(tc.id)
+          })));
+        }
+        if (data.suggested_topics?.length > 0) {
+          setSuggestedTopics(data.suggested_topics);
+          // Auto-apply suggested topics
+          setTopics(prev => prev.map(t => ({
+            ...t,
+            linked: t.linked || data.suggested_topics.includes(t.id)
+          })));
+        }
+
+        toast({ title: 'Success', description: 'Metadata extracted — review and save' });
+      }
+    } catch (error) {
+      console.error('Error extracting metadata:', error);
+      toast({ title: 'Note', description: 'Could not auto-fill. Please fill in manually.', variant: 'destructive' });
+    } finally {
+      setExtracting(false);
+      setUrlStep(false);
+    }
+  };
+
   const handleExtractMetadata = async () => {
     if (!resource.url) {
       toast({ title: 'Error', description: 'Please enter a URL first', variant: 'destructive' });
@@ -124,7 +189,6 @@ export default function AdminResourceForm() {
           image_url: data.image_url || prev.image_url,
         }));
         
-        // Store suggested topic categories and topics
         if (data.suggested_topic_categories?.length > 0) {
           setSuggestedTopicCategories(data.suggested_topic_categories);
         }
