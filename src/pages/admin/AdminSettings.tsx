@@ -29,6 +29,7 @@ const defaultSettings: Settings = {
   welcome_modal_text: 'Welcome to Growth Lab!',
   support_email: 'support@bbh.com',
   support_url: 'https://bbh.com/contact',
+  ai_assistant_global_prompt: '',
   enable_feed: false,
   enable_comments: false,
   enable_member_directory: false,
