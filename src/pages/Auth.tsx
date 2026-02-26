@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, CheckCircle, ArrowLeft, Eye, EyeOff, BookOpen, FlaskConical, Lightbulb, ArrowRight, Sparkles } from "lucide-react";
+import { Loader2, Mail, CheckCircle, ArrowLeft, BookOpen, FlaskConical, Lightbulb, ArrowRight, Sparkles } from "lucide-react";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
 
 type AuthMode = "main" | "success" | "resetting";
