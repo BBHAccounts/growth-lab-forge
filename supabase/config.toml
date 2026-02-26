@@ -1,28 +1,23 @@
 project_id = "pavcfkubatwuwgrtwqlr"
 
-[functions.navigator-chat]
-verify_jwt = true
-
-[functions.extract-url-metadata]
-verify_jwt = true
-
-[functions.generate-insight-image]
-verify_jwt = true
-
-[functions.extract-vendor-metadata]
-verify_jwt = true
-
-[functions.invite-user]
-verify_jwt = true
-
-[functions.delete-user]
-verify_jwt = true
-
-[functions.send-invite-email]
-verify_jwt = false
-
-[functions.send-auth-email]
-verify_jwt = false
-
-[functions.reset-password]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.delete-user]
+    verify_jwt = true
+  [functions.extract-url-metadata]
+    verify_jwt = true
+  [functions.extract-vendor-metadata]
+    verify_jwt = true
+  [functions.generate-insight-image]
+    verify_jwt = true
+  [functions.invite-user]
+    verify_jwt = true
+  [functions.navigator-chat]
+    verify_jwt = true
+  [functions.reset-password]
+    verify_jwt = false
+  [functions.send-auth-email]
+    verify_jwt = false
+  [functions.send-invite-email]
+    verify_jwt = false
