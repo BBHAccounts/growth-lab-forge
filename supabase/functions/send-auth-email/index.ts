@@ -105,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
 
-    } else if (type === "signup_magiclink") {
+    } else if (resolvedType === "signup_magiclink") {
       // Create new user and send magic link
       const fullName = payload.full_name || "";
 
