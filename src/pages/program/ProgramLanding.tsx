@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Clock, FileText } from "lucide-react";
+import { ArrowRight, Clock, FileText, Calendar } from "lucide-react";
 
 interface Program {
   id: string;
@@ -31,6 +31,7 @@ interface ProgramModelInfo {
   name: string;
   emoji: string | null;
   stepCount: number;
+  deadline: string | null;
 }
 
 export default function ProgramLanding() {
@@ -99,7 +100,7 @@ export default function ProgramLanding() {
         // Fetch models from program_models table
         const { data: pmData } = await supabase
           .from("program_models")
-          .select("model_id, order_index")
+          .select("model_id, order_index, deadline")
           .eq("program_id", programData.id)
           .order("order_index");
 
@@ -118,19 +119,20 @@ export default function ProgramLanding() {
 
           if (modelsData) {
             // Maintain order from program_models
-            const orderedIds = pmData && pmData.length > 0
-              ? pmData.map(pm => pm.model_id)
-              : modelIds;
-
+            const orderedPms = pmData && pmData.length > 0 ? pmData : modelIds.map(id => ({ model_id: id, deadline: null }));
             const modelsMap = Object.fromEntries(modelsData.map(m => [m.id, m]));
-            const ordered: ProgramModelInfo[] = orderedIds
-              .map(id => modelsMap[id])
-              .filter(Boolean)
-              .map(m => ({
-                name: m.name,
-                emoji: m.emoji,
-                stepCount: Array.isArray(m.steps) ? m.steps.length : 0,
-              }));
+            const ordered: ProgramModelInfo[] = orderedPms
+              .map(pm => {
+                const m = modelsMap[pm.model_id];
+                if (!m) return null;
+                return {
+                  name: m.name,
+                  emoji: m.emoji,
+                  stepCount: Array.isArray(m.steps) ? m.steps.length : 0,
+                  deadline: pm.deadline || null,
+                };
+              })
+              .filter(Boolean) as ProgramModelInfo[];
             setProgramModels(ordered);
           }
         }
@@ -285,7 +287,15 @@ export default function ProgramLanding() {
                       <span className="text-sm">
                         {m.emoji} {m.name}
                       </span>
-                      <span className="text-xs text-muted-foreground ml-auto">{m.stepCount} steps</span>
+                      <div className="ml-auto flex items-center gap-3">
+                        {m.deadline && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(m.deadline).toLocaleDateString()}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">{m.stepCount} steps</span>
+                      </div>
                     </div>
                   ))}
                 </div>
