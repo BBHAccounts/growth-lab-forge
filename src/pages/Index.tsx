@@ -16,7 +16,7 @@ import {
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
 import { ReadingReminderCard } from "@/components/ReadingReminderCard";
-import { format } from "date-fns";
+import { format, differenceInDays, isPast } from "date-fns";
 
 interface Profile {
   full_name: string | null;
