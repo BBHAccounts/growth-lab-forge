@@ -213,7 +213,7 @@ export default function Auth() {
             </div>
             <div className="space-y-2">
               <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-secondary" />
                 Check your email
               </h3>
               <p className="text-sm text-muted-foreground">
