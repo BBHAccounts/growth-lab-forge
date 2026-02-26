@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   BookOpen, FlaskConical, ArrowRight, CheckCircle2, Circle,
   ExternalLink, Sparkles, Info, Lightbulb, Clock, Newspaper,
-  TrendingUp, Calendar
+  TrendingUp, Calendar, GraduationCap
 } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
