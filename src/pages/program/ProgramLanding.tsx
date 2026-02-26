@@ -45,9 +45,7 @@ export default function ProgramLanding() {
   const [submitting, setSubmitting] = useState(false);
   const [program, setProgram] = useState<Program | null>(null);
   const [participant, setParticipant] = useState<Participant | null>(null);
-  const [model, setModel] = useState<Model | null>(null);
-  const [needsInfo, setNeedsInfo] = useState(false);
-  const [userInfo, setUserInfo] = useState({ name: '', email: '' });
+  const [programModels, setProgramModels] = useState<ProgramModelInfo[]>([]);
 
   // Support both /program/:code and /program?code=xxx
   const accessCode = code || searchParams.get('code');
