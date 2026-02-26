@@ -42,6 +42,7 @@ import AdminProgramResponses from "./pages/admin/AdminProgramResponses";
 import AdminProgramCompare from "./pages/admin/AdminProgramCompare";
 
 // Program pages (participant-facing)
+import Programmes from "./pages/Programmes";
 import ProgramLanding from "./pages/program/ProgramLanding";
 import ProgramWorkspace from "./pages/program/ProgramWorkspace";
 import ProgramReview from "./pages/program/ProgramReview";
