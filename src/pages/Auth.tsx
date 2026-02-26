@@ -16,7 +16,6 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>("main");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const { toast } = useToast();
