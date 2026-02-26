@@ -72,6 +72,7 @@ const App = () => (
           <Route path="/insights-hub" element={<InsightsHub />} />
           <Route path="/email-verified" element={<EmailVerified />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
