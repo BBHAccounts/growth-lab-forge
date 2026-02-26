@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Copy, Plus, Send, Trash2, Users, Link2, Mail } from 'lucide-react';
+import { ArrowLeft, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search } from 'lucide-react';
 
 interface Model {
   id: string;
