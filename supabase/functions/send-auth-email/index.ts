@@ -11,7 +11,7 @@ const corsHeaders = {
 
 interface AuthEmailRequest {
   email: string;
-  type: "signup" | "recovery" | "magiclink" | "signup_magiclink";
+  type: "auto" | "signup" | "recovery" | "magiclink" | "signup_magiclink";
   user_id?: string;
   full_name?: string;
   redirect_to?: string;
@@ -60,8 +60,17 @@ const handler = async (req: Request): Promise<Response> => {
     const baseUrl = site_url || redirect_to || "https://growthlab.beyondbillablehours.io";
     let subject = "";
     let htmlContent = "";
+    let resolvedType = type;
 
-    if (type === "magiclink") {
+    // Auto-detect: check if user exists, then route to magiclink or signup_magiclink
+    if (type === "auto") {
+      const { data: userData } = await supabaseAdmin.auth.admin.listUsers();
+      const existingUser = userData?.users?.find(u => u.email === email);
+      resolvedType = existingUser ? "magiclink" : "signup_magiclink";
+      console.log(`Auto-detected type: ${resolvedType} for ${email}`);
+    }
+
+    if (resolvedType === "magiclink") {
       // Generate magic link for existing user
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
@@ -96,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
 
-    } else if (type === "signup_magiclink") {
+    } else if (resolvedType === "signup_magiclink") {
       // Create new user and send magic link
       const fullName = payload.full_name || "";
 
@@ -153,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
 
-    } else if (type === "signup" && user_id) {
+    } else if (resolvedType === "signup" && user_id) {
       // Legacy signup verification flow
       const token = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -180,7 +189,7 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
 
-    } else if (type === "recovery") {
+    } else if (resolvedType === "recovery") {
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
       if (userError) throw userError;
 
