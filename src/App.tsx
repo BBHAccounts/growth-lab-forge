@@ -30,7 +30,6 @@ import AdminResearch from "./pages/admin/AdminResearch";
 import AdminResearchForm from "./pages/admin/AdminResearchForm";
 import AdminResearchResponses from "./pages/admin/AdminResearchResponses";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminTopics from "./pages/admin/AdminTopics";
 import AdminTopicForm from "./pages/admin/AdminTopicForm";
@@ -62,7 +61,6 @@ const App = () => (
           <Route path="/models" element={<Models />} />
           <Route path="/models/:id" element={<ModelDetail />} />
           <Route path="/models/:id/workspace" element={<ModelWorkspace />} />
-          <Route path="/martech" element={<Martech />} />
           <Route path="/research" element={<Research />} />
           <Route path="/research/:studyId" element={<ResearchSurvey />} />
           <Route path="/about" element={<About />} />
@@ -82,8 +80,6 @@ const App = () => (
           <Route path="/admin/research" element={<AdminRouteGuard><AdminResearch /></AdminRouteGuard>} />
           <Route path="/admin/research/:studyId" element={<AdminRouteGuard><AdminResearchForm /></AdminRouteGuard>} />
           <Route path="/admin/research/:studyId/responses" element={<AdminRouteGuard><AdminResearchResponses /></AdminRouteGuard>} />
-          <Route path="/admin/martech" element={<AdminRouteGuard><AdminMartech /></AdminRouteGuard>} />
-          <Route path="/admin/martech/vendors/:vendorId" element={<AdminRouteGuard><AdminVendorForm /></AdminRouteGuard>} />
           <Route path="/admin/analytics" element={<AdminRouteGuard><AdminAnalytics /></AdminRouteGuard>} />
           <Route path="/admin/settings" element={<AdminRouteGuard><AdminSettings /></AdminRouteGuard>} />
           <Route path="/admin/notifications" element={<AdminRouteGuard><AdminNotifications /></AdminRouteGuard>} />
