@@ -15,7 +15,7 @@ type AuthMode = "main" | "success" | "resetting";
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>("main");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [newPassword, setNewPassword] = useState("");
