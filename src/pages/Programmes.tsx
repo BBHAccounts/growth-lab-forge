@@ -10,6 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, Calendar, Clock, FileText, GraduationCap } from "lucide-react";
 import { format, isPast, differenceInDays } from "date-fns";
 
+interface ProgramModelInfo {
+  name: string;
+  emoji: string | null;
+  stepCount: number;
+}
+
 interface EnrolledProgram {
   participant_id: string;
   access_code: string;
@@ -19,13 +25,8 @@ interface EnrolledProgram {
     name: string;
     description: string | null;
     deadline: string | null;
-    model_id: string | null;
   };
-  model?: {
-    name: string;
-    emoji: string | null;
-    steps: unknown[];
-  } | null;
+  models: ProgramModelInfo[];
   currentStep: number;
   totalSteps: number;
 }
@@ -56,7 +57,7 @@ export default function Programmes() {
         // Fetch programs
         const { data: programsData } = await supabase
           .from("programs")
-          .select("id, name, description, deadline, model_id, status")
+          .select("id, name, description, deadline, status")
           .in("id", programIds)
           .eq("status", "active");
 
@@ -65,15 +66,25 @@ export default function Programmes() {
           return;
         }
 
-        // Fetch models for programs that have one
-        const modelIds = programsData.filter(p => p.model_id).map(p => p.model_id!);
+        // Fetch program_models for all programs
+        const { data: pmData } = await supabase
+          .from("program_models")
+          .select("program_id, model_id, order_index")
+          .in("program_id", programsData.map(p => p.id))
+          .order("order_index");
+
+        // Also check legacy model_id from programs
+        const legacyModelIds = programsData.filter(p => (p as any).model_id).map(p => (p as any).model_id);
+        const pmModelIds = pmData?.map(pm => pm.model_id) || [];
+        const allModelIds = [...new Set([...pmModelIds, ...legacyModelIds])];
+
         let modelsMap: Record<string, { name: string; emoji: string | null; steps: unknown[] }> = {};
         
-        if (modelIds.length > 0) {
+        if (allModelIds.length > 0) {
           const { data: modelsData } = await supabase
             .from("models")
             .select("id, name, emoji, steps")
-            .in("id", modelIds);
+            .in("id", allModelIds);
 
           if (modelsData) {
             modelsData.forEach(m => {
@@ -83,6 +94,22 @@ export default function Programmes() {
                 steps: Array.isArray(m.steps) ? m.steps : [],
               };
             });
+          }
+        }
+
+        // Build program -> models mapping
+        const programModelsMap: Record<string, ProgramModelInfo[]> = {};
+        if (pmData) {
+          for (const pm of pmData) {
+            if (!programModelsMap[pm.program_id]) programModelsMap[pm.program_id] = [];
+            const model = modelsMap[pm.model_id];
+            if (model) {
+              programModelsMap[pm.program_id].push({
+                name: model.name,
+                emoji: model.emoji,
+                stepCount: model.steps.length,
+              });
+            }
           }
         }
 
@@ -104,8 +131,8 @@ export default function Programmes() {
           const program = programsData.find(p => p.id === participant.program_id);
           if (!program) return;
 
-          const model = program.model_id ? modelsMap[program.model_id] : null;
-          const totalSteps = model?.steps?.length || 0;
+          const models = programModelsMap[program.id] || [];
+          const totalSteps = models.reduce((sum, m) => sum + m.stepCount, 0);
           const currentStep = responsesMap[participant.id] || 0;
 
           enrolled.push({
@@ -117,9 +144,8 @@ export default function Programmes() {
               name: program.name,
               description: program.description,
               deadline: program.deadline,
-              model_id: program.model_id,
             },
-            model,
+            models,
             currentStep,
             totalSteps,
           });
@@ -203,14 +229,17 @@ export default function Programmes() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
-                          {item.model?.emoji || "📋"}
+                          {item.models.length > 0 ? item.models[0].emoji || "📋" : "📋"}
                         </div>
                         <div>
                           <h3 className="font-semibold group-hover:text-primary transition-colors">
                             {item.program.name}
                           </h3>
-                          {item.model && (
-                            <p className="text-sm text-muted-foreground">{item.model.name}</p>
+                          {item.models.length === 1 && (
+                            <p className="text-sm text-muted-foreground">{item.models[0].name}</p>
+                          )}
+                          {item.models.length > 1 && (
+                            <p className="text-sm text-muted-foreground">{item.models.length} tasks</p>
                           )}
                         </div>
                       </div>

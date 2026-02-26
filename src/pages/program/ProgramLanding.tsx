@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, Clock, FileText } from "lucide-react";
@@ -26,10 +27,10 @@ interface Participant {
   status: string;
 }
 
-interface Model {
+interface ProgramModelInfo {
   name: string;
   emoji: string | null;
-  steps: unknown[];
+  stepCount: number;
 }
 
 export default function ProgramLanding() {
@@ -42,11 +43,10 @@ export default function ProgramLanding() {
   const [submitting, setSubmitting] = useState(false);
   const [program, setProgram] = useState<Program | null>(null);
   const [participant, setParticipant] = useState<Participant | null>(null);
-  const [model, setModel] = useState<Model | null>(null);
+  const [programModels, setProgramModels] = useState<ProgramModelInfo[]>([]);
   const [needsInfo, setNeedsInfo] = useState(false);
   const [userInfo, setUserInfo] = useState({ name: '', email: '' });
 
-  // Support both /program/:code and /program?code=xxx
   const accessCode = code || searchParams.get('code');
 
   useEffect(() => {
@@ -58,7 +58,6 @@ export default function ProgramLanding() {
       }
 
       try {
-        // Find participant by access code
         const { data: participantData, error: participantError } = await supabase
           .from("program_participants")
           .select("*")
@@ -73,12 +72,10 @@ export default function ProgramLanding() {
 
         setParticipant(participantData);
 
-        // Check if we need to collect user info
         if (!participantData.name && !participantData.email) {
           setNeedsInfo(true);
         }
 
-        // Fetch program
         const { data: programData, error: programError } = await supabase
           .from("programs")
           .select("*")
@@ -99,20 +96,42 @@ export default function ProgramLanding() {
 
         setProgram(programData);
 
-        // Fetch model if linked
-        if (programData.model_id) {
-          const { data: modelData } = await supabase
-            .from("models")
-            .select("name, emoji, steps")
-            .eq("id", programData.model_id)
-            .single();
+        // Fetch models from program_models table
+        const { data: pmData } = await supabase
+          .from("program_models")
+          .select("model_id, order_index")
+          .eq("program_id", programData.id)
+          .order("order_index");
 
-          if (modelData) {
-            setModel({
-              name: modelData.name,
-              emoji: modelData.emoji,
-              steps: Array.isArray(modelData.steps) ? modelData.steps : [],
-            });
+        const modelIds = pmData?.map(pm => pm.model_id) || [];
+        
+        // Fallback to legacy single model_id
+        if (modelIds.length === 0 && programData.model_id) {
+          modelIds.push(programData.model_id);
+        }
+
+        if (modelIds.length > 0) {
+          const { data: modelsData } = await supabase
+            .from("models")
+            .select("id, name, emoji, steps")
+            .in("id", modelIds);
+
+          if (modelsData) {
+            // Maintain order from program_models
+            const orderedIds = pmData && pmData.length > 0
+              ? pmData.map(pm => pm.model_id)
+              : modelIds;
+
+            const modelsMap = Object.fromEntries(modelsData.map(m => [m.id, m]));
+            const ordered: ProgramModelInfo[] = orderedIds
+              .map(id => modelsMap[id])
+              .filter(Boolean)
+              .map(m => ({
+                name: m.name,
+                emoji: m.emoji,
+                stepCount: Array.isArray(m.steps) ? m.steps.length : 0,
+              }));
+            setProgramModels(ordered);
           }
         }
 
@@ -139,7 +158,6 @@ export default function ProgramLanding() {
     setSubmitting(true);
 
     try {
-      // If we need info, update participant first
       if (needsInfo) {
         if (!userInfo.name.trim()) {
           toast({ title: "Please enter your name", variant: "destructive" });
@@ -156,14 +174,12 @@ export default function ProgramLanding() {
           })
           .eq("id", participant.id);
       } else {
-        // Just update status
         await supabase
           .from("program_participants")
           .update({ status: 'in_progress' })
           .eq("id", participant.id);
       }
 
-      // Check if response record exists, create if not
       const { data: existingResponse } = await supabase
         .from("program_responses")
         .select("id")
@@ -180,7 +196,6 @@ export default function ProgramLanding() {
           });
       }
 
-      // Navigate to workspace
       navigate(`/program/${accessCode}/workspace`);
     } catch (error: any) {
       console.error("Error starting program:", error);
@@ -213,23 +228,22 @@ export default function ProgramLanding() {
     );
   }
 
-  const stepCount = model?.steps?.length || 0;
+  const totalSteps = programModels.reduce((sum, m) => sum + m.stepCount, 0);
 
   return (
     <ProgramLayout programName={program.name}>
       <div className="max-w-2xl mx-auto p-6 md:p-8">
         <Card className="border-2">
           <CardHeader className="text-center pb-2">
-            {model?.emoji && (
-              <div className="text-5xl mb-4">{model.emoji}</div>
+            {programModels.length === 1 && programModels[0].emoji && (
+              <div className="text-5xl mb-4">{programModels[0].emoji}</div>
             )}
             <CardTitle className="text-2xl md:text-3xl">{program.name}</CardTitle>
-            {model && (
-              <p className="text-muted-foreground">{model.name}</p>
+            {programModels.length === 1 && (
+              <p className="text-muted-foreground">{programModels[0].name}</p>
             )}
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Description */}
             {program.description && (
               <div className="prose prose-sm max-w-none text-muted-foreground">
                 <p className="whitespace-pre-wrap">{program.description}</p>
@@ -238,11 +252,11 @@ export default function ProgramLanding() {
 
             {/* Info Cards */}
             <div className="grid grid-cols-2 gap-4">
-              {stepCount > 0 && (
+              {totalSteps > 0 && (
                 <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                   <FileText className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">{stepCount} steps</p>
+                    <p className="text-sm font-medium">{totalSteps} steps</p>
                     <p className="text-xs text-muted-foreground">to complete</p>
                   </div>
                 </div>
@@ -260,7 +274,25 @@ export default function ProgramLanding() {
               )}
             </div>
 
-            {/* User Info Form (if needed) */}
+            {/* Tasks list for multi-model */}
+            {programModels.length > 1 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Tasks in this programme:</p>
+                <div className="space-y-1.5">
+                  {programModels.map((m, i) => (
+                    <div key={i} className="flex items-center gap-3 p-2.5 border rounded-lg bg-muted/30">
+                      <Badge variant="outline" className="shrink-0 font-mono text-xs">{i + 1}</Badge>
+                      <span className="text-sm">
+                        {m.emoji} {m.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-auto">{m.stepCount} steps</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* User Info Form */}
             {needsInfo && (
               <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                 <p className="text-sm text-muted-foreground">
@@ -290,7 +322,7 @@ export default function ProgramLanding() {
               </div>
             )}
 
-            {/* Welcome message if name is known */}
+            {/* Welcome message */}
             {!needsInfo && participant?.name && (
               <div className="p-4 border rounded-lg bg-muted/30">
                 <p className="text-sm">
