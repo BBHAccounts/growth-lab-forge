@@ -11,7 +11,7 @@ const corsHeaders = {
 
 interface AuthEmailRequest {
   email: string;
-  type: "signup" | "recovery" | "magiclink" | "signup_magiclink";
+  type: "auto" | "signup" | "recovery" | "magiclink" | "signup_magiclink";
   user_id?: string;
   full_name?: string;
   redirect_to?: string;
