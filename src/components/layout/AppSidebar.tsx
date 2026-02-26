@@ -8,6 +8,10 @@ import { useProfile } from "@/hooks/use-profile";
 import { Badge } from "@/components/ui/badge";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
 const mainNavItems = [{
+  title: "Programmes",
+  url: "/programmes",
+  icon: GraduationCap
+}, {
   title: "Home",
   url: "/",
   icon: Home
@@ -23,10 +27,6 @@ const mainNavItems = [{
   title: "Insights Hub",
   url: "/insights-hub",
   icon: Lightbulb
-}, {
-  title: "Programmes",
-  url: "/programmes",
-  icon: GraduationCap
 }];
 const secondaryNavItems = [{
   title: "My Account",
