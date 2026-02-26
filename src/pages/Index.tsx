@@ -263,13 +263,15 @@ const Index = () => {
       </div>
 
       <div className="p-6 md:p-8 space-y-6">
-        {/* Row 1: Navigator + To-Dos */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <section className="lg:col-span-2">
-            <NavigatorChat />
-          </section>
+        {/* Navigator - full width */}
+        <section>
+          <NavigatorChat />
+        </section>
 
-          <section className="lg:col-span-1">
+        {/* Row: To-Dos + Programmes + Quick Access */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* To-Dos */}
+          <section>
             <Card className="h-full border-border/60">
               <CardHeader className="pb-3 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border-b border-border/40">
                 <div className="flex items-center gap-3">
@@ -370,162 +372,133 @@ const Index = () => {
               </CardContent>
             </Card>
           </section>
-        </div>
 
-        {/* Row 2: Programmes + Quick Access side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Programmes or Active Models — whichever has content */}
-          <section className="lg:col-span-2">
+          {/* Programmes */}
+          <section>
             {enrolledPrograms.length > 0 ? (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <GraduationCap className="h-4.5 w-4.5 text-primary" />
+              <Card className="h-full border-border/60">
+                <CardHeader className="pb-3 border-b border-border/40">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <GraduationCap className="h-4.5 w-4.5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">My Programmes</CardTitle>
+                        <CardDescription className="text-xs">Active assignments</CardDescription>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-lg font-semibold">My Programmes</h2>
-                      <p className="text-sm text-muted-foreground">Active assignments and pre-work</p>
-                    </div>
+                    <Link to="/programmes">
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8 px-2">
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
-                  <Link to="/programmes">
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                      View all <ArrowRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {enrolledPrograms.slice(0, 4).map((prog) => {
+                </CardHeader>
+                <CardContent className="pt-4 space-y-2">
+                  {enrolledPrograms.slice(0, 3).map((prog) => {
                     const deadlineDays = prog.deadline ? differenceInDays(new Date(prog.deadline), new Date()) : null;
                     const overdue = prog.deadline ? isPast(new Date(prog.deadline)) : false;
 
                     return (
                       <Link key={prog.participant_id} to={`/program/${prog.access_code}${prog.status !== "invited" ? "/workspace" : ""}`}>
-                        <Card className="group h-full hover:shadow-lg transition-all duration-200 hover:border-primary/40 hover:-translate-y-0.5">
-                          <CardContent className="p-5">
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">
-                                {prog.model_emoji || "📋"}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
-                                  {prog.program_name}
-                                </h3>
-                                {prog.model_name && (
-                                  <p className="text-xs text-muted-foreground truncate">{prog.model_name}</p>
-                                )}
-                              </div>
+                        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-xl shrink-0">
+                            {prog.model_emoji || "📋"}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                              {prog.program_name}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={
+                                prog.status === "submitted" ? "default" :
+                                prog.status === "in_progress" ? "secondary" : "outline"
+                              } className="text-xs">
+                                {prog.status === "in_progress" ? "In Progress" : prog.status === "submitted" ? "Submitted" : "Not Started"}
+                              </Badge>
+                              {overdue && <Badge variant="destructive" className="text-xs">Overdue</Badge>}
+                              {!overdue && deadlineDays !== null && deadlineDays <= 7 && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />{deadlineDays}d
+                                </span>
+                              )}
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Badge variant={
-                                  prog.status === "submitted" ? "default" :
-                                  prog.status === "in_progress" ? "secondary" : "outline"
-                                } className="text-xs">
-                                  {prog.status === "in_progress" ? "In Progress" : prog.status === "submitted" ? "Submitted" : "Not Started"}
-                                </Badge>
-                                {overdue && <Badge variant="destructive" className="text-xs">Overdue</Badge>}
-                                {!overdue && deadlineDays !== null && deadlineDays <= 7 && (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />{deadlineDays}d left
-                                  </span>
-                                )}
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                            </div>
-                          </CardContent>
-                        </Card>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                        </div>
                       </Link>
                     );
                   })}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">My Active Models</h2>
-                  {activatedModels.length > 0 && (
+                </CardContent>
+              </Card>
+            ) : activatedModels.length > 0 ? (
+              <Card className="h-full border-border/60">
+                <CardHeader className="pb-3 border-b border-border/40">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">My Active Models</CardTitle>
                     <Link to="/models">
-                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                        View All <ArrowRight className="ml-1 h-4 w-4" />
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8 px-2">
+                        <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
-                  )}
-                </div>
-                {loading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {[1, 2].map((i) => (
-                      <Card key={i}>
-                        <CardContent className="p-5">
-                          <Skeleton className="h-5 w-3/4 mb-2" />
-                          <Skeleton className="h-4 w-1/2 mb-4" />
-                          <Skeleton className="h-2 w-full" />
-                        </CardContent>
-                      </Card>
-                    ))}
                   </div>
-                ) : activatedModels.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {activatedModels.slice(0, 4).map((am) => {
-                      const totalSteps = (am.model?.steps as ModelStep[] | undefined)?.length || 5;
-                      const progressPct = am.completed ? 100 : Math.min((am.current_step / totalSteps) * 100, 95);
-                      return (
-                        <Card key={am.id} className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
-                          <CardContent className="p-5">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-2.5">
-                                <span className="text-xl">{am.model?.emoji || "📚"}</span>
-                                <div>
-                                  <h3 className="font-medium text-sm">{am.model?.name || "Model"}</h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    {am.completed ? "✅ Completed" : `Step ${am.current_step + 1} of ${totalSteps}`}
-                                  </p>
-                                </div>
-                              </div>
-                              <Link to={`/models/${am.model_id}/workspace`}>
-                                <Button size="sm" variant={am.completed ? "outline" : "default"} className="text-xs h-8">
-                                  {am.completed ? "Review" : "Continue"}
-                                </Button>
-                              </Link>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-2">
+                  {activatedModels.slice(0, 3).map((am) => {
+                    const totalSteps = (am.model?.steps as ModelStep[] | undefined)?.length || 5;
+                    const progressPct = am.completed ? 100 : Math.min((am.current_step / totalSteps) * 100, 95);
+                    return (
+                      <Link key={am.id} to={`/models/${am.model_id}/workspace`}>
+                        <div className="p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
+                          <div className="flex items-center gap-2.5 mb-2">
+                            <span className="text-lg">{am.model?.emoji || "📚"}</span>
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">{am.model?.name || "Model"}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                {am.completed ? "✅ Completed" : `Step ${am.current_step + 1} of ${totalSteps}`}
+                              </p>
                             </div>
-                            <Progress value={progressPct} className="h-1.5" />
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <Card className="bg-muted/30 border-dashed">
-                    <CardContent className="p-8 text-center">
-                      <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-muted-foreground text-sm mb-3">
-                        Start a growth model and track your progress here.
-                      </p>
-                      <Link to="/models">
-                        <Button size="sm">
-                          Browse Models <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
+                          </div>
+                          <Progress value={progressPct} className="h-1.5" />
+                        </div>
                       </Link>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="h-full border-border/60 bg-muted/30 border-dashed">
+                <CardContent className="p-8 text-center flex flex-col items-center justify-center h-full">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground text-sm mb-3">
+                    Start a growth model to track progress here.
+                  </p>
+                  <Link to="/models">
+                    <Button size="sm">
+                      Browse Models <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             )}
           </section>
 
           {/* Quick Access */}
-          <section className="lg:col-span-1">
-            <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
-            <div className="space-y-3">
-              {[
-                { title: "Toolbox", desc: "Interactive frameworks to grow your practice", icon: BookOpen, href: "/models", emoji: "📚" },
-                { title: "Research Lab", desc: "Participate in studies, unlock rewards", icon: FlaskConical, href: "/research", emoji: "🧪" },
-                { title: "Insights Hub", desc: "Curated articles and resources", icon: Lightbulb, href: "/insights-hub", emoji: "💡" },
-              ].map((card) => (
-                <Link key={card.title} to={card.href}>
-                  <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className="h-11 w-11 rounded-xl bg-muted flex items-center justify-center text-2xl shrink-0">
+          <section>
+            <Card className="h-full border-border/60">
+              <CardHeader className="pb-3 border-b border-border/40">
+                <CardTitle className="text-base">Quick Access</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-2">
+                {[
+                  { title: "Toolbox", desc: "Interactive growth frameworks", icon: BookOpen, href: "/models", emoji: "📚" },
+                  { title: "Research Lab", desc: "Studies & rewards", icon: FlaskConical, href: "/research", emoji: "🧪" },
+                  { title: "Insights Hub", desc: "Curated articles", icon: Lightbulb, href: "/insights-hub", emoji: "💡" },
+                ].map((card) => (
+                  <Link key={card.title} to={card.href}>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
+                      <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center text-xl shrink-0">
                         {card.emoji}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -533,22 +506,22 @@ const Index = () => {
                         <p className="text-xs text-muted-foreground">{card.desc}</p>
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+                    </div>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
           </section>
         </div>
 
-        {/* Active Models (when programmes exist, show models separately below) */}
+        {/* Active Models row (only when programmes exist and user also has models) */}
         {enrolledPrograms.length > 0 && activatedModels.length > 0 && (
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">My Active Models</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold">My Active Models</h2>
               <Link to="/models">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  View All <ArrowRight className="ml-1 h-4 w-4" />
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8">
+                  View All <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>
@@ -557,27 +530,22 @@ const Index = () => {
                 const totalSteps = (am.model?.steps as ModelStep[] | undefined)?.length || 5;
                 const progressPct = am.completed ? 100 : Math.min((am.current_step / totalSteps) * 100, 95);
                 return (
-                  <Card key={am.id} className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xl">{am.model?.emoji || "📚"}</span>
-                          <div>
-                            <h3 className="font-medium text-sm">{am.model?.name || "Model"}</h3>
+                  <Link key={am.id} to={`/models/${am.model_id}/workspace`}>
+                    <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <span className="text-lg">{am.model?.emoji || "📚"}</span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">{am.model?.name || "Model"}</h3>
                             <p className="text-xs text-muted-foreground">
-                              {am.completed ? "✅ Completed" : `Step ${am.current_step + 1} of ${totalSteps}`}
+                              {am.completed ? "✅ Done" : `Step ${am.current_step + 1}/${totalSteps}`}
                             </p>
                           </div>
                         </div>
-                        <Link to={`/models/${am.model_id}/workspace`}>
-                          <Button size="sm" variant={am.completed ? "outline" : "default"} className="text-xs h-8">
-                            {am.completed ? "Review" : "Continue"}
-                          </Button>
-                        </Link>
-                      </div>
-                      <Progress value={progressPct} className="h-1.5" />
-                    </CardContent>
-                  </Card>
+                        <Progress value={progressPct} className="h-1.5" />
+                      </CardContent>
+                    </Card>
+                  </Link>
                 );
               })}
             </div>
