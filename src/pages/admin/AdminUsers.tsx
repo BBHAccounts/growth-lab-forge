@@ -211,6 +211,11 @@ export default function AdminUsers() {
     },
   ];
 
+  // New users = those without a full_name (haven't completed onboarding) or created in last 7 days with no login
+  const newUsers = users.filter(u => 
+    !u.full_name || u.full_name.trim() === '' || u.status === 'unconfirmed'
+  );
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -234,6 +239,45 @@ export default function AdminUsers() {
             </Button>
           </div>
         </div>
+
+        {/* New Users Queue */}
+        {!loading && newUsers.length > 0 && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                <span className="text-lg">👋</span>
+              </div>
+              <div>
+                <h3 className="font-semibold">New Users ({newUsers.length})</h3>
+                <p className="text-xs text-muted-foreground">Users who haven't completed their profile yet</p>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              {newUsers.slice(0, 5).map(user => (
+                <button
+                  key={user.id}
+                  onClick={() => navigate(`/admin/users/${user.user_id}`)}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{user.full_name || user.email || 'Unknown'}</p>
+                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <Badge variant={user.status === 'unconfirmed' ? 'outline' : 'secondary'}>
+                      {!user.full_name || user.full_name.trim() === '' ? 'No profile' : user.status}
+                    </Badge>
+                  </div>
+                </button>
+              ))}
+              {newUsers.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center pt-1">
+                  +{newUsers.length - 5} more new users
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex gap-4">
