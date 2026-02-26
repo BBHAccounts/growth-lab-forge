@@ -10,6 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, Calendar, Clock, FileText, GraduationCap } from "lucide-react";
 import { format, isPast, differenceInDays } from "date-fns";
 
+interface ProgramModelInfo {
+  name: string;
+  emoji: string | null;
+  stepCount: number;
+}
+
 interface EnrolledProgram {
   participant_id: string;
   access_code: string;
@@ -19,13 +25,8 @@ interface EnrolledProgram {
     name: string;
     description: string | null;
     deadline: string | null;
-    model_id: string | null;
   };
-  model?: {
-    name: string;
-    emoji: string | null;
-    steps: unknown[];
-  } | null;
+  models: ProgramModelInfo[];
   currentStep: number;
   totalSteps: number;
 }
