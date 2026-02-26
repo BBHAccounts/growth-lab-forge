@@ -476,6 +476,63 @@ export default function AdminResourceForm() {
     );
   }
 
+  if (urlStep) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card className="w-full max-w-lg">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Add New Insight</CardTitle>
+              <CardDescription>
+                Paste the URL and we'll auto-fill the details for you
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>URL</Label>
+                <Input
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://example.com/article..."
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleUrlStepSubmit();
+                  }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUrlStepSubmit}
+                  disabled={extracting}
+                  className="flex-1"
+                >
+                  {extracting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Extracting...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      {urlInput.trim() ? 'Extract & Continue' : 'Skip — Fill Manually'}
+                    </>
+                  )}
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => navigate('/admin/insights-hub')}
+              >
+                Cancel
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
