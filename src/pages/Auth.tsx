@@ -368,8 +368,8 @@ export default function Auth() {
                 <p className="text-xs text-primary-foreground/50 mt-1">Interactive Models</p>
               </div>
               <div>
-                <p className="text-2xl">🗺️</p>
-                <p className="text-xs text-primary-foreground/50 mt-1">Martech Map</p>
+                <p className="text-2xl">💡</p>
+                <p className="text-xs text-primary-foreground/50 mt-1">Insights Hub</p>
               </div>
               <div>
                 <p className="text-2xl">🧪</p>
@@ -398,7 +398,7 @@ export default function Auth() {
               </section>
               <section>
                 <h3 className="font-semibold text-foreground mb-2">3. Use of the Platform</h3>
-                <p>Growth Lab provides access to business models, frameworks, research insights, and martech resources. You may use these materials for your professional development and business activities within your organisation.</p>
+                <p>Growth Lab provides access to business models, frameworks, research insights, and curated resources. You may use these materials for your professional development and business activities within your organisation.</p>
               </section>
               <section>
                 <h3 className="font-semibold text-foreground mb-2">4. Data Collection and Use</h3>

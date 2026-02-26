@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, FlaskConical, Map, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info } from "lucide-react";
+import { BookOpen, FlaskConical, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info, Lightbulb } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
 import { ReadingReminderCard } from "@/components/ReadingReminderCard";
@@ -41,13 +41,8 @@ interface ActivatedModel {
   model: Model;
 }
 
-interface Vendor {
-  id: string;
-  name: string;
-  description: string | null;
-  logo_url: string | null;
-  website_url: string | null;
-}
+
+
 
 interface TodoItem {
   id: string;
@@ -62,7 +57,6 @@ const Index = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [activatedModels, setActivatedModels] = useState<ActivatedModel[]>([]);
   const [todos, setTodos] = useState<TodoItem[]>([]);
-  const [followedVendors, setFollowedVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   
   const recommendations = useRecommendations(5);
@@ -122,23 +116,8 @@ const Index = () => {
           setTodos(todoItems);
         }
 
-        // Fetch followed vendors (liked by user)
-        const { data: reactionsData } = await supabase
-          .from("reactions")
-          .select("target_id")
-          .eq("user_id", user.id)
-          .eq("target_type", "vendor");
 
-        if (reactionsData && reactionsData.length > 0) {
-          const vendorIds = reactionsData.map(r => r.target_id);
-          const { data: vendorsData } = await supabase
-            .from("vendors")
-            .select("id, name, description, logo_url, website_url")
-            .in("id", vendorIds)
-            .limit(4);
 
-          setFollowedVendors(vendorsData || []);
-        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -174,15 +153,15 @@ const Index = () => {
       emoji: "🧪",
     },
     {
-      title: "Martech Map",
-      description: "Explore legal marketing technology",
-      icon: Map,
-      href: "/martech",
-      emoji: "🗺️",
+      title: "Insights Hub",
+      description: "Curated articles and resources",
+      icon: Lightbulb,
+      href: "/insights-hub",
+      emoji: "💡",
     },
   ];
 
-  const hasRecommendations = recommendations.models.length > 0 || recommendations.martechCategories.length > 0 || recommendations.resources.length > 0;
+  const hasRecommendations = recommendations.models.length > 0 || recommendations.resources.length > 0;
 
   return (
     <AppLayout>
@@ -276,11 +255,11 @@ const Index = () => {
                         </li>
                         <li>
                           <Link
-                            to="/martech"
+                            to="/insights-hub"
                             className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                           >
                             <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm font-medium flex-1 group-hover:text-primary transition-colors">Explore the Martech Map</span>
+                            <span className="text-sm font-medium flex-1 group-hover:text-primary transition-colors">Browse the Insights Hub</span>
                             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                           </Link>
                         </li>
@@ -356,36 +335,6 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Recommended Martech Categories */}
-                {recommendations.martechCategories.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🗺️</span>
-                      <h3 className="font-medium">Martech Map</h3>
-                    </div>
-                    <div className="space-y-3">
-                      {recommendations.martechCategories.slice(0, 3).map((category) => (
-                        <Link key={category.id} to={`/martech?category=${encodeURIComponent(category.name)}`}>
-                          <Card className="group hover:shadow-lg transition-all duration-200 hover:border-primary/50 hover:-translate-y-0.5">
-                            <CardContent className="p-4 flex items-center gap-3">
-                              <div 
-                                className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0 text-white font-semibold"
-                                style={{ backgroundColor: `hsl(${category.name.charCodeAt(0) * 7 % 360}, 60%, 50%)` }}
-                              >
-                                {category.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate group-hover:text-primary transition-colors">{category.name}</p>
-                                <p className="text-sm text-muted-foreground">Explore vendors</p>
-                              </div>
-                              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Recommended Insights */}
                 {recommendations.resources.length > 0 && (
@@ -513,59 +462,7 @@ const Index = () => {
           )}
         </section>
 
-        {/* Followed Vendors */}
-        {followedVendors.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Your Followed Vendors</h2>
-              <Link to="/martech">
-                <Button variant="ghost" size="sm">
-                  View All <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {followedVendors.map((vendor) => (
-                <Card key={vendor.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      {vendor.logo_url ? (
-                        <img
-                          src={vendor.logo_url}
-                          alt={vendor.name}
-                          className="h-8 w-8 rounded object-contain"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
-                          <span className="text-xs font-bold">{vendor.name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <h3 className="font-medium truncate">{vendor.name}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {vendor.description}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary" className="text-xs">
-                        <Heart className="h-3 w-3 mr-1 fill-current" /> Following
-                      </Badge>
-                      {vendor.website_url && (
-                        <a
-                          href={vendor.website_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Visit
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+
 
       </div>
     </AppLayout>

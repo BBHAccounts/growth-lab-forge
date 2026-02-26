@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Box, Heart, TrendingUp } from 'lucide-react';
+import { Users, Box, TrendingUp } from 'lucide-react';
 
 interface AnalyticsData {
   userStats: {
@@ -14,10 +14,6 @@ interface AnalyticsData {
     total: number;
     totalActivations: number;
     topActivated: { name: string; count: number }[];
-  };
-  vendorStats: {
-    total: number;
-    topLiked: { name: string; likes: number }[];
   };
   researchStats: {
     totalStudies: number;
@@ -78,21 +74,8 @@ export default function AdminAnalytics() {
           .sort((a, b) => b.count - a.count)
           .slice(0, 10);
 
-        // Vendor stats
-        const { count: totalVendors } = await supabase
-          .from('vendors')
-          .select('*', { count: 'exact', head: true });
 
-        const { data: likedVendors } = await supabase
-          .from('vendors')
-          .select('name, likes_count')
-          .order('likes_count', { ascending: false })
-          .limit(10);
 
-        const topLiked = (likedVendors || []).map((v) => ({
-          name: v.name,
-          likes: v.likes_count || 0,
-        }));
 
         // Research stats
         const { count: totalStudies } = await supabase
@@ -124,10 +107,8 @@ export default function AdminAnalytics() {
             totalActivations: totalActivations || 0,
             topActivated,
           },
-          vendorStats: {
-            total: totalVendors || 0,
-            topLiked,
-          },
+
+
           researchStats: {
             totalStudies: totalStudies || 0,
             totalResponses: totalResponses || 0,
@@ -196,16 +177,8 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Martech Vendors</CardTitle>
-              <Heart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{data.vendorStats.total}</div>
-              <p className="text-xs text-muted-foreground">in catalog</p>
-            </CardContent>
-          </Card>
+
+
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -289,29 +262,8 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          {/* Top Vendors */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Most Liked Vendors</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.vendorStats.topLiked.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No data yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {data.vendorStats.topLiked.map((vendor, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground text-sm w-4">{i + 1}.</span>
-                        <span className="text-sm">{vendor.name}</span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">{vendor.likes} ❤️</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+
         </div>
       </div>
     </AdminLayout>

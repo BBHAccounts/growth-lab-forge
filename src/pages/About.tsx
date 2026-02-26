@@ -45,8 +45,8 @@ export default function About() {
                 North Star, ideal clients, and go-to-market approach
               </li>
               <li>
-                <strong>Martech Map</strong> – A curated database of legal technology vendors across 
-                CRM, experience management, content, and more
+                <strong>Insights Hub</strong> – Curated articles, guides, and resources for 
+                legal business development
               </li>
               <li>
                 <strong>Research Lab</strong> – Participate in industry research and unlock premium 

@@ -41,11 +41,6 @@ export interface RecommendedModel {
   slug: string | null;
 }
 
-export interface RecommendedVendorCategory {
-  id: string;
-  name: string;
-}
-
 export interface RecommendedResource {
   id: string;
   title: string;
@@ -60,7 +55,6 @@ export interface RecommendedResource {
 export interface Recommendations {
   topics: ScoredTopic[];
   models: RecommendedModel[];
-  martechCategories: RecommendedVendorCategory[];
   resources: RecommendedResource[];
   loading: boolean;
 }
@@ -68,7 +62,6 @@ export interface Recommendations {
 function scoreTopicForUser(topic: Topic, profile: UserProfile): number {
   let score = 0;
 
-  // +4 for overlap between user interest_areas and interest_area_keywords
   const userInterests = profile.interest_areas || [];
   const topicKeywords = topic.interest_area_keywords || [];
   for (const interest of userInterests) {
@@ -77,39 +70,29 @@ function scoreTopicForUser(topic: Topic, profile: UserProfile): number {
     }
   }
 
-  // +3 if user.role in recommended_roles
   if (profile.role_title && topic.recommended_roles.includes(profile.role_title)) {
     score += 3;
   }
-
-  // +2 if user.seniority in recommended_seniority
   if (profile.seniority && topic.recommended_seniority.includes(profile.seniority)) {
     score += 2;
   }
-
-  // +2 if user.firm_size in recommended_firm_sizes
   if (profile.firm_size && topic.recommended_firm_sizes.includes(profile.firm_size)) {
     score += 2;
   }
-
-  // +2 if user.firm_type in recommended_firm_types
   if (profile.firm_type && topic.recommended_firm_types.includes(profile.firm_type)) {
     score += 2;
   }
 
-  // +1 if user.international_scope in national_or_international
   const userScope = profile.international_scope ? 'international' : 'national';
   if (topic.national_or_international.includes(userScope)) {
     score += 1;
   }
 
-  // +2 if user.growth_maturity_level is inside the Topic's maturity range
   const growthLevel = profile.growth_maturity_level || 1;
   if (growthLevel >= topic.min_growth_maturity && growthLevel <= topic.max_growth_maturity) {
     score += 2;
   }
 
-  // +1 if user.data_maturity_level is inside the Topic's data maturity range
   const dataLevel = profile.data_maturity_level || 1;
   if (dataLevel >= topic.min_data_maturity && dataLevel <= topic.max_data_maturity) {
     score += 1;
@@ -122,7 +105,6 @@ export function useRecommendations(maxTopics: number = 5) {
   const [recommendations, setRecommendations] = useState<Recommendations>({
     topics: [],
     models: [],
-    martechCategories: [],
     resources: [],
     loading: true,
   });
@@ -130,14 +112,12 @@ export function useRecommendations(maxTopics: number = 5) {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        // Get current user
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           setRecommendations((prev) => ({ ...prev, loading: false }));
           return;
         }
 
-        // Fetch user profile
         const { data: profileData } = await supabase
           .from('profiles')
           .select('seniority, role_title, firm_size, firm_type, interest_areas, international_scope, growth_maturity_level, data_maturity_level')
@@ -155,7 +135,6 @@ export function useRecommendations(maxTopics: number = 5) {
           data_maturity_level: profileData?.data_maturity_level || 1,
         };
 
-        // Fetch active topics
         const { data: topicsData } = await supabase
           .from('topics')
           .select('*')
@@ -163,64 +142,30 @@ export function useRecommendations(maxTopics: number = 5) {
 
         const topics = (topicsData || []) as Topic[];
 
-        // Score and sort topics
         const scoredTopics: ScoredTopic[] = topics
           .map((topic) => ({ ...topic, score: scoreTopicForUser(topic, profile) }))
           .sort((a, b) => b.score - a.score)
           .slice(0, maxTopics);
 
         let models: RecommendedModel[] = [];
-        let martechCategories: RecommendedVendorCategory[] = [];
         let resources: RecommendedResource[] = [];
 
         const topTopicIds = scoredTopics.map((t) => t.id);
         const topTopicCategoryKeys = [...new Set(scoredTopics.map((t) => t.category_key).filter(Boolean))] as string[];
 
-        // If we have matching topics, fetch linked items
         if (topTopicIds.length > 0) {
-          // Fetch models directly via topic_models
           const linkedModels = await supabase.from('topic_models').select('model_id').in('topic_id', topTopicIds);
           const modelIds = [...new Set((linkedModels.data || []).map((l) => l.model_id))];
 
-          // Fetch martech categories via the linking tables
-          // 1. Get martech categories linked directly to topics
-          const martechCatsByTopic = await supabase
-            .from('martech_category_topics')
-            .select('martech_category_id')
-            .in('topic_id', topTopicIds);
-
-          // 2. Get martech categories linked via topic categories
-          let martechCatsByTopicCategory: { data: { martech_category_id: string }[] | null } = { data: [] };
           let topicCategoryIds: string[] = [];
           if (topTopicCategoryKeys.length > 0) {
             const { data: topicCatData } = await supabase
               .from('topic_categories')
               .select('id')
               .in('key', topTopicCategoryKeys);
-            
             topicCategoryIds = (topicCatData || []).map(tc => tc.id);
-            
-            if (topicCategoryIds.length > 0) {
-              martechCatsByTopicCategory = await supabase
-                .from('martech_category_topic_categories')
-                .select('martech_category_id')
-                .in('topic_category_id', topicCategoryIds);
-            }
           }
 
-          const martechCategoryIds = [
-            ...new Set([
-              ...(martechCatsByTopic.data || []).map(l => l.martech_category_id),
-              ...(martechCatsByTopicCategory.data || []).map(l => l.martech_category_id),
-            ])
-          ];
-
-          // Fetch martech categories
-          const martechCatsRes = martechCategoryIds.length > 0
-            ? await supabase.from('martech_categories').select('id, name').in('id', martechCategoryIds)
-            : { data: [] };
-
-          // Fetch resources via BOTH resource_topics (direct topic links) AND resource_topic_categories (topic category links)
           const [resourcesByTopic, resourcesByTopicCategory] = await Promise.all([
             supabase.from('resource_topics').select('resource_id').in('topic_id', topTopicIds),
             topicCategoryIds.length > 0
@@ -245,32 +190,26 @@ export function useRecommendations(maxTopics: number = 5) {
           ]);
 
           models = (modelsRes.data || []) as RecommendedModel[];
-          martechCategories = (martechCatsRes.data || []) as RecommendedVendorCategory[];
           resources = (resourcesRes.data || []) as RecommendedResource[];
         }
 
-        // If we have no recommendations, fetch random items as fallback
-        const needsFallback = models.length === 0 && martechCategories.length === 0 && resources.length === 0;
+        const needsFallback = models.length === 0 && resources.length === 0;
         
         if (needsFallback) {
-          const [randomModels, randomMartechCats, randomResources] = await Promise.all([
+          const [randomModels, randomResources] = await Promise.all([
             supabase.from('models').select('id, name, emoji, short_description, slug').eq('status', 'active').limit(4),
-            supabase.from('martech_categories').select('id, name').limit(4),
             supabase.from('resources').select('id, title, description, type, url, emoji, author, estimated_time').eq('status', 'active').limit(4),
           ]);
 
-          // Shuffle and pick a mix
           const shuffleArray = <T,>(arr: T[]): T[] => arr.sort(() => Math.random() - 0.5);
           
           models = shuffleArray(randomModels.data || []).slice(0, 3) as RecommendedModel[];
-          martechCategories = shuffleArray(randomMartechCats.data || []).slice(0, 3) as RecommendedVendorCategory[];
           resources = shuffleArray(randomResources.data || []).slice(0, 3) as RecommendedResource[];
         }
 
         setRecommendations({
           topics: scoredTopics,
           models,
-          martechCategories,
           resources,
           loading: false,
         });
@@ -289,7 +228,7 @@ export function useRecommendations(maxTopics: number = 5) {
 // Helper function to get user profile and top topics for chatbot
 export async function getUserRecommendationContext(userId: string): Promise<{
   profile: UserProfile | null;
-  topTopics: { name: string; description: string | null; linkedModels: string[]; linkedCategories: { vendorCategories: string[]; resourceCategories: string[] } }[];
+  topTopics: { name: string; description: string | null; linkedModels: string[]; linkedCategories: { resourceCategories: string[] } }[];
 }> {
   try {
     const { data: profileData } = await supabase
@@ -323,53 +262,21 @@ export async function getUserRecommendationContext(userId: string): Promise<{
 
     const topTopics = await Promise.all(
       scoredTopics.map(async (topic) => {
-        // Fetch linked models
         const linkedModels = await supabase
           .from('topic_models')
           .select('models(name)')
           .eq('topic_id', topic.id);
 
-        // Fetch resource categories linked to the topic
         const resourceCats = await supabase
           .from('topic_resource_categories')
           .select('resource_categories(name)')
           .eq('topic_id', topic.id);
-
-        // Fetch martech categories via the NEW linking tables
-        const martechCatsByTopic = await supabase
-          .from('martech_category_topics')
-          .select('martech_categories(name)')
-          .eq('topic_id', topic.id);
-
-        // Also get martech categories linked via topic category
-        let martechCatsByTopicCategory: any[] = [];
-        if (topic.category_key) {
-          const { data: topicCatData } = await supabase
-            .from('topic_categories')
-            .select('id')
-            .eq('key', topic.category_key)
-            .single();
-          
-          if (topicCatData) {
-            const { data: cats } = await supabase
-              .from('martech_category_topic_categories')
-              .select('martech_categories(name)')
-              .eq('topic_category_id', topicCatData.id);
-            martechCatsByTopicCategory = cats || [];
-          }
-        }
-
-        const vendorCategoryNames = [
-          ...(martechCatsByTopic.data || []).map((c: any) => c.martech_categories?.name).filter(Boolean),
-          ...martechCatsByTopicCategory.map((c: any) => c.martech_categories?.name).filter(Boolean),
-        ];
 
         return {
           name: topic.name,
           description: topic.description,
           linkedModels: (linkedModels.data || []).map((m: any) => m.models?.name).filter(Boolean),
           linkedCategories: {
-            vendorCategories: [...new Set(vendorCategoryNames)],
             resourceCategories: (resourceCats.data || []).map((c: any) => c.resource_categories?.name).filter(Boolean),
           },
         };
