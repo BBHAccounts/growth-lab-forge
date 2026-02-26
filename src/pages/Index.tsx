@@ -255,11 +255,11 @@ const Index = () => {
                         </li>
                         <li>
                           <Link
-                            to="/martech"
+                            to="/insights-hub"
                             className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                           >
                             <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="text-sm font-medium flex-1 group-hover:text-primary transition-colors">Explore the Martech Map</span>
+                            <span className="text-sm font-medium flex-1 group-hover:text-primary transition-colors">Browse the Insights Hub</span>
                             <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
                           </Link>
                         </li>
