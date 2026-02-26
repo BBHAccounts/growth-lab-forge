@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, CheckCircle, ArrowLeft, Eye, EyeOff, Star } from "lucide-react";
+import { Loader2, Mail, CheckCircle, ArrowLeft, Eye, EyeOff, BookOpen, FlaskConical, Lightbulb, ArrowRight, Sparkles } from "lucide-react";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
 
 type AuthMode = "main" | "success" | "password" | "forgot" | "reset-sent" | "resetting";
@@ -341,41 +341,75 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Right side - Dark panel with testimonial */}
+      {/* Right side - Dark panel with platform preview */}
       <div className="hidden lg:flex lg:w-1/2 bg-foreground items-center justify-center p-12">
-        <div className="max-w-md">
-          <div className="flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-primary-foreground/50 mb-6">
-            <Star className="h-4 w-4 fill-secondary text-secondary" />
-            Member Insight
+        <div className="max-w-lg w-full">
+          <div className="flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-primary-foreground/50 mb-4">
+            <Sparkles className="h-4 w-4 text-secondary" />
+            What's Inside
           </div>
-          <div className="flex gap-1 mb-6">
-            {[1,2,3,4,5].map(i => (
-              <Star key={i} className="h-5 w-5 fill-secondary text-secondary" />
-            ))}
-          </div>
-          <blockquote className="text-xl leading-relaxed mb-8 text-primary-foreground/90">
-            "Growth Lab has transformed how we approach business development strategy. The frameworks and research insights are invaluable for our team's growth."
-          </blockquote>
-          <div>
-            <p className="font-medium text-primary-foreground/80">Senior BD Director</p>
-            <p className="text-sm text-primary-foreground/50">International Law Firm</p>
-          </div>
+          <h2 className="text-2xl font-bold text-primary-foreground/90 mb-2">
+            Your strategic growth toolkit
+          </h2>
+          <p className="text-sm text-primary-foreground/50 mb-8">
+            Frameworks, research, and insights built for legal professionals.
+          </p>
 
-          <div className="mt-16 pt-8 border-t border-primary-foreground/10">
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-2xl">📚</p>
-                <p className="text-xs text-primary-foreground/50 mt-1">Interactive Models</p>
-              </div>
-              <div>
-                <p className="text-2xl">💡</p>
-                <p className="text-xs text-primary-foreground/50 mt-1">Insights Hub</p>
-              </div>
-              <div>
-                <p className="text-2xl">🧪</p>
-                <p className="text-xs text-primary-foreground/50 mt-1">Research Lab</p>
+          {/* Feature cards */}
+          <div className="space-y-4">
+            <div className="rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-5">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-lg bg-secondary/20 flex items-center justify-center shrink-0">
+                  <BookOpen className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-primary-foreground/90 mb-1">Interactive Models</h3>
+                  <p className="text-sm text-primary-foreground/50 leading-relaxed">
+                    Step-by-step frameworks for BD planning, client development, pitching, and practice growth.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {["BD Planner", "Client Growth", "Pitch Builder", "Market Analysis"].map(tag => (
+                      <span key={tag} className="text-[11px] px-2.5 py-1 rounded-full bg-primary-foreground/10 text-primary-foreground/40">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
+
+            <div className="rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-5">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-lg bg-secondary/20 flex items-center justify-center shrink-0">
+                  <Lightbulb className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-primary-foreground/90 mb-1">Insights Hub</h3>
+                  <p className="text-sm text-primary-foreground/50 leading-relaxed">
+                    Curated articles, guides, and resources on legal business development trends.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-primary-foreground/10 bg-primary-foreground/5 p-5">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-lg bg-secondary/20 flex items-center justify-center shrink-0">
+                  <FlaskConical className="h-5 w-5 text-secondary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-primary-foreground/90 mb-1">Research Lab</h3>
+                  <p className="text-sm text-primary-foreground/50 leading-relaxed">
+                    Participate in industry studies and unlock exclusive benchmarking data.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex items-center gap-2 text-xs text-primary-foreground/30">
+            <ArrowRight className="h-3.5 w-3.5" />
+            <span>Sign in to explore all features</span>
           </div>
         </div>
       </div>
