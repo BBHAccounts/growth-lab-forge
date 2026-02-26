@@ -490,6 +490,48 @@ export type Database = {
         }
         Relationships: []
       }
+      program_models: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          id: string
+          model_id: string
+          order_index: number
+          program_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          model_id: string
+          order_index?: number
+          program_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          model_id?: string
+          order_index?: number
+          program_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "program_models_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       program_participants: {
         Row: {
           access_code: string
@@ -623,6 +665,7 @@ export type Database = {
           id: string
           model_id: string | null
           name: string
+          sequential: boolean | null
           status: string
           updated_at: string
         }
@@ -635,6 +678,7 @@ export type Database = {
           id?: string
           model_id?: string | null
           name: string
+          sequential?: boolean | null
           status?: string
           updated_at?: string
         }
@@ -647,6 +691,7 @@ export type Database = {
           id?: string
           model_id?: string | null
           name?: string
+          sequential?: boolean | null
           status?: string
           updated_at?: string
         }
