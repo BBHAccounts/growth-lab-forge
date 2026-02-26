@@ -140,6 +140,52 @@ const Index = () => {
           });
           setTodos(todoItems);
         }
+
+        // Fetch enrolled programs
+        const { data: participantData } = await supabase
+          .from("program_participants")
+          .select("id, access_code, status, program_id")
+          .eq("user_id", user.id);
+
+        if (participantData && participantData.length > 0) {
+          const progIds = participantData.map(p => p.program_id);
+          const { data: progsData } = await supabase
+            .from("programs")
+            .select("id, name, description, deadline, model_id, status")
+            .in("id", progIds)
+            .eq("status", "active");
+
+          if (progsData && progsData.length > 0) {
+            const mIds = progsData.filter(p => p.model_id).map(p => p.model_id!);
+            let modelsLookup: Record<string, { name: string; emoji: string | null }> = {};
+            if (mIds.length > 0) {
+              const { data: mData } = await supabase
+                .from("models")
+                .select("id, name, emoji")
+                .in("id", mIds);
+              mData?.forEach(m => { modelsLookup[m.id] = { name: m.name, emoji: m.emoji }; });
+            }
+
+            const enrolled: EnrolledProgram[] = participantData
+              .map(p => {
+                const prog = progsData.find(pr => pr.id === p.program_id);
+                if (!prog) return null;
+                const model = prog.model_id ? modelsLookup[prog.model_id] : null;
+                return {
+                  participant_id: p.id,
+                  access_code: p.access_code,
+                  status: p.status,
+                  program_name: prog.name,
+                  program_description: prog.description,
+                  deadline: prog.deadline,
+                  model_emoji: model?.emoji || null,
+                  model_name: model?.name || null,
+                };
+              })
+              .filter(Boolean) as EnrolledProgram[];
+            setEnrolledPrograms(enrolled);
+          }
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
