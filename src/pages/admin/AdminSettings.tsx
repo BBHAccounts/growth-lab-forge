@@ -16,6 +16,7 @@ interface Settings {
   welcome_modal_text: string;
   support_email: string;
   support_url: string;
+  ai_assistant_global_prompt: string;
   enable_feed: boolean;
   enable_comments: boolean;
   enable_member_directory: boolean;
