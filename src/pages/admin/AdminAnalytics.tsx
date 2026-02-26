@@ -107,10 +107,8 @@ export default function AdminAnalytics() {
             totalActivations: totalActivations || 0,
             topActivated,
           },
-          vendorStats: {
-            total: totalVendors || 0,
-            topLiked,
-          },
+
+
           researchStats: {
             totalStudies: totalStudies || 0,
             totalResponses: totalResponses || 0,
