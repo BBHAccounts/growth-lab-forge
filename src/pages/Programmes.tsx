@@ -333,16 +333,7 @@ export default function Programmes() {
                     )}
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {item.program.deadline && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span>{format(new Date(item.program.deadline), "MMM d, yyyy")}</span>
-                          </div>
-                        )}
-                        {getDeadlineBadge(item.program.deadline)}
-                      </div>
+                    <div className="flex items-center justify-end">
                       <Link to={`/program/${item.access_code}`}>
                         <Button size="sm" variant={item.status === "submitted" ? "outline" : "default"}>
                           {item.status === "submitted" ? "Review" : item.status === "in_progress" ? "Continue" : "Start"}
