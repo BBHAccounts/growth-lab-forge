@@ -162,7 +162,7 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
 
-    } else if (type === "signup" && user_id) {
+    } else if (resolvedType === "signup" && user_id) {
       // Legacy signup verification flow
       const token = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
