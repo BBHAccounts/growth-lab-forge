@@ -27,6 +27,8 @@ interface ModelStep {
   title: string;
   instruction: string;
   fields: ModelField[];
+  _modelId?: string; // track which model this step belongs to
+  _modelName?: string;
 }
 
 interface Program {
@@ -34,8 +36,8 @@ interface Program {
   name: string;
   model_id: string | null;
   allow_pdf_upload: boolean;
+  sequential: boolean;
 }
-
 
 interface Participant {
   id: string;
@@ -65,7 +67,6 @@ export default function ProgramWorkspace() {
       }
 
       try {
-        // Get participant
         const { data: participantData, error: participantError } = await supabase
           .from("program_participants")
           .select("*")
@@ -80,7 +81,6 @@ export default function ProgramWorkspace() {
 
         setParticipant(participantData);
 
-        // Get program
         const { data: programData } = await supabase
           .from("programs")
           .select("*")
@@ -94,18 +94,54 @@ export default function ProgramWorkspace() {
 
         setProgram(programData);
 
-        // Get model steps
-        if (programData.model_id) {
+        // Load steps from program_models (multi-model) or fallback to model_id
+        let allSteps: ModelStep[] = [];
+
+        const { data: pmData } = await supabase
+          .from("program_models")
+          .select("model_id, order_index")
+          .eq("program_id", programData.id)
+          .order("order_index");
+
+        if (pmData && pmData.length > 0) {
+          const modelIds = pmData.map(pm => pm.model_id);
+          const { data: modelsData } = await supabase
+            .from("models")
+            .select("id, name, emoji, steps")
+            .in("id", modelIds);
+
+          if (modelsData) {
+            const modelsMap = Object.fromEntries(modelsData.map(m => [m.id, m]));
+            for (const pm of pmData) {
+              const model = modelsMap[pm.model_id];
+              if (model?.steps && Array.isArray(model.steps)) {
+                const modelSteps = (model.steps as unknown as ModelStep[]).map(s => ({
+                  ...s,
+                  _modelId: model.id,
+                  _modelName: model.name,
+                }));
+                allSteps = allSteps.concat(modelSteps);
+              }
+            }
+          }
+        } else if (programData.model_id) {
+          // Fallback to legacy single model
           const { data: modelData } = await supabase
             .from("models")
-            .select("steps")
+            .select("id, name, steps")
             .eq("id", programData.model_id)
             .single();
 
           if (modelData?.steps) {
-            setSteps(modelData.steps as unknown as ModelStep[]);
+            allSteps = (modelData.steps as unknown as ModelStep[]).map(s => ({
+              ...s,
+              _modelId: modelData.id,
+              _modelName: modelData.name,
+            }));
           }
         }
+
+        setSteps(allSteps);
 
         // Get existing response
         const { data: responseData } = await supabase
@@ -155,14 +191,13 @@ export default function ProgramWorkspace() {
     }
   }, [responseId]);
 
-  // Debounced auto-save
   useEffect(() => {
     if (!responseId) return;
     
     setAutoSaveStatus('unsaved');
     const timer = setTimeout(() => {
       saveProgress(formData, currentStep);
-    }, 3000); // Auto-save after 3 seconds of no changes
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [formData, currentStep, responseId, saveProgress]);
@@ -188,13 +223,9 @@ export default function ProgramWorkspace() {
   };
 
   const updateFieldValue = (fieldId: string, value: unknown) => {
-    setFormData((prev) => ({
-      ...prev,
-      [fieldId]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [fieldId]: value }));
   };
 
-  // List field helpers
   const addListItem = (fieldId: string) => {
     const current = (formData[fieldId] as string[]) || [];
     updateFieldValue(fieldId, [...current, ""]);
@@ -212,7 +243,6 @@ export default function ProgramWorkspace() {
     updateFieldValue(fieldId, current.filter((_, i) => i !== index));
   };
 
-  // Table field helpers
   const addTableRow = (fieldId: string, columns: Array<{ id: string }>) => {
     const current = (formData[fieldId] as Record<string, string>[]) || [];
     const emptyRow = columns.reduce((acc, col) => ({ ...acc, [col.id]: "" }), {});
@@ -255,12 +285,7 @@ export default function ProgramWorkspace() {
                   onChange={(e) => updateListItem(field.id, i, e.target.value)}
                   placeholder={field.placeholder}
                 />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeListItem(field.id, i)}
-                  className="shrink-0"
-                >
+                <Button variant="ghost" size="icon" onClick={() => removeListItem(field.id, i)} className="shrink-0">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -280,32 +305,17 @@ export default function ProgramWorkspace() {
             {columns.length > 0 && (
               <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 40px` }}>
                 {columns.map((col) => (
-                  <Label key={col.id} className="text-xs text-muted-foreground">
-                    {col.label}
-                  </Label>
+                  <Label key={col.id} className="text-xs text-muted-foreground">{col.label}</Label>
                 ))}
                 <div />
               </div>
             )}
             {tableRows.map((row, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="grid gap-2"
-                style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 40px` }}
-              >
+              <div key={rowIndex} className="grid gap-2" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 40px` }}>
                 {columns.map((col) => (
-                  <Input
-                    key={col.id}
-                    value={row[col.id] || ""}
-                    onChange={(e) => updateTableCell(field.id, rowIndex, col.id, e.target.value)}
-                    placeholder={col.label}
-                  />
+                  <Input key={col.id} value={row[col.id] || ""} onChange={(e) => updateTableCell(field.id, rowIndex, col.id, e.target.value)} placeholder={col.label} />
                 ))}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeTableRow(field.id, rowIndex)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => removeTableRow(field.id, rowIndex)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -343,6 +353,7 @@ export default function ProgramWorkspace() {
 
   const step = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
+  const currentModelId = step._modelId || program.model_id;
 
   return (
     <ProgramLayout programName={program.name}>
@@ -353,9 +364,14 @@ export default function ProgramWorkspace() {
             <h1 className="text-xl font-bold">
               Step {currentStep + 1} of {steps.length}
             </h1>
-            {participant?.name && (
-              <p className="text-sm text-muted-foreground">{participant.name}</p>
-            )}
+            <div className="flex items-center gap-2">
+              {participant?.name && (
+                <p className="text-sm text-muted-foreground">{participant.name}</p>
+              )}
+              {step._modelName && (
+                <Badge variant="outline" className="text-xs">{step._modelName}</Badge>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant={
@@ -378,7 +394,7 @@ export default function ProgramWorkspace() {
           <div className="flex justify-between mt-2">
             {steps.map((s, i) => (
               <button
-                key={s.id}
+                key={s.id + '-' + i}
                 onClick={() => setCurrentStep(i)}
                 className={`text-xs px-2 py-1 rounded transition-colors ${
                   i === currentStep
@@ -411,9 +427,9 @@ export default function ProgramWorkspace() {
                   {field.optional && (
                     <span className="text-xs text-muted-foreground">(optional)</span>
                   )}
-                  {program.model_id && (
+                  {currentModelId && (
                     <FieldAssistant
-                      modelId={program.model_id}
+                      modelId={currentModelId}
                       stepTitle={step.title}
                       stepInstruction={step.instruction}
                       fieldLabel={field.label}

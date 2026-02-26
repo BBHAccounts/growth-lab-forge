@@ -30,6 +30,7 @@ interface ModelStep {
   id: string;
   title: string;
   fields: ModelField[];
+  _modelName?: string;
 }
 
 interface Program {
@@ -59,7 +60,6 @@ export default function ProgramReview() {
       }
 
       try {
-        // Get participant
         const { data: participantData } = await supabase
           .from("program_participants")
           .select("*")
@@ -73,7 +73,6 @@ export default function ProgramReview() {
 
         setParticipantId(participantData.id);
 
-        // Get program
         const { data: programData } = await supabase
           .from("programs")
           .select("*")
@@ -87,20 +86,47 @@ export default function ProgramReview() {
 
         setProgram(programData);
 
-        // Get model steps
-        if (programData.model_id) {
+        // Load steps from program_models or fallback
+        let allSteps: ModelStep[] = [];
+
+        const { data: pmData } = await supabase
+          .from("program_models")
+          .select("model_id, order_index")
+          .eq("program_id", programData.id)
+          .order("order_index");
+
+        if (pmData && pmData.length > 0) {
+          const modelIds = pmData.map(pm => pm.model_id);
+          const { data: modelsData } = await supabase
+            .from("models")
+            .select("id, name, steps")
+            .in("id", modelIds);
+
+          if (modelsData) {
+            const modelsMap = Object.fromEntries(modelsData.map(m => [m.id, m]));
+            for (const pm of pmData) {
+              const model = modelsMap[pm.model_id];
+              if (model?.steps && Array.isArray(model.steps)) {
+                allSteps = allSteps.concat(
+                  (model.steps as unknown as ModelStep[]).map(s => ({ ...s, _modelName: model.name }))
+                );
+              }
+            }
+          }
+        } else if (programData.model_id) {
           const { data: modelData } = await supabase
             .from("models")
-            .select("steps")
+            .select("name, steps")
             .eq("id", programData.model_id)
             .single();
 
           if (modelData?.steps) {
-            setSteps(modelData.steps as unknown as ModelStep[]);
+            allSteps = (modelData.steps as unknown as ModelStep[]).map(s => ({ ...s, _modelName: modelData.name }));
           }
         }
 
-        // Get response
+        setSteps(allSteps);
+
         const { data: responseData } = await supabase
           .from("program_responses")
           .select("*")
@@ -127,13 +153,11 @@ export default function ProgramReview() {
     setSubmitting(true);
 
     try {
-      // Update response as submitted
       await supabase
         .from("program_responses")
         .update({ submitted_at: new Date().toISOString() })
         .eq("id", responseId);
 
-      // Update participant status
       await supabase
         .from("program_participants")
         .update({ status: 'submitted' })
@@ -157,7 +181,6 @@ export default function ProgramReview() {
         return <span className="text-muted-foreground italic">No items</span>;
       }
       
-      // Table type
       if (typeof value[0] === 'object' && field.columns) {
         return (
           <div className="overflow-x-auto">
@@ -165,9 +188,7 @@ export default function ProgramReview() {
               <thead>
                 <tr className="border-b">
                   {field.columns.map((col) => (
-                    <th key={col.id} className="text-left p-2 font-medium">
-                      {col.label}
-                    </th>
+                    <th key={col.id} className="text-left p-2 font-medium">{col.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -175,9 +196,7 @@ export default function ProgramReview() {
                 {value.map((row: Record<string, string>, i) => (
                   <tr key={i} className="border-b">
                     {field.columns!.map((col) => (
-                      <td key={col.id} className="p-2">
-                        {row[col.id] || '-'}
-                      </td>
+                      <td key={col.id} className="p-2">{row[col.id] || '-'}</td>
                     ))}
                   </tr>
                 ))}
@@ -187,7 +206,6 @@ export default function ProgramReview() {
         );
       }
 
-      // List type
       return (
         <ul className="list-disc list-inside space-y-1">
           {value.map((item, i) => (
@@ -224,7 +242,6 @@ export default function ProgramReview() {
   return (
     <ProgramLayout programName={program?.name}>
       <div className="max-w-3xl mx-auto p-6 md:p-8">
-        {/* Header */}
         <div className="mb-6">
           <Button variant="ghost" onClick={() => navigate(`/program/${code}/workspace`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -239,13 +256,12 @@ export default function ProgramReview() {
           </p>
         </div>
 
-        {/* Summary Cards */}
         <div className="space-y-6">
           {steps.map((step, stepIndex) => {
             const complete = isStepComplete(step);
             
             return (
-              <Card key={step.id} className="relative">
+              <Card key={step.id + '-' + stepIndex} className="relative">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -255,14 +271,14 @@ export default function ProgramReview() {
                         <Circle className="h-5 w-5 text-muted-foreground" />
                       )}
                       <CardTitle className="text-lg">{step.title}</CardTitle>
+                      {step._modelName && (
+                        <Badge variant="outline" className="text-xs">{step._modelName}</Badge>
+                      )}
                     </div>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => {
-                        // Navigate back to workspace at this step
-                        navigate(`/program/${code}/workspace`);
-                      }}
+                      onClick={() => navigate(`/program/${code}/workspace`)}
                     >
                       <Edit2 className="h-4 w-4 mr-1" />
                       Edit
@@ -272,12 +288,8 @@ export default function ProgramReview() {
                 <CardContent className="space-y-4">
                   {step.fields.map((field) => (
                     <div key={field.id} className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        {field.label}
-                      </p>
-                      <div className="text-sm">
-                        {renderFieldValue(field, formData[field.id])}
-                      </div>
+                      <p className="text-sm font-medium text-muted-foreground">{field.label}</p>
+                      <div className="text-sm">{renderFieldValue(field, formData[field.id])}</div>
                     </div>
                   ))}
                 </CardContent>
@@ -286,7 +298,6 @@ export default function ProgramReview() {
           })}
         </div>
 
-        {/* Submit Section */}
         <Card className="mt-8 border-primary/50">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
