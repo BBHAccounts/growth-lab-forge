@@ -339,7 +339,7 @@ export default function Auth() {
               </p>
             </div>
             <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-              Accounts are for professionals in legal business development.
+              Accounts are for legal professionals looking to drive growth and build a stronger business.
             </div>
             <form onSubmit={handleSendMagicLink} className="space-y-4">
               <div className="space-y-2">
