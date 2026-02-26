@@ -211,6 +211,7 @@ export default function AdminModelForm() {
         suggested_actions: model.suggested_actions,
         steps: JSON.parse(JSON.stringify(model.steps)),
         owner_id: ownerId,
+        ai_assistant_prompt: model.ai_assistant_prompt || null,
       };
 
       let savedModelId = modelId;
