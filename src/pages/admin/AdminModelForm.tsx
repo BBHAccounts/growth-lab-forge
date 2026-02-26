@@ -18,7 +18,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User, Bell } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User, Bell, Sparkles } from 'lucide-react';
 
 interface Step {
   title: string;
