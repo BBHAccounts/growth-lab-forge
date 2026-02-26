@@ -229,14 +229,17 @@ export default function Programmes() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-2xl shrink-0">
-                          {item.model?.emoji || "📋"}
+                          {item.models.length > 0 ? item.models[0].emoji || "📋" : "📋"}
                         </div>
                         <div>
                           <h3 className="font-semibold group-hover:text-primary transition-colors">
                             {item.program.name}
                           </h3>
-                          {item.model && (
-                            <p className="text-sm text-muted-foreground">{item.model.name}</p>
+                          {item.models.length === 1 && (
+                            <p className="text-sm text-muted-foreground">{item.models[0].name}</p>
+                          )}
+                          {item.models.length > 1 && (
+                            <p className="text-sm text-muted-foreground">{item.models.length} tasks</p>
                           )}
                         </div>
                       </div>
