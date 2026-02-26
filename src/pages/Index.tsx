@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BookOpen, FlaskConical, Map, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info } from "lucide-react";
+import { BookOpen, FlaskConical, MapPin, ArrowRight, CheckCircle2, Circle, ExternalLink, Heart, Sparkles, Info, Lightbulb } from "lucide-react";
 import { NavigatorChat } from "@/components/NavigatorChat";
 import { useRecommendations } from "@/hooks/use-recommendations";
 import { ReadingReminderCard } from "@/components/ReadingReminderCard";
