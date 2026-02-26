@@ -64,13 +64,15 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await supabase.functions.invoke("send-auth-email", {
-        body: { email, type: "auto", site_url: window.location.origin }
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: window.location.origin,
+        },
       });
-      if (response.error) throw response.error;
-      const data = response.data;
-      if (data?.error) {
-        toast({ title: "Error", description: data.error, variant: "destructive" });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
         setMode("success");
       }
