@@ -188,6 +188,7 @@ export default function AdminResourceForm() {
           emoji: RESOURCE_TYPES.find((t) => t.value === data.type)?.emoji || prev.emoji,
           estimated_time: data.estimated_time || prev.estimated_time,
           image_url: data.image_url || prev.image_url,
+          published_date: data.published_date || prev.published_date,
         }));
         
         if (data.suggested_topic_categories?.length > 0) {

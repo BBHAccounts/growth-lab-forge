@@ -272,6 +272,7 @@ Extract and return a JSON object with these fields:
 - author: The author if identifiable (string or null)
 - type: One of "article", "webinar", "guide", "video", "podcast", "event" based on content type (string)
 - estimated_time: Reading/watching time in minutes as a number (number or null)
+- published_date: The publication date in YYYY-MM-DD format if identifiable (string or null)
 ${topicContext}
 
 Return ONLY valid JSON, no other text.`;
