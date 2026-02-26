@@ -307,7 +307,28 @@ const Index = () => {
                         </Link>
                       </li>
                     ))}
-                    {todos.length === 0 && (
+                    {/* Programme tasks */}
+                    {enrolledPrograms
+                      .filter(p => p.status !== 'submitted')
+                      .slice(0, Math.max(0, 3 - todos.length))
+                      .map((prog) => (
+                        <li key={`prog-${prog.participant_id}`}>
+                          <Link
+                            to={`/program/${prog.access_code}${prog.status !== "invited" ? "/workspace" : ""}`}
+                            className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group"
+                          >
+                            <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                                {prog.status === 'in_progress' ? 'Continue' : 'Start'}: {prog.program_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{prog.model_emoji || "📋"} Programme</p>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </Link>
+                        </li>
+                      ))}
+                    {todos.length === 0 && enrolledPrograms.filter(p => p.status !== 'submitted').length === 0 && (
                       <>
                         <li>
                           <Link to="/account" className="flex items-center gap-3 p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
