@@ -561,51 +561,117 @@ export default function AdminProgramForm() {
                         Add Participant
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="sm:max-w-md">
                       <DialogHeader>
                         <DialogTitle>Add Participant</DialogTitle>
                         <DialogDescription>
-                          Add a participant and optionally send them an email invite.
+                          Add an existing user or a new participant.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="participant-email">Email</Label>
-                          <Input
-                            id="participant-email"
-                            type="email"
-                            value={newParticipant.email}
-                            onChange={(e) => setNewParticipant({ ...newParticipant, email: e.target.value })}
-                            placeholder="participant@example.com"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="participant-name">Name</Label>
-                          <Input
-                            id="participant-name"
-                            value={newParticipant.name}
-                            onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
-                            placeholder="John Doe"
-                          />
-                        </div>
+                      
+                      {/* Mode Toggle */}
+                      <div className="flex gap-2 border-b pb-3">
+                        <Button
+                          variant={addMode === 'existing' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => { setAddMode('existing'); setSelectedUser(null); }}
+                        >
+                          <Search className="h-4 w-4 mr-1.5" />
+                          Existing User
+                        </Button>
+                        <Button
+                          variant={addMode === 'new' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setAddMode('new')}
+                        >
+                          <Plus className="h-4 w-4 mr-1.5" />
+                          New Participant
+                        </Button>
                       </div>
-                      <DialogFooter className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => handleAddParticipant(false)}
-                          disabled={sendingInvite}
-                        >
-                          <Link2 className="h-4 w-4 mr-2" />
-                          Add (share link later)
-                        </Button>
-                        <Button
-                          onClick={() => handleAddParticipant(true)}
-                          disabled={sendingInvite || !newParticipant.email}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          {sendingInvite ? 'Sending...' : 'Send Email Invite'}
-                        </Button>
-                      </DialogFooter>
+
+                      {addMode === 'existing' ? (
+                        <div className="space-y-4 py-2">
+                          <div className="space-y-2">
+                            <Label>Search by name or email</Label>
+                            <Input
+                              value={userSearch}
+                              onChange={(e) => handleSearchUsers(e.target.value)}
+                              placeholder="Type to search..."
+                            />
+                          </div>
+                          {searchLoading && <p className="text-sm text-muted-foreground">Searching...</p>}
+                          {searchResults.length > 0 && (
+                            <div className="max-h-48 overflow-y-auto space-y-1 border rounded-lg p-1">
+                              {searchResults.map(user => (
+                                <button
+                                  key={user.user_id}
+                                  onClick={() => setSelectedUser(user)}
+                                  className={`w-full text-left p-2.5 rounded-md text-sm transition-colors ${
+                                    selectedUser?.user_id === user.user_id
+                                      ? 'bg-primary/10 border border-primary/30'
+                                      : 'hover:bg-muted'
+                                  }`}
+                                >
+                                  <p className="font-medium">{user.full_name || 'No name'}</p>
+                                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {userSearch.length >= 2 && !searchLoading && searchResults.length === 0 && (
+                            <p className="text-sm text-muted-foreground">No users found.</p>
+                          )}
+                          <DialogFooter>
+                            <Button
+                              onClick={handleAddExistingUser}
+                              disabled={!selectedUser || sendingInvite}
+                            >
+                              {sendingInvite ? 'Adding...' : 'Add to Program'}
+                            </Button>
+                          </DialogFooter>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-4 py-2">
+                            <div className="space-y-2">
+                              <Label htmlFor="participant-email">Email</Label>
+                              <Input
+                                id="participant-email"
+                                type="email"
+                                value={newParticipant.email}
+                                onChange={(e) => setNewParticipant({ ...newParticipant, email: e.target.value })}
+                                placeholder="participant@example.com"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="participant-name">Name</Label>
+                              <Input
+                                id="participant-name"
+                                value={newParticipant.name}
+                                onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
+                                placeholder="John Doe"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => handleAddParticipant(false)}
+                              disabled={sendingInvite}
+                            >
+                              <Link2 className="h-4 w-4 mr-2" />
+                              Add (share link later)
+                            </Button>
+                            <Button
+                              onClick={() => handleAddParticipant(true)}
+                              disabled={sendingInvite || !newParticipant.email}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              {sendingInvite ? 'Sending...' : 'Send Email Invite'}
+                            </Button>
+                          </DialogFooter>
+                        </>
+                      )}
                     </DialogContent>
                   </Dialog>
                 </div>
