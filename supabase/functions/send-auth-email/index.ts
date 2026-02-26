@@ -189,7 +189,7 @@ const handler = async (req: Request): Promise<Response> => {
         </p>
       `);
 
-    } else if (type === "recovery") {
+    } else if (resolvedType === "recovery") {
       const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
       if (userError) throw userError;
 
