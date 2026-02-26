@@ -23,6 +23,10 @@ const mainNavItems = [{
   title: "Insights Hub",
   url: "/insights-hub",
   icon: Lightbulb
+}, {
+  title: "Programmes",
+  url: "/programmes",
+  icon: GraduationCap
 }];
 const secondaryNavItems = [{
   title: "My Account",

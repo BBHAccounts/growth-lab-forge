@@ -70,6 +70,7 @@ const App = () => (
           <Route path="/email-verified" element={<EmailVerified />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/programmes" element={<Programmes />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
