@@ -432,51 +432,16 @@ const Index = () => {
                   })}
                 </CardContent>
               </Card>
-            ) : activatedModels.length > 0 ? (
-              <Card className="h-full border-border/60">
-                <CardHeader className="pb-3 border-b border-border/40">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">My Active Models</CardTitle>
-                    <Link to="/models">
-                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8 px-2">
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-2">
-                  {activatedModels.slice(0, 3).map((am) => {
-                    const totalSteps = (am.model?.steps as ModelStep[] | undefined)?.length || 5;
-                    const progressPct = am.completed ? 100 : Math.min((am.current_step / totalSteps) * 100, 95);
-                    return (
-                      <Link key={am.id} to={`/models/${am.model_id}/workspace`}>
-                        <div className="p-3 rounded-lg bg-muted/40 hover:bg-muted transition-colors group">
-                          <div className="flex items-center gap-2.5 mb-2">
-                            <span className="text-lg">{am.model?.emoji || "📚"}</span>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">{am.model?.name || "Model"}</h3>
-                              <p className="text-xs text-muted-foreground">
-                                {am.completed ? "✅ Completed" : `Step ${am.current_step + 1} of ${totalSteps}`}
-                              </p>
-                            </div>
-                          </div>
-                          <Progress value={progressPct} className="h-1.5" />
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </CardContent>
-              </Card>
             ) : (
               <Card className="h-full border-border/60 bg-muted/30 border-dashed">
                 <CardContent className="p-8 text-center flex flex-col items-center justify-center h-full">
-                  <TrendingUp className="h-8 w-8 text-muted-foreground mb-3" />
+                  <GraduationCap className="h-8 w-8 text-muted-foreground mb-3" />
                   <p className="text-muted-foreground text-sm mb-3">
-                    Start a growth model to track progress here.
+                    No active programmes yet.
                   </p>
-                  <Link to="/models">
-                    <Button size="sm">
-                      Browse Models <ArrowRight className="ml-2 h-4 w-4" />
+                  <Link to="/programmes">
+                    <Button size="sm" variant="outline">
+                      View Programmes <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                 </CardContent>
