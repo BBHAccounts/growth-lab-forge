@@ -81,52 +81,6 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast({ title: "Login failed", description: error.message, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      if (authData.user) {
-        const { data: profile } = await supabase.from("profiles").select("email_verified, full_name").eq("user_id", authData.user.id).maybeSingle();
-        if (profile && !profile.email_verified) {
-          await supabase.auth.signOut();
-          toast({ title: "Email not verified", description: "Please check your email for a verification link.", variant: "destructive" });
-          setLoading(false);
-          return;
-        }
-        if (!profile?.full_name || profile.full_name.trim() === '') {
-          navigate("/onboarding");
-        } else {
-          navigate("/");
-        }
-      }
-      toast({ title: "Welcome back!", description: "You've successfully logged in." });
-    } catch (err: any) {
-      toast({ title: "Connection error", description: "Unable to connect. Please try again.", variant: "destructive" });
-    }
-    setLoading(false);
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { error } = await supabase.functions.invoke("send-auth-email", {
-        body: { email, type: "recovery", site_url: window.location.origin }
-      });
-      if (error) throw error;
-      setMode("reset-sent");
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to send reset link", variant: "destructive" });
-    }
-    setLoading(false);
-  };
-
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
