@@ -222,6 +222,12 @@ export default function ProgramWorkspace() {
     navigate(`/program/${code}/review`);
   };
 
+  const handleExit = async () => {
+    await saveProgress(formData, currentStep);
+    toast({ title: "Progress saved" });
+    navigate("/programmes");
+  };
+
   const updateFieldValue = (fieldId: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }));
   };
