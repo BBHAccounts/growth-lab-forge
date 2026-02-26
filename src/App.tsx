@@ -17,6 +17,7 @@ import InsightsHub from "./pages/InsightsHub";
 import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
 import ResetPassword from "./pages/ResetPassword";
+import Onboarding from "./pages/Onboarding";
 
 // Admin pages
 import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
