@@ -1,4 +1,4 @@
-import { Home, BookOpen, FlaskConical, User, LogOut, Settings, Lightbulb, Award } from "lucide-react";
+import { Home, BookOpen, FlaskConical, User, LogOut, Settings, Lightbulb, Award, GraduationCap } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
