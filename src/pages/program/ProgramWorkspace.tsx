@@ -391,6 +391,10 @@ export default function ProgramWorkspace() {
               <Save className="h-4 w-4 mr-1" />
               Save
             </Button>
+            <Button variant="ghost" size="sm" onClick={handleExit} disabled={saving}>
+              <LogOut className="h-4 w-4 mr-1" />
+              Exit
+            </Button>
           </div>
         </div>
 
