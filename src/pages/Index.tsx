@@ -514,14 +514,14 @@ const Index = () => {
           </section>
         </div>
 
-        {/* Active Models (when programmes exist, show models separately below) */}
+        {/* Active Models row (only when programmes exist and user also has models) */}
         {enrolledPrograms.length > 0 && activatedModels.length > 0 && (
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">My Active Models</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold">My Active Models</h2>
               <Link to="/models">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  View All <ArrowRight className="ml-1 h-4 w-4" />
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-8">
+                  View All <ArrowRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </Link>
             </div>
@@ -530,27 +530,22 @@ const Index = () => {
                 const totalSteps = (am.model?.steps as ModelStep[] | undefined)?.length || 5;
                 const progressPct = am.completed ? 100 : Math.min((am.current_step / totalSteps) * 100, 95);
                 return (
-                  <Card key={am.id} className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xl">{am.model?.emoji || "📚"}</span>
-                          <div>
-                            <h3 className="font-medium text-sm">{am.model?.name || "Model"}</h3>
+                  <Link key={am.id} to={`/models/${am.model_id}/workspace`}>
+                    <Card className="group hover:shadow-md transition-all duration-200 hover:border-primary/40">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2.5 mb-2">
+                          <span className="text-lg">{am.model?.emoji || "📚"}</span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">{am.model?.name || "Model"}</h3>
                             <p className="text-xs text-muted-foreground">
-                              {am.completed ? "✅ Completed" : `Step ${am.current_step + 1} of ${totalSteps}`}
+                              {am.completed ? "✅ Done" : `Step ${am.current_step + 1}/${totalSteps}`}
                             </p>
                           </div>
                         </div>
-                        <Link to={`/models/${am.model_id}/workspace`}>
-                          <Button size="sm" variant={am.completed ? "outline" : "default"} className="text-xs h-8">
-                            {am.completed ? "Review" : "Continue"}
-                          </Button>
-                        </Link>
-                      </div>
-                      <Progress value={progressPct} className="h-1.5" />
-                    </CardContent>
-                  </Card>
+                        <Progress value={progressPct} className="h-1.5" />
+                      </CardContent>
+                    </Card>
+                  </Link>
                 );
               })}
             </div>
