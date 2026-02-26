@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Clock, FileText, Calendar } from "lucide-react";
+import { ArrowRight, ArrowLeft, Clock, FileText, Calendar } from "lucide-react";
 
 interface Program {
   id: string;
