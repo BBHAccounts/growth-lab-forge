@@ -12,3 +12,10 @@
 - [x] Preserve firm codes through magic link sign-in and the existing onboarding page.
 - [x] Test return-path rules and controlled joining/redirect states; verify desktop and mobile layouts.
 - [ ] Verify real magic-link delivery, onboarding and joining end to end: blocked by no signed-in preview session. Hosted return addresses are verified.
+
+## Step 3: book path
+
+- [x] Load the signed-in participant's chapters, responses, posters and derived chapter states.
+- [x] Build the desktop path and mobile weekly/chapter views, with tools and notes placeholders.
+- [x] Add completion comparison, accessible controls and populated responsive checks; test week and state rules.
+- [ ] Verify real participant data and signed poster access: blocked by no signed-in preview session. Video links target the requested `/book/v/:stepId` screens, which arrive in the next step.

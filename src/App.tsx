@@ -63,6 +63,9 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/book/join" element={<BookJoin />} />
           <Route path="/book" element={<BookHome />} />
+          <Route path="/book/chapters" element={<BookHome />} />
+          <Route path="/book/tools" element={<BookHome />} />
+          <Route path="/book/notes" element={<BookHome />} />
           <Route path="/models" element={<Models />} />
           <Route path="/models/:id" element={<ModelDetail />} />
           <Route path="/models/:id/workspace" element={<ModelWorkspace />} />

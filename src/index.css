@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 .theme-book {
-  --background: 42 62% 96%;
-  --foreground: 223 95% 25%;
-  --primary: 225 63% 12%;
+  --background: 42 62% 95.9%;
+  --foreground: 223.4 95.3% 25.3%;
+  --primary: 225.4 62.7% 11.6%;
   --primary-foreground: 42 62% 96%;
-  --card: 42 62% 96%;
+  --card: 0 0% 100%;
   --card-foreground: 223 95% 25%;
   --secondary: 45 48% 92%;
   --secondary-foreground: 225 63% 12%;
@@ -22,6 +22,9 @@
   --popover-foreground: 223 95% 25%;
   --radius: 1rem;
   --shadow-book: 0 8px 24px hsl(225 63% 12% / 0.04);
+  --gradient-book: linear-gradient(92deg, hsl(332 75% 59%) 0%, hsl(15 82% 58%) 50%, hsl(39 94% 57%) 100%);
+  --book-track: 225 63% 12% / 0.12;
+  --shadow-elevated: var(--shadow-book);
   font-family: 'Raleway', sans-serif;
   line-height: 1.5;
   letter-spacing: 0;
@@ -31,8 +34,36 @@
 .theme-book .book-card { border: 1px solid hsl(var(--border)); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-book); }
 .theme-book .book-enter { animation: book-entry 500ms ease-out both; }
 .theme-book input { background: hsl(var(--background)); }
+.theme-book .book-dot-grid { background-image: radial-gradient(hsl(var(--primary-foreground) / 0.08) 1px, transparent 1px); background-size: 22px 22px; }
+.theme-book .book-gradient-word { font-family: 'DM Serif Display', serif; background: var(--gradient-book); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.theme-book .book-gradient-pill { background: var(--gradient-book); color: hsl(var(--primary)); border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 700; }
+.theme-book .book-poster { aspect-ratio: 9/16; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.theme-book .book-poster-small { width: 44px; height: 78px; flex-shrink: 0; border-radius: 8px; }
+.theme-book .book-video-row { padding: 16px; gap: 16px; border-radius: 16px; border: 1px solid hsl(var(--border)); }
+.theme-book .book-next-row { border: 1.5px solid hsl(var(--foreground)); }
+.theme-book .book-status { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.theme-book .book-dot { width: 10px; height: 10px; border-radius: 50%; }
+.theme-book .book-current-card { border: 1.5px solid hsl(var(--foreground)); }
+.theme-book .book-progress { height: 4px; border: 0; border-radius: 999px; background: hsl(var(--book-track)); overflow: hidden; display: block; }
+.theme-book .book-progress::-webkit-progress-bar { background: hsl(var(--book-track)); }
+.theme-book .book-progress::-webkit-progress-value { background: hsl(var(--foreground)); }
+.theme-book .book-progress::-moz-progress-bar { background: hsl(var(--foreground)); }
+.theme-book .book-node-path { display: grid; grid-template-columns: repeat(15, minmax(0,1fr)); }
+.theme-book .book-node-item { position: relative; text-align: center; }
+.theme-book .book-node-item:not(:last-child)::after { content: ''; position: absolute; top: 23px; left: 50%; width: 100%; height: 3px; background: hsl(var(--primary-foreground) / 0.2); }
+.theme-book .book-node-item.book-line-open:not(:last-child)::after { background: hsl(var(--primary-foreground)); }
+.theme-book .book-node { position: relative; z-index: 1; width: 48px; height: 48px; border-radius: 50%; background: hsl(var(--primary)); border: 1px solid hsl(var(--primary-foreground) / 0.35); color: hsl(var(--primary-foreground)); }
+.theme-book .book-node-completed { background: hsl(var(--background)); color: hsl(var(--primary)); border-color: hsl(var(--background)); }
+.theme-book .book-node-open { border-color: hsl(var(--background)); }
+.theme-book .book-node-in-progress { border: 0; }
+.theme-book .book-node-in-progress::before { content: ''; position: absolute; inset: -3px; background: var(--gradient-book); border-radius: 50%; z-index: -2; }
+.theme-book .book-node-in-progress::after { content: ''; position: absolute; inset: 0; background: hsl(var(--primary)); border-radius: 50%; z-index: -1; }
+.theme-book .book-node:hover { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.theme-book .book-unlock { animation: book-unlock 600ms ease-out both; }
+.theme-book .book-tabs { padding-bottom: env(safe-area-inset-bottom); }
+@keyframes book-unlock { from { opacity: 0.3; transform: scale(0.86); } to { opacity: 1; transform: scale(1); } }
 @keyframes book-entry { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { .theme-book .book-enter { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .theme-book .book-enter, .theme-book .book-unlock { animation: none; } }
 
 /* BBH Brand Design System - Tech Edition */
 
