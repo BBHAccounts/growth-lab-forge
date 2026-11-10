@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowRight, Check, Lock, Loader2 } from "lucide-react";
 import { BookLayout } from "@/components/book/BookLayout";
 import { BookVideoPlayer } from "@/components/book/BookVideoPlayer";
@@ -14,6 +14,8 @@ import { type PathChapter } from "@/lib/book-path";
 import { rememberBookVideo } from "@/lib/book-entry";
 import { bookNoteField, followingBookStep } from "@/lib/book-video";
 import { supabase } from "@/integrations/supabase/client";
+import { reminderJoinTarget } from "@/lib/book-reminders";
+import { useBookProgrammeCode } from "@/hooks/use-book-programme-code";
 
 function Exercise({ data, chapter, step }: { data: BookPathData; chapter: PathChapter; step: BookStep }) {
   if (data.preview) return <div className="book-card bg-card space-y-6"><p className="book-eyebrow">Your exercise</p><h2 className="book-display text-3xl">{step.exercise_title || step.title}</h2><p className="text-sm whitespace-pre-line">{step.instruction}</p>{step.keep && <div className="bg-secondary p-6 rounded-xl space-y-3"><p className="book-eyebrow">What to keep</p><p className="text-sm">{step.keep}</p></div>}<p className="text-xs">BBHTEST preview</p></div>;
@@ -73,19 +75,22 @@ export default function BookVideo() {
 }
 
 function BookVideoScreen({ stepId }: { stepId: string }) {
+  const [params] = useSearchParams();
+  const code = params.get("code");
   const state = useBookEntry();
+  const programmeCode = useBookProgrammeCode(state.user?.id, code);
   const { data, loading, error } = useBookPath(state.user?.id);
   const navigate = useNavigate();
   useEffect(() => {
-    if (!state.loading && !state.error && !state.member) {
+    if (!state.loading && !state.error && !programmeCode.loading && !programmeCode.error && (!state.member || !programmeCode.matches)) {
       const target = `/book/v/${stepId}`; rememberBookVideo(localStorage, target);
-      navigate(`/book/join?returnTo=${encodeURIComponent(target)}`, { replace: true });
+      navigate(reminderJoinTarget(stepId, code), { replace: true });
     }
-  }, [state, navigate, stepId]);
+  }, [state, navigate, stepId, code, programmeCode.loading, programmeCode.error, programmeCode.matches]);
   const chapter = data?.chapters.find(ch => ch.steps.some(step => step.id === stepId));
   const step = chapter?.steps.find(step => step.id === stepId);
   return <BookLayout video>
-    {state.loading || (state.member && loading) ? <div className="max-w-7xl mx-auto p-6 space-y-6" role="status" aria-label="Loading your exercise"><div className="h-24 rounded-xl bg-muted animate-pulse" /><div className="h-96 rounded-xl bg-muted animate-pulse" /></div> : state.error || error ? <section className="max-w-3xl mx-auto p-6"><p role="alert">{state.error || error}</p><Button className="rounded-full mt-6" onClick={() => window.location.reload()}>Try again</Button></section> : state.member && data ? !chapter || !step ? <section className="max-w-3xl mx-auto p-6"><h1 className="book-display text-3xl">We could not find this video</h1><Button asChild variant="outline" className="rounded-full mt-6"><Link to="/book">Back to your path</Link></Button></section> : <>
+    {state.loading || programmeCode.loading || (state.member && loading) ? <div className="max-w-7xl mx-auto p-6 space-y-6" role="status" aria-label="Loading your exercise"><div className="h-24 rounded-xl bg-muted animate-pulse" /><div className="h-96 rounded-xl bg-muted animate-pulse" /></div> : state.error || error || programmeCode.error ? <section className="max-w-3xl mx-auto p-6"><p role="alert">{state.error || error || "We could not check this programme. Please try again."}</p><Button className="rounded-full mt-6" onClick={() => window.location.reload()}>Try again</Button></section> : state.member && programmeCode.matches && data ? !chapter || !step ? <section className="max-w-3xl mx-auto p-6"><h1 className="book-display text-3xl">We could not find this video</h1><Button asChild variant="outline" className="rounded-full mt-6"><Link to="/book">Back to your path</Link></Button></section> : <>
       <section className="max-w-7xl mx-auto px-6 lg:px-10 py-8 book-enter"><p className="book-eyebrow mb-4">Chapter {chapter.order_index} · Video {String.fromCharCode(65 + chapter.steps.indexOf(step))} of 3</p><h1 className="book-display text-4xl lg:text-5xl max-w-4xl break-words">{step.title}</h1></section>
       <div className="book-exercise-grid max-w-7xl mx-auto lg:px-10 lg:pb-12">
         <section aria-label="Chapter video" className="bg-primary book-dot-grid px-6 py-8 lg:rounded-xl lg:self-start"><BookVideoPlayer key={step.id} step={step} /></section>

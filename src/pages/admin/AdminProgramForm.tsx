@@ -40,6 +40,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, ArrowUp, ArrowDown, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search, GripVertical } from 'lucide-react';
 import { BookProgramSettings } from '@/components/admin/BookProgramSettings';
 import { bookJoinLink, weeklyBookDates } from '@/lib/book-admin';
+import { BookProgrammeTabs } from '@/components/admin/BookProgrammeTabs';
 
 interface Model {
   id: string;
@@ -508,6 +509,7 @@ export default function AdminProgramForm() {
         </div>
 
         {/* Basic Info */}
+        {!isNew && programId && <BookProgrammeTabs programmeId={programId} />}
         <Card>
           <CardHeader>
             <CardTitle>Program Details</CardTitle>

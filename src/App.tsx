@@ -30,6 +30,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminPrograms from "./pages/admin/AdminPrograms";
 import AdminProgramForm from "./pages/admin/AdminProgramForm";
 import AdminProgramResponses from "./pages/admin/AdminProgramResponses";
+import AdminProgramReminders from "./pages/admin/AdminProgramReminders";
 
 // Program pages (participant-facing)
 
@@ -74,6 +75,7 @@ const App = () => (
           <Route path="/admin/programs" element={<AdminRouteGuard><AdminPrograms /></AdminRouteGuard>} />
           <Route path="/admin/programs/:programId" element={<AdminRouteGuard><AdminProgramForm /></AdminRouteGuard>} />
           <Route path="/admin/programs/:programId/responses" element={<AdminRouteGuard><AdminProgramResponses /></AdminRouteGuard>} />
+          <Route path="/admin/programs/:programId/reminders" element={<AdminRouteGuard><AdminProgramReminders /></AdminRouteGuard>} />
           
           {/* Program Routes (public, participant-facing) */}
           

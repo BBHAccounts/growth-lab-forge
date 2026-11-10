@@ -1,5 +1,13 @@
 # Beyond the Book preparation
 
+## Programme reminder emails
+
+- [x] Add Barbara's exact 45 emails, programme reminder tab, per-programme sender draft and rich/plain copy.
+- [x] Export all reminders in order to Word with live video links and programme chapter dates.
+- [x] Preserve reminder code and video destination through sign-in and programme joining using existing secure joining.
+- [x] Verify real signed-in admin copy/export, sender reload, 45-page Word validation, desktop/mobile and signed-out/signed-in non-member links; 43 tests pass.
+- [ ] Paste email 1A into real Outlook and Gmail: mailbox access is unavailable; rich HTML/plain clipboard and Word links are verified.
+
 ## Dimensional pathway and chapter pop-ups
 
 - [x] Create a raised winding pathway with clearer current, started and completed states.

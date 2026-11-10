@@ -9,6 +9,7 @@ import { useBookEntry } from "@/hooks/use-book-entry";
 import { joinBookProgramme } from "@/lib/book-api";
 import { bookDestination, bookMagicLinkReturn, clearBookEntry, rememberBookEntry, rememberBookVideo } from "@/lib/book-entry";
 import { EmailCodeSignIn } from "@/components/book/EmailCodeSignIn";
+import { useBookProgrammeCode } from "@/hooks/use-book-programme-code";
 
 export default function BookJoin() {
   const [params] = useSearchParams();
@@ -20,13 +21,14 @@ export default function BookJoin() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const state = useBookEntry();
+  const programmeCode = useBookProgrammeCode(state.user?.id, params.get("code"));
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (state.loading || state.error || !state.user) return;
-    if (state.member) { const destination = bookDestination(localStorage); clearBookEntry(localStorage); navigate(destination, { replace: true }); }
+    if (state.loading || state.error || !state.user || programmeCode.loading || programmeCode.error) return;
+    if (state.member && programmeCode.matches) { const destination = bookDestination(localStorage); clearBookEntry(localStorage); navigate(destination, { replace: true }); }
     else if (state.needsOnboarding) navigate("/onboarding?from=book", { replace: true });
-  }, [state, navigate]);
+  }, [state, navigate, programmeCode.loading, programmeCode.error, programmeCode.matches]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -48,6 +50,6 @@ export default function BookJoin() {
     } finally { setBusy(false); }
   };
 
-  const checking = state.loading || (state.user && !state.error && (state.member || state.needsOnboarding));
-  return <BookLayout><section className="book-auth-page max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16 book-enter"><div className="space-y-6"><p className="book-eyebrow">The book, put into practice</p><h1 className="book-display text-5xl lg:text-7xl">Beyond<br />the <em className="book-gradient-word">Book.</em></h1><p className="text-xl font-medium">The companion to Beyond Billable Hours</p><p className="max-w-md leading-relaxed">Fifteen chapters, three short videos each, one practical exercise per video.</p><div className="book-intro-path" aria-hidden="true"><span>01</span><i /><span>02</span><i /><span>03</span><i /><span>15</span></div></div><div className="book-auth-form space-y-6"><p className="book-eyebrow">{state.user ? "Your firm programme" : "Your next chapter starts here"}</p>{checking ? <div role="status" aria-label="Checking your account"><Loader2 className="h-6 w-6 animate-spin" /></div> : state.error ? <p role="alert">{state.error}</p> : state.user ? <><h2 className="book-display text-3xl">Enter the access code from your firm</h2><form onSubmit={submit} className="space-y-6"><Label htmlFor="firm-code">Access code</Label><Input id="firm-code" value={code} onChange={e => setCode(e.target.value)} required autoComplete="off" className="h-12" />{error && <p role="alert" className="text-sm">{error}</p>}<Button type="submit" disabled={busy} size="lg">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}Join</Button></form></> : <><h2 className="book-display text-3xl">Sign in or create your account</h2><EmailCodeSignIn returnUrl={bookMagicLinkReturn(window.location.origin, code, bookDestination(localStorage))} beforeSend={() => rememberBookEntry(localStorage, code)} /></>}</div></section></BookLayout>;
+  const checking = state.loading || programmeCode.loading || (state.user && !state.error && !programmeCode.error && ((state.member && programmeCode.matches) || state.needsOnboarding));
+  return <BookLayout><section className="book-auth-page max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16 book-enter"><div className="space-y-6"><p className="book-eyebrow">The book, put into practice</p><h1 className="book-display text-5xl lg:text-7xl">Beyond<br />the <em className="book-gradient-word">Book.</em></h1><p className="text-xl font-medium">The companion to Beyond Billable Hours</p><p className="max-w-md leading-relaxed">Fifteen chapters, three short videos each, one practical exercise per video.</p><div className="book-intro-path" aria-hidden="true"><span>01</span><i /><span>02</span><i /><span>03</span><i /><span>15</span></div></div><div className="book-auth-form space-y-6"><p className="book-eyebrow">{state.user ? "Your firm programme" : "Your next chapter starts here"}</p>{checking ? <div role="status" aria-label="Checking your account"><Loader2 className="h-6 w-6 animate-spin" /></div> : state.error || programmeCode.error ? <p role="alert">{state.error || "We could not check this programme. Please try again."}</p> : state.user ? <><h2 className="book-display text-3xl">Enter the access code from your firm</h2><form onSubmit={submit} className="space-y-6"><Label htmlFor="firm-code">Access code</Label><Input id="firm-code" value={code} onChange={e => setCode(e.target.value)} required autoComplete="off" className="h-12" />{error && <p role="alert" className="text-sm">{error}</p>}<Button type="submit" disabled={busy} size="lg">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}Join</Button></form></> : <><h2 className="book-display text-3xl">Sign in or create your account</h2><EmailCodeSignIn returnUrl={bookMagicLinkReturn(window.location.origin, code, bookDestination(localStorage))} beforeSend={() => rememberBookEntry(localStorage, code)} /></>}</div></section></BookLayout>;
 }

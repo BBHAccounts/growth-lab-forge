@@ -1,4 +1,5 @@
 import { addDays, format } from "date-fns";
+import { PUBLIC_APP_URL } from "@/config/public-app";
 
 export const BOOK_JOIN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -16,7 +17,7 @@ export function generateBookJoinCode(random: (array: Uint8Array) => Uint8Array =
 }
 
 export function bookJoinLink(code: string): string {
-  const url = new URL("/book/join", "https://growthlab.beyondbillablehours.io");
+  const url = new URL("/book/join", PUBLIC_APP_URL);
   url.searchParams.set("code", code.trim().toUpperCase());
   return url.toString();
 }
