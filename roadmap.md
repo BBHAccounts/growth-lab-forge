@@ -1,5 +1,11 @@
 # Beyond the Book preparation
 
+## Mobile path and exercises
+
+- [x] Fit video players and exercise grids on narrow phones, wrap long actions and refine mobile cards, sign-in fields and bottom tabs.
+- [x] Apply chapter-dialog sizing to its themed portal root so phone pop-ups are visible, scrollable and clear of navigation.
+- [x] Verify joining, path, chapter next/close and real completion/undo at 320, 390 and 768 pixels; all 51 tests pass.
+
 ## Personal path joining
 
 - [x] Separate actual enrolment from read-only admin preview when opening the firm-code join page.

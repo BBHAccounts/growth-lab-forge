@@ -29,7 +29,7 @@ export function BookLayout({ children, name = "", video = false, onBack }: { chi
     <main className="flex-1 pb-20 lg:pb-0">{video && <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6"><Button variant="ghost" onClick={back}><ArrowLeft className="h-5 w-5" />Back to your path</Button></div>}{children}</main>
     <footer className="max-w-7xl w-full mx-auto px-6 lg:px-10 pt-8 pb-24 lg:pb-8 text-xs flex items-center gap-3"><img src={bbhColour.url} alt="Beyond Billable Hours" className="w-28 object-contain" /><span>A product of Beyond Billable Hours</span></footer>
     <nav aria-label="Book tabs" className="book-tabs lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border grid grid-cols-4">
-      {[["/book", "This week", BookOpen], ["/book/chapters", "Chapters", List], ["/book/library", "Model library", Wrench], ["/book/notes", "My notes", NotebookPen]].map(([to, label, Icon]) => {
+      {[["/book", "Path", BookOpen], ["/book/chapters", "Chapters", List], ["/book/library", "Model library", Wrench], ["/book/notes", "My notes", NotebookPen]].map(([to, label, Icon]) => {
         const TabIcon = Icon as typeof BookOpen;
         return <Button key={String(to)} asChild variant="ghost" className="h-16 flex-col gap-1 text-xs"><NavLink to={String(to)} end><TabIcon className="h-5 w-5" strokeWidth={1.5} />{String(label)}</NavLink></Button>;
       })}
