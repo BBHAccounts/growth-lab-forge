@@ -22,3 +22,4 @@
 - Keep reminder content as an immutable typed source, build clipboard and lazy Word exports from it, and share one public-app URL config; preview-generated links must target the live app without sending emails or changing stored data.
 - Check reminder programme codes against the current user's own enrolments before returning from joining; a membership in another book programme must not bypass the requested firm-code flow, and existing server access checks remain authoritative.
 - Derive visible video numbers from chapter order and step position through bookVideoNumber; retain original step IDs for stored progress, URLs and immutable reminder copy.
+- Keep pathway motion decorative and reduced-motion aware; the viewing marker follows chapter selection independently of persisted exercise progress.

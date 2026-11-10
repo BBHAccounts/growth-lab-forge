@@ -1,5 +1,11 @@
 # Beyond the Book preparation
 
+## Pathway motion and softer perspective
+
+- [x] Soften the trail and lower the chapter-stop viewing angle.
+- [x] Animate in-progress chapter numbers and the current ring; move a viewing marker between chapters with reduced-motion support.
+- [x] Verify real signed-in desktop/mobile navigation, marker movement and disabled animations under reduced motion; five path rule tests pass.
+
 ## Numbered videos and completion
 
 - [x] Display chapter.video numbering and a numbered placeholder before playback.

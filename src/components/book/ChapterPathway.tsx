@@ -5,6 +5,7 @@ import { BookPoster } from "./BookPoster";
 import { ChapterModels } from "./ChapterModels";
 import { chapterTitle, type PathChapter, type deriveBookPath } from "@/lib/book-path";
 import { bookVideoNumber } from "@/lib/book-video";
+import { useLayoutEffect, useRef, useState } from "react";
 
 type Path = ReturnType<typeof deriveBookPath>;
 export function ChapterPanel({ chapter, path, onNext }: { chapter: PathChapter; path: Path; onNext?: (id: string) => void }) {
@@ -18,15 +19,29 @@ export function ChapterPanel({ chapter, path, onNext }: { chapter: PathChapter; 
 }
 
 export function ChapterPathway({ path, selected, onSelect }: { path: Path; selected: PathChapter; onSelect: (id: string) => void }) {
+  const trail = useRef<HTMLDivElement>(null);
+  const [marker, setMarker] = useState<{ x: number; y: number } | null>(null);
+  useLayoutEffect(() => {
+    const element = trail.current;
+    if (!element) return;
+    const position = () => {
+      const node = element.querySelector(`[data-chapter="${selected.order_index}"] .book-path-platform`);
+      if (!(node instanceof HTMLElement) || !node.parentElement) return;
+      setMarker({ x: node.offsetLeft + node.parentElement.offsetLeft + node.offsetWidth / 2, y: node.parentElement.offsetTop + 4 });
+    };
+    position();
+    const observer = new ResizeObserver(position); observer.observe(element);
+    return () => observer.disconnect();
+  }, [selected.order_index]);
   return <section className="book-path-surface"><div className="max-w-7xl mx-auto px-6 lg:px-10 pt-10 pb-16">
     <div className="flex flex-wrap justify-between items-start gap-8 mb-12"><div className="space-y-4"><p className="book-eyebrow">Beyond the Book · Your path</p><h1 className="book-display text-4xl lg:text-6xl">From reading<br />to doing.</h1></div><div className="space-y-4 w-full sm:w-72"><p className="book-eyebrow">Your progress</p><p className="text-sm"><span className="text-3xl font-semibold">{path.doneCount}</span> / {path.total} exercises complete</p><progress value={path.doneCount} max={path.total || 1} className="book-progress w-full" aria-label="Exercise progress" />{path.nextStep && <Button asChild><Link to={`/book/v/${path.nextStep.id}`}>Continue your path<ArrowRight className="h-4 w-4" /></Link></Button>}</div></div>
     <div className="book-path-legend"><span><i className="book-legend-current" />Current chapter</span><span><i className="book-legend-started" />In progress</span><span><Check className="h-3 w-3" />Complete</span></div>
-    <div className="book-pathway" aria-label="Chapter pathway">{path.chapters.map((chapter) => {
+    <div ref={trail} className="book-pathway" aria-label="Chapter pathway">{marker && <span className="book-view-marker" aria-hidden="true" style={{ left: marker.x, top: marker.y }} />}{path.chapters.map((chapter) => {
       const complete = path.states[chapter.id] === "completed";
       const count = chapter.steps.filter(step => path.done[step.id]).length;
       const current = path.current?.id === chapter.id;
       const started = path.states[chapter.id] === "in progress";
-      return <div key={chapter.id} className={`book-path-stop ${current ? "is-current" : ""} ${complete ? "is-complete" : ""}`}><div className="book-path-platform"><Button variant="ghost" onClick={() => onSelect(chapter.id)} aria-label={`Open chapter ${chapter.order_index}: ${chapterTitle(chapter.name)}`} aria-haspopup="dialog" aria-pressed={selected.id === chapter.id} className={`book-path-node ${current ? "is-current" : ""} ${complete ? "is-complete" : ""} ${started ? "is-started" : ""}`}><span className="book-display">{complete ? <Check className="h-7 w-7" /> : String(chapter.order_index).padStart(2, "0")}</span></Button></div><p className="book-path-label">{chapterTitle(chapter.name)}</p><span className="book-path-count">{complete ? "Complete" : started ? "In progress" : "Not started"}</span><span className="book-step-marks" aria-label={`${count} of 3 exercises complete`}>{chapter.steps.map(step => <i key={step.id} className={path.done[step.id] ? "is-done" : ""} />)}</span></div>;
+      return <div key={chapter.id} data-chapter={chapter.order_index} className={`book-path-stop ${current ? "is-current" : ""} ${complete ? "is-complete" : ""}`}><div className="book-path-platform"><Button variant="ghost" onClick={() => onSelect(chapter.id)} aria-label={`Open chapter ${chapter.order_index}: ${chapterTitle(chapter.name)}`} aria-haspopup="dialog" aria-pressed={selected.id === chapter.id} className={`book-path-node ${current ? "is-current" : ""} ${complete ? "is-complete" : ""} ${started ? "is-started" : ""}`}><span className="book-display">{complete ? <Check className="h-7 w-7" /> : String(chapter.order_index).padStart(2, "0")}</span></Button></div><p className="book-path-label">{chapterTitle(chapter.name)}</p><span className="book-path-count">{complete ? "Complete" : started ? "In progress" : "Not started"}</span><span className="book-step-marks" aria-label={`${count} of 3 exercises complete`}>{chapter.steps.map(step => <i key={step.id} className={path.done[step.id] ? "is-done" : ""} />)}</span></div>;
     })}</div>
   </div></section>;
 }
