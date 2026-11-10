@@ -18,4 +18,11 @@
 - [x] Load the signed-in participant's chapters, responses, posters and derived chapter states.
 - [x] Build the desktop path and mobile weekly/chapter views, with tools and notes placeholders.
 - [x] Add completion comparison, accessible controls and populated responsive checks; test week and state rules.
-- [ ] Verify real participant data and signed poster access: blocked by no signed-in preview session. Video links target the requested `/book/v/:stepId` screens, which arrive in the next step.
+- [ ] Verify real participant data and signed poster access: blocked by no signed-in preview session.
+
+## Step 4: video and exercise
+
+- [x] Add video page, locked state, linked tools and reminder-link return paths.
+- [x] Add queued note auto-save with retained drafts, done/undo and book coaching.
+- [x] Test save/undo/navigation rules and populated desktop/mobile flows: 22 tests pass; controlled saves, failure recovery, reload, coaching, next navigation and locked states pass without runtime errors. Real signed-out reminder redirect verified.
+- [ ] Verify real signed-in note saving and coaching: blocked because session minting found no account matching the requesting user. Sign in in the preview to enable these checks. Video playback awaits uploaded media.

@@ -1,12 +1,21 @@
 /// <reference types="bun" />
 import { describe, test, expect } from "bun:test";
-import { bookMagicLinkReturn, clearBookEntry, isBookEntry, needsBookOnboarding, rememberBookEntry } from "./book-entry";
+import { bookDestination, bookMagicLinkReturn, clearBookEntry, isBookEntry, needsBookOnboarding, rememberBookEntry, rememberBookVideo, safeBookVideoReturn } from "./book-entry";
 
 function storage() {
   const values = new Map<string, string>();
   return { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); }, removeItem: (key: string) => { values.delete(key); } };
 }
 describe("book joining", () => {
+  test("firm reminder video survives joining and travels in the magic link for another device", () => {
+    const store = storage(); rememberBookVideo(store, "/book/v/3B"); rememberBookEntry(store, "BBHTEST");
+    expect(bookDestination(store)).toBe("/book/v/3B");
+    expect(new URL(bookMagicLinkReturn("https://growthlab.beyondbillablehours.io", "BBHTEST", bookDestination(store))).searchParams.get("returnTo")).toBe("/book/v/3B");
+    clearBookEntry(store); expect(bookDestination(store)).toBe("/book");
+  });
+  test("return destinations cannot redirect outside book videos or outside the app", () => {
+    for (const path of ["https://other.example", "//other.example", "/admin", "/book/v/../join", "/book/v/3B?next=outside"]) expect(safeBookVideoReturn(path)).toBeNull();
+  });
   test("code is retained through sign-in and onboarding without query parameters", () => {
     const store = storage();
     expect(rememberBookEntry(store, "BBHTEST")).toBe("BBHTEST");

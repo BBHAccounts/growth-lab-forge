@@ -7,12 +7,16 @@ import { Label } from "@/components/ui/label";
 import { BookLayout } from "@/components/book/BookLayout";
 import { useBookEntry } from "@/hooks/use-book-entry";
 import { joinBookProgramme } from "@/lib/book-api";
-import { bookMagicLinkReturn, clearBookEntry, rememberBookEntry } from "@/lib/book-entry";
+import { bookDestination, bookMagicLinkReturn, clearBookEntry, rememberBookEntry, rememberBookVideo } from "@/lib/book-entry";
 import { sendMagicLink } from "@/lib/magic-link";
 
 export default function BookJoin() {
   const [params] = useSearchParams();
-  const [code, setCode] = useState(() => rememberBookEntry(localStorage, params.get("code")));
+  const [code, setCode] = useState(() => {
+    const returnTo = params.get("returnTo");
+    if (returnTo) rememberBookVideo(localStorage, returnTo);
+    return rememberBookEntry(localStorage, params.get("code"));
+  });
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -22,7 +26,7 @@ export default function BookJoin() {
 
   useEffect(() => {
     if (state.loading || state.error || !state.user) return;
-    if (state.member) { clearBookEntry(localStorage); navigate("/book", { replace: true }); }
+    if (state.member) { const destination = bookDestination(localStorage); clearBookEntry(localStorage); navigate(destination, { replace: true }); }
     else if (state.needsOnboarding) navigate("/onboarding?from=book", { replace: true });
   }, [state, navigate]);
 
@@ -33,10 +37,11 @@ export default function BookJoin() {
     try {
       if (state.user) {
         await joinBookProgramme(code.trim());
+        const destination = bookDestination(localStorage);
         clearBookEntry(localStorage);
-        navigate("/book", { replace: true });
+        navigate(destination, { replace: true });
       } else {
-        const result = await sendMagicLink(email.trim(), bookMagicLinkReturn(window.location.origin, code));
+        const result = await sendMagicLink(email.trim(), bookMagicLinkReturn(window.location.origin, code, bookDestination(localStorage)));
         if (result.error) throw result.error;
         setSent(true);
       }

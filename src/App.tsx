@@ -19,6 +19,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import BookJoin from "./pages/book/BookJoin";
 import BookHome from "./pages/book/BookHome";
+import BookVideo from "./pages/book/BookVideo";
 
 // Admin pages
 import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/book/join" element={<BookJoin />} />
+          <Route path="/book/v/:stepId" element={<BookVideo />} />
           <Route path="/book" element={<BookHome />} />
           <Route path="/book/chapters" element={<BookHome />} />
           <Route path="/book/tools" element={<BookHome />} />

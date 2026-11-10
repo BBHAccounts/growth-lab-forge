@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 function renderMarkdown(text: string) {
   // Split into lines, then process inline markdown
@@ -51,6 +52,7 @@ interface FieldAssistantProps {
   fieldLabel: string;
   currentValue: unknown;
   allProgress: Record<string, unknown>;
+  book?: boolean;
 }
 
 interface Message {
@@ -65,6 +67,7 @@ export function FieldAssistant({
   fieldLabel,
   currentValue,
   allProgress,
+  book = false,
 }: FieldAssistantProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -81,11 +84,12 @@ export function FieldAssistant({
     let assistantContent = "";
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           modelId,
@@ -199,8 +203,9 @@ export function FieldAssistant({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-primary"
+          className={book ? "h-11 w-11 rounded-full text-primary" : "h-6 w-6 text-muted-foreground hover:text-primary"}
           title="Get AI coaching hint"
+          aria-label="AI Coach"
         >
           <Sparkles className="h-3.5 w-3.5" />
         </Button>
@@ -208,7 +213,7 @@ export function FieldAssistant({
       <PopoverContent
         side="right"
         align="start"
-        className="w-80 p-0"
+        className={`w-80 max-w-[calc(100vw-32px)] p-0 ${book ? "theme-book bg-popover text-popover-foreground" : ""}`}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <div className="p-3 border-b">
@@ -217,7 +222,7 @@ export function FieldAssistant({
             AI Coach
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Hints &amp; examples — won't write your answer
+            {book ? "Questions and examples for your exercise" : "Hints & examples — won't write your answer"}
           </p>
         </div>
 
@@ -254,12 +259,13 @@ export function FieldAssistant({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask a follow-up…"
-            className="h-8 text-sm"
+            className={book ? "h-11 rounded-full text-sm" : "h-8 text-sm"}
             disabled={loading}
           />
           <Button
             size="icon"
-            className="h-8 w-8 shrink-0"
+            className={book ? "h-11 w-11 rounded-full shrink-0" : "h-8 w-8 shrink-0"}
+            aria-label="Send to AI Coach"
             onClick={handleSend}
             disabled={loading || !input.trim()}
           >

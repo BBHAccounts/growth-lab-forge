@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { markBookStepDone, type BookResponses } from "./book";
+import { markBookStepDone, undoBookStepDone, type BookResponses } from "./book";
 
 export async function joinBookProgramme(code: string): Promise<string> {
   const { data, error } = await supabase.rpc("join_book_programme", { code });
@@ -26,12 +26,18 @@ export async function saveBookStepDone(
   participantId: string,
   responses: BookResponses,
   stepId: string,
+  done = true,
 ): Promise<BookResponses> {
-  const next = markBookStepDone(responses, stepId);
+  const next = done ? markBookStepDone(responses, stepId) : undoBookStepDone(responses, stepId);
+  await saveBookResponses(participantId, next);
+  return next;
+}
+
+export async function saveBookResponses(participantId: string, responses: BookResponses): Promise<void> {
   const { data: existing, error: readError } = await supabase.from("program_responses")
     .select("id").eq("participant_id", participantId).maybeSingle();
   if (readError) throw readError;
-  const values = { responses: next, auto_saved_at: new Date().toISOString() };
+  const values = { responses, auto_saved_at: new Date().toISOString() };
   if (existing) {
     const { error } = await supabase.from("program_responses").update(values).eq("id", existing.id);
     if (error) throw error;
@@ -39,5 +45,4 @@ export async function saveBookStepDone(
     const { error } = await supabase.from("program_responses").insert({ participant_id: participantId, ...values });
     if (error) throw error;
   }
-  return next;
 }

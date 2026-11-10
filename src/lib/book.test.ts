@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test";
-import { getBookDone, hasBookChapterTag, isBookChapterComplete, isBookChapterUnlocked, markBookStepDone } from "./book";
+import { getBookDone, hasBookChapterTag, isBookChapterComplete, isBookChapterUnlocked, markBookStepDone, undoBookStepDone } from "./book";
 
 const now = new Date("2026-11-10T14:26:00Z");
 const first = { order_index: 1, deadline: null, steps: [{ id: "1A" }, { id: "1B" }, { id: "1C" }] };
@@ -9,6 +9,11 @@ const chapters = [first, second];
 const complete = { __done: { "1A": now.toISOString(), "1B": now.toISOString(), "1C": now.toISOString() } };
 
 describe("book chapter rules", () => {
+  test("undo removes only that step completion and retains private notes and other completions", () => {
+    const original = { notes_1A: "Private answer", __done: { "1A": now.toISOString(), "1B": now.toISOString() } };
+    expect(undoBookStepDone(original, "1A")).toEqual({ notes_1A: "Private answer", __done: { "1B": now.toISOString() } });
+    expect(getBookDone(original)["1A"]).toBe(now.toISOString());
+  });
   test("chapter 1 is always open", () => {
     expect(isBookChapterUnlocked(first, chapters, {}, true, now)).toBe(true);
   });

@@ -1,10 +1,10 @@
 import { useEffect, type ReactNode } from "react";
 import bbhLogo from "@/assets/bbh-logo.jpg";
-import { NavLink } from "react-router-dom";
-import { BookOpen, List, Wrench, NotebookPen } from "lucide-react";
+import { NavLink, Link } from "react-router-dom";
+import { ArrowLeft, BookOpen, List, Wrench, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function BookLayout({ children, path = false, name = "" }: { children: ReactNode; path?: boolean; name?: string }) {
+export function BookLayout({ children, path = false, name = "", video = false }: { children: ReactNode; path?: boolean; name?: string; video?: boolean }) {
   useEffect(() => {
     const fonts = document.createElement("link");
     fonts.rel = "stylesheet";
@@ -16,7 +16,7 @@ export function BookLayout({ children, path = false, name = "" }: { children: Re
   return <div className="theme-book min-h-screen bg-background text-foreground flex flex-col">
     <header className="bg-primary text-primary-foreground">
       <div className="max-w-7xl mx-auto px-6 lg:px-10 py-6 flex items-center justify-between gap-6">
-        {path ? <div><span className="book-display text-2xl lg:text-3xl">Beyond the Book</span><p className="hidden lg:block text-xs mt-2">The companion to Beyond Billable Hours</p></div> : <span className="text-sm font-semibold">Beyond Billable Hours</span>}
+        {video ? <Button asChild variant="ghost" className="rounded-full min-h-11 text-primary-foreground hover:bg-primary-foreground hover:text-primary"><Link to="/book"><ArrowLeft className="h-5 w-5" /><span className="lg:hidden">This week</span><span className="hidden lg:inline">Your path</span></Link></Button> : path ? <div><span className="book-display text-2xl lg:text-3xl">Beyond the Book</span><p className="hidden lg:block text-xs mt-2">The companion to Beyond Billable Hours</p></div> : <span className="text-sm font-semibold">Beyond Billable Hours</span>}
         {path && <nav aria-label="Book navigation" className="hidden lg:flex items-center gap-3">
           {[["/book", "Your path"], ["/book/tools", "Tools"], ["/book/notes", "My notes"]].map(([to, label]) => <Button key={to} variant="ghost" asChild className="rounded-full border border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground hover:text-primary"><NavLink to={to} end>{label}</NavLink></Button>)}
           <span className="h-11 w-11 rounded-full border border-primary-foreground/40 flex items-center justify-center text-sm" aria-label={name || "Your account"}>{name.split(/\s+/).filter(Boolean).map(s => s[0]).slice(0, 2).join("").toUpperCase() || "B"}</span>

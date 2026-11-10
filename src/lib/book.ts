@@ -46,6 +46,12 @@ export function isBookChapterComplete(chapter: BookChapter, responses: BookRespo
   return chapter.steps.length === 3 && chapter.steps.every(step => Boolean(done[step.id]));
 }
 
+export function undoBookStepDone(responses: BookResponses, stepId: string): BookResponses {
+  const done = { ...getBookDone(responses) };
+  delete done[stepId];
+  return { ...responses, __done: done };
+}
+
 export function isBookChapterUnlocked(
   chapter: BookChapter,
   chapters: readonly BookChapter[],
