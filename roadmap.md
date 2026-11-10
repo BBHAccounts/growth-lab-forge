@@ -1,5 +1,11 @@
 # Beyond the Book preparation
 
+## BBH constellation path
+
+- [x] Replace the raised trail with an Ink constellation, Cream framing and compact progress header.
+- [x] Retain real chapter titles, exercise completion, unrestricted exploration and chapter pop-ups; remove continuous motion.
+- [x] Verify signed-in desktop/mobile path, all 15 chapter pop-ups, next-chapter navigation and reduced-motion transitions; 12 path/completion tests pass and no runtime errors.
+
 ## Firm reminder coordinators
 
 - [x] Add protected admin-assigned programme coordinator grants and reminder-only metadata access, without changing existing note policies.

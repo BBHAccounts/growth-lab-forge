@@ -23,4 +23,4 @@
 - Store programme reminder grants in a dedicated protected assignment table; expose only reminder programme metadata through the authenticated RPC so coordinators never receive participant or note access.
 - Check reminder programme codes against the current user's own enrolments before returning from joining; a membership in another book programme must not bypass the requested firm-code flow, and existing server access checks remain authoritative.
 - Derive visible video numbers from chapter order and step position through bookVideoNumber; retain original step IDs for stored progress, URLs and immutable reminder copy.
-- Keep pathway motion decorative and reduced-motion aware; the viewing marker follows chapter selection independently of persisted exercise progress.
+- Keep the constellation pathway still at rest; only chapter transitions move its viewing marker, independently of persisted exercise progress and with reduced-motion support.

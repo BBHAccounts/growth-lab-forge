@@ -20,28 +20,61 @@ export function ChapterPanel({ chapter, path, onNext }: { chapter: PathChapter; 
 
 export function ChapterPathway({ path, selected, onSelect }: { path: Path; selected: PathChapter; onSelect: (id: string) => void }) {
   const trail = useRef<HTMLDivElement>(null);
-  const [marker, setMarker] = useState<{ x: number; y: number } | null>(null);
+  const [geometry, setGeometry] = useState<{ line: string; x: number; y: number }>({ line: "", x: 0, y: 0 });
   useLayoutEffect(() => {
     const element = trail.current;
     if (!element) return;
     const position = () => {
-      const node = element.querySelector(`[data-chapter="${selected.order_index}"] .book-path-platform`);
-      if (!(node instanceof HTMLElement) || !node.parentElement) return;
-      setMarker({ x: node.offsetLeft + node.parentElement.offsetLeft + node.offsetWidth / 2, y: node.parentElement.offsetTop + 4 });
+      const bounds = element.getBoundingClientRect();
+      const points = Array.from(element.querySelectorAll<HTMLElement>(".book-path-node")).map(node => {
+        const rect = node.getBoundingClientRect();
+        return { x: rect.left - bounds.left + rect.width / 2, y: rect.top - bounds.top + rect.height / 2 };
+      });
+      let line = "";
+      points.forEach((point, i) => {
+        const previous = points[i - 1];
+        if (!previous) { line = `M ${point.x} ${point.y}`; return; }
+        if (Math.abs(point.y - previous.y) > 80) {
+          const side = point.x > bounds.width / 2 ? 1 : -1;
+          const bend = side * Math.min(64, bounds.width / 12);
+          line += ` C ${previous.x + bend} ${previous.y}, ${point.x + bend} ${point.y}, ${point.x} ${point.y}`;
+        } else {
+          const middle = (previous.x + point.x) / 2;
+          line += ` C ${middle} ${previous.y + 24}, ${middle} ${point.y - 24}, ${point.x} ${point.y}`;
+        }
+      });
+      const index = path.chapters.findIndex(ch => ch.id === selected.id);
+      const point = points[index];
+      setGeometry({ line, x: point?.x ?? 0, y: (point?.y ?? 0) - 52 });
     };
     position();
     const observer = new ResizeObserver(position); observer.observe(element);
     return () => observer.disconnect();
-  }, [selected.order_index]);
-  return <section className="book-path-surface"><div className="max-w-7xl mx-auto px-6 lg:px-10 pt-10 pb-16">
-    <div className="flex flex-wrap justify-between items-start gap-8 mb-12"><div className="space-y-4"><p className="book-eyebrow">Beyond the Book · Your path</p><h1 className="book-display text-4xl lg:text-6xl">From reading<br />to doing.</h1></div><div className="space-y-4 w-full sm:w-72"><p className="book-eyebrow">Your progress</p><p className="text-sm"><span className="text-3xl font-semibold">{path.doneCount}</span> / {path.total} exercises complete</p><progress value={path.doneCount} max={path.total || 1} className="book-progress w-full" aria-label="Exercise progress" />{path.nextStep && <Button asChild><Link to={`/book/v/${path.nextStep.id}`}>Continue your path<ArrowRight className="h-4 w-4" /></Link></Button>}</div></div>
-    <div className="book-path-legend"><span><i className="book-legend-current" />Current chapter</span><span><i className="book-legend-started" />In progress</span><span><Check className="h-3 w-3" />Complete</span></div>
-    <div ref={trail} className="book-pathway" aria-label="Chapter pathway">{marker && <span className="book-view-marker" aria-hidden="true" style={{ left: marker.x, top: marker.y }} />}{path.chapters.map((chapter) => {
-      const complete = path.states[chapter.id] === "completed";
-      const count = chapter.steps.filter(step => path.done[step.id]).length;
-      const current = path.current?.id === chapter.id;
-      const started = path.states[chapter.id] === "in progress";
-      return <div key={chapter.id} data-chapter={chapter.order_index} className={`book-path-stop ${current ? "is-current" : ""} ${complete ? "is-complete" : ""}`}><div className="book-path-platform"><Button variant="ghost" onClick={() => onSelect(chapter.id)} aria-label={`Open chapter ${chapter.order_index}: ${chapterTitle(chapter.name)}`} aria-haspopup="dialog" aria-pressed={selected.id === chapter.id} className={`book-path-node ${current ? "is-current" : ""} ${complete ? "is-complete" : ""} ${started ? "is-started" : ""}`}><span className="book-display">{complete ? <Check className="h-7 w-7" /> : String(chapter.order_index).padStart(2, "0")}</span></Button></div><p className="book-path-label">{chapterTitle(chapter.name)}</p><span className="book-path-count">{complete ? "Complete" : started ? "In progress" : "Not started"}</span><span className="book-step-marks" aria-label={`${count} of 3 exercises complete`}>{chapter.steps.map(step => <i key={step.id} className={path.done[step.id] ? "is-done" : ""} />)}</span></div>;
-    })}</div>
-  </div></section>;
+  }, [selected.id, path.chapters]);
+  return <section className="book-path-surface">
+    <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8 lg:py-10 flex flex-wrap justify-between items-center gap-6">
+      <div className="space-y-3"><p className="book-eyebrow">Beyond the Book</p><h1 className="book-display text-4xl lg:text-5xl">Your path</h1></div>
+      <div className="flex flex-wrap items-center gap-6"><div className="space-y-3"><p className="text-sm"><strong>{path.doneCount} / {path.total}</strong> exercises complete</p><progress value={path.doneCount} max={path.total || 1} className="book-progress w-full" aria-label="Exercise progress" /></div>{path.nextStep && <Button asChild><Link to={`/book/v/${path.nextStep.id}`}>Continue your path<ArrowRight className="h-4 w-4" /></Link></Button>}</div>
+    </div>
+    <div className="book-constellation book-dot-grid"><div className="max-w-7xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
+      <div ref={trail} className="book-pathway" aria-label="Chapter pathway">
+        <svg className="book-path-connections" aria-hidden="true"><path d={geometry.line} /></svg>
+        {geometry.line && <span className="book-view-marker" aria-hidden="true" style={{ left: geometry.x, top: geometry.y }} />}
+        {path.chapters.map(chapter => {
+          const complete = path.states[chapter.id] === "completed";
+          const count = chapter.steps.filter(step => path.done[step.id]).length;
+          const current = path.current?.id === chapter.id;
+          const started = path.states[chapter.id] === "in progress";
+          return <div key={chapter.id} data-chapter={chapter.order_index} className={`book-path-stop ${current ? "is-current" : ""} ${complete ? "is-complete" : ""}`}>
+            <p className="book-path-number">Chapter {chapter.order_index}</p>
+            <div className="book-path-platform"><Button variant="ghost" onClick={() => onSelect(chapter.id)} aria-label={`Open chapter ${chapter.order_index}: ${chapterTitle(chapter.name)}`} aria-haspopup="dialog" aria-pressed={selected.id === chapter.id} className={`book-path-node ${current ? "is-current" : ""} ${complete ? "is-complete" : ""} ${started ? "is-started" : ""}`}><span className="book-display">{complete ? <Check className="h-7 w-7" /> : chapter.order_index}</span></Button></div>
+            <p className="book-path-label">{chapterTitle(chapter.name)}</p>
+            <span className="book-path-count">{complete ? "Complete" : started ? "In progress" : current ? "Start here" : "Not started"}</span>
+            <span className="book-step-marks" aria-label={`${count} of 3 exercises complete`}>{chapter.steps.map(step => <i key={step.id} className={path.done[step.id] ? "is-done" : ""} />)}</span>
+          </div>;
+        })}
+      </div>
+    </div></div>
+    <div className="book-path-legend max-w-7xl mx-auto px-6 lg:px-10 py-6"><span><Check className="h-4 w-4" />Complete</span><span><i />In progress</span><span><i />Not started</span></div>
+  </section>;
 }
