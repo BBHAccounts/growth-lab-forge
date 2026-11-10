@@ -75,6 +75,5 @@ export function ChapterPathway({ path, selected, onSelect }: { path: Path; selec
         })}
       </div>
     </div></div>
-    <div className="book-path-legend max-w-7xl mx-auto px-6 lg:px-10 py-6"><span><Check className="h-4 w-4" />Complete</span><span><i />In progress</span><span><i />Not started</span></div>
   </section>;
 }
