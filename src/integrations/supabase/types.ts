@@ -663,6 +663,8 @@ export type Database = {
           deadline: string | null
           description: string | null
           id: string
+          is_book: boolean
+          join_code: string | null
           model_id: string | null
           name: string
           sequential: boolean | null
@@ -676,6 +678,8 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          is_book?: boolean
+          join_code?: string | null
           model_id?: string | null
           name: string
           sequential?: boolean | null
@@ -689,6 +693,8 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          is_book?: boolean
+          join_code?: string | null
           model_id?: string | null
           name?: string
           sequential?: boolean | null
@@ -1513,6 +1519,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_book_model: { Args: { model_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1520,6 +1527,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_book_participant: { Args: { programme_id?: string }; Returns: boolean }
+      is_book_programme: { Args: { programme_id: string }; Returns: boolean }
+      join_book_programme: { Args: { code: string }; Returns: string }
       notify_all_users: {
         Args: {
           p_link: string
