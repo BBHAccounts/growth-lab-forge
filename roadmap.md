@@ -1,5 +1,12 @@
 # Beyond the Book preparation
 
+## Firm reminder coordinators
+
+- [x] Add protected admin-assigned programme coordinator grants and reminder-only metadata access, without changing existing note policies.
+- [x] Add programme assignment controls, account-menu reminder access and shared copy/Word export pages.
+- [x] Verify admin assignment, reminder copying, Word export and denied unknown/anonymous access; permission tests pass.
+- [ ] Verify with a real non-admin coordinator account: no coordinator session is available in this turn.
+
 ## Pathway motion and softer perspective
 
 - [x] Soften the trail and lower the chapter-stop viewing angle.

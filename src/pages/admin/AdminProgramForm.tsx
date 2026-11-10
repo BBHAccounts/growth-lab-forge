@@ -41,6 +41,7 @@ import { ArrowLeft, ArrowUp, ArrowDown, Copy, Plus, Send, Trash2, Users, Link2, 
 import { BookProgramSettings } from '@/components/admin/BookProgramSettings';
 import { bookJoinLink, weeklyBookDates } from '@/lib/book-admin';
 import { BookProgrammeTabs } from '@/components/admin/BookProgrammeTabs';
+import { ReminderCoordinators } from '@/components/admin/ReminderCoordinators';
 
 interface Model {
   id: string;
@@ -510,6 +511,7 @@ export default function AdminProgramForm() {
 
         {/* Basic Info */}
         {!isNew && programId && <BookProgrammeTabs programmeId={programId} />}
+        {!isNew && programId && <ReminderCoordinators programmeId={programId} />}
         <Card>
           <CardHeader>
             <CardTitle>Program Details</CardTitle>

@@ -58,6 +58,35 @@ export type Database = {
           },
         ]
       }
+      book_reminder_coordinators: {
+        Row: {
+          assigned_by: string
+          created_at: string
+          program_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by: string
+          created_at?: string
+          program_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string
+          created_at?: string
+          program_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_reminder_coordinators_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_verification_tokens: {
         Row: {
           created_at: string | null
@@ -1529,6 +1558,15 @@ export type Database = {
           name: string
           participant_id: string
           steps_done: number
+        }[]
+      }
+      book_reminder_programmes: {
+        Args: never
+        Returns: {
+          chapter_dates: Json
+          id: string
+          join_code: string
+          name: string
         }[]
       }
       can_access_book_model: { Args: { model_id: string }; Returns: boolean }

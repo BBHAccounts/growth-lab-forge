@@ -20,6 +20,7 @@
 - Share the BBH email layout across all six scaffolded auth templates and pass Cloud-issued tokens to signup and sign-in emails; preserve SDK dispatch and signature handling.
 - Keep pathway chapter exploration in a themed accessible dialog on BookHome, including next-chapter navigation; this preserves the path context and handles legacy chapter links without a separate screen.
 - Keep reminder content as an immutable typed source, build clipboard and lazy Word exports from it, and share one public-app URL config; preview-generated links must target the live app without sending emails or changing stored data.
+- Store programme reminder grants in a dedicated protected assignment table; expose only reminder programme metadata through the authenticated RPC so coordinators never receive participant or note access.
 - Check reminder programme codes against the current user's own enrolments before returning from joining; a membership in another book programme must not bypass the requested firm-code flow, and existing server access checks remain authoritative.
 - Derive visible video numbers from chapter order and step position through bookVideoNumber; retain original step IDs for stored progress, URLs and immutable reminder copy.
 - Keep pathway motion decorative and reduced-motion aware; the viewing marker follows chapter selection independently of persisted exercise progress.

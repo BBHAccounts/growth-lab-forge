@@ -31,6 +31,7 @@ import AdminPrograms from "./pages/admin/AdminPrograms";
 import AdminProgramForm from "./pages/admin/AdminProgramForm";
 import AdminProgramResponses from "./pages/admin/AdminProgramResponses";
 import AdminProgramReminders from "./pages/admin/AdminProgramReminders";
+import ReminderProgrammes from "./pages/book/ReminderProgrammes";
 
 // Program pages (participant-facing)
 
@@ -55,6 +56,8 @@ const App = () => (
           <Route path="/book/library/:modelId/workspace" element={<ModelWorkspace />} />
           <Route path="/book/tools" element={<LegacyModelRedirect />} />
           <Route path="/book/notes" element={<BookHome />} />
+          <Route path="/book/reminders" element={<ReminderProgrammes />} />
+          <Route path="/book/reminders/:programId" element={<AdminProgramReminders coordinator />} />
           <Route path="/book/tools/:modelId" element={<LegacyModelRedirect />} />
           <Route path="/models" element={<LegacyModelRedirect />} />
           <Route path="/models/:id" element={<LegacyModelRedirect />} />

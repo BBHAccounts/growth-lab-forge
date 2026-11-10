@@ -10,8 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { bookReminderEmails } from "@/content/bookReminderEmails";
 import { reminderClipboard, reminderSenderKey, reminderVideoLink } from "@/lib/book-reminders";
 import { useToast } from "@/hooks/use-toast";
+import { BookLayout } from "@/components/book/BookLayout";
 
-export default function AdminProgramReminders() {
+export default function AdminProgramReminders({ coordinator = false }: { coordinator?: boolean }) {
   const { programId = "" } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -24,14 +25,12 @@ export default function AdminProgramReminders() {
     let live = true;
     try { setSender(localStorage.getItem(reminderSenderKey(programId)) ?? ""); } catch { setSender(""); }
     void (async () => {
-      const [program, links] = await Promise.all([
-        supabase.from("programs").select("name, join_code").eq("id", programId).eq("is_book", true).single(),
-        supabase.from("program_models").select("order_index, deadline").eq("program_id", programId).order("order_index"),
-      ]);
+      const result = await supabase.rpc("book_reminder_programmes");
       if (!live) return;
-      if (program.error || links.error) { setError("We could not load the reminder emails. Please try again."); return; }
-      setProgramme(program.data);
-      setDates(Object.fromEntries((links.data ?? []).map(row => [row.order_index, row.deadline])));
+      const program = result.data?.find(row => row.id === programId);
+      if (result.error || !program) { setError("These reminders are not available to your account."); setProgramme(null); return; }
+      setProgramme(program);
+      setDates(program.chapter_dates as Record<number, string | null>);
     })();
     return () => { live = false; };
   }, [programId]);
@@ -69,9 +68,10 @@ export default function AdminProgramReminders() {
     } catch { toast({ title: "We could not prepare the Word document", variant: "destructive" }); }
     finally { setExporting(false); }
   };
-  return <AdminLayout><div className="space-y-8">
-    <Button variant="ghost" onClick={() => navigate(`/admin/programs/${programId}`)}><ArrowLeft className="h-4 w-4" />Back to programme</Button>
-    <BookProgrammeTabs programmeId={programId} />
+  const Layout = coordinator ? BookLayout : AdminLayout;
+  return <Layout><div className={coordinator ? "max-w-5xl mx-auto px-6 py-12 space-y-8" : "space-y-8"}>
+    <Button variant="ghost" onClick={() => navigate(coordinator ? "/book/reminders" : `/admin/programs/${programId}`)}><ArrowLeft className="h-4 w-4" />{coordinator ? "Back to reminder programmes" : "Back to programme"}</Button>
+    {!coordinator && <BookProgrammeTabs programmeId={programId} />}
     <header className="space-y-3"><p className="book-eyebrow">{programme?.name || "Book programme"}</p><h1 className="book-display text-4xl">Reminder emails</h1></header>
     {error ? <p role="alert">{error}</p> : !programme ? <div role="status" aria-label="Loading reminder emails" className="h-48 bg-muted rounded-xl animate-pulse" /> : <>
       <div className="flex flex-col sm:flex-row sm:items-end gap-6"><div className="space-y-3 flex-1 min-w-0"><Label htmlFor="reminder-sender">Sender name or team</Label><Input id="reminder-sender" value={sender} onChange={e => changeSender(e.target.value)} /></div><Button disabled={exporting || !programme.join_code} onClick={download}>{exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}Download all as Word</Button></div>
@@ -80,5 +80,5 @@ export default function AdminProgramReminders() {
         {bookReminderEmails.filter(email => Number(email.id.slice(0, -1)) === chapter).map(email => <article key={email.id} className="book-card bg-card space-y-6"><p className="book-eyebrow">{email.id}</p><h3 className="text-xl font-semibold leading-snug">{email.subject}</h3><div className="space-y-4 text-sm leading-relaxed"><p>Hi everyone,</p>{email.intro.map((text, i) => <p key={i}>{text}</p>)}<p>Watch the video: <a className="underline underline-offset-4" href={reminderVideoLink(email.id, programme.join_code ?? "")}>{email.title}</a></p><p>Put it into practice: {email.practice}</p>{email.closing.map((text, i) => <p key={i}>{text}</p>)}<p>Best wishes,<br />{sender || "[Sender name or team]"}</p></div><div className="flex flex-wrap gap-3"><Button variant="outline" disabled={!programme.join_code} onClick={() => void copy(bookReminderEmails.indexOf(email), true)}><Copy className="h-4 w-4" />Copy subject</Button><Button disabled={!programme.join_code} onClick={() => void copy(bookReminderEmails.indexOf(email), false)}><Copy className="h-4 w-4" />Copy email</Button></div></article>)}
       </section>)}
     </>}
-  </div></AdminLayout>;
+  </div></Layout>;
 }
