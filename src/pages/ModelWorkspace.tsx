@@ -24,6 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Check, Save, X, Plus, Trash2, FileText, Download, PenLine } from "lucide-react";
 import { ModelSummary } from "@/components/ModelSummary";
 import { generateModelPDF } from "@/lib/pdf-generator";
+import type { Json } from "@/integrations/supabase/types";
+import { isBookTool } from "@/lib/book-routing";
+import { canAccessBookModel } from "@/lib/book-api";
 import { FieldAssistant } from "@/components/FieldAssistant";
 
 interface ModelField {
@@ -57,7 +60,7 @@ interface ActivatedModel {
 }
 
 export default function ModelWorkspace() {
-  const { id } = useParams<{ id: string }>();
+  const { modelId: id } = useParams<{ modelId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [model, setModel] = useState<Model | null>(null);
@@ -74,20 +77,20 @@ export default function ModelWorkspace() {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth");
+        navigate(`/auth?returnTo=${encodeURIComponent(`/book/tools/${id}`)}`);
         return;
       }
 
       // Fetch model
       const { data: modelData, error: modelError } = await supabase
         .from("models")
-        .select("id, name, emoji, steps")
+        .select("id, name, emoji, steps, tags, status")
         .eq("id", id)
         .single();
 
-      if (modelError || !modelData) {
+      if (modelError || !modelData || !isBookTool(modelData.tags) || modelData.status !== "active") {
         toast({ title: "Model not found", variant: "destructive" });
-        navigate("/models");
+        navigate("/book/tools");
         return;
       }
 
@@ -105,21 +108,27 @@ export default function ModelWorkspace() {
         .eq("model_id", id)
         .single();
 
-      if (!activated) {
-        // Not activated, redirect to detail page
-        navigate(`/models/${id}`);
-        return;
+      let workspace = activated;
+      if (!workspace) {
+        const [access, role] = await Promise.all([canAccessBookModel(id), supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })]);
+        if (!access && role.data !== true) { navigate("/book/join"); return; }
+        const { data, error } = await supabase.from("activated_models").insert({ user_id: user.id, model_id: id, progress: {}, current_step: 0, completed: false }).select().single();
+        if (error || !data) { toast({ title: "We could not open this tool", description: error?.message, variant: "destructive" }); navigate("/book/tools"); return; }
+        workspace = data;
       }
 
       const parsedActivated: ActivatedModel = {
-        id: activated.id,
-        progress: (activated.progress as Record<string, unknown>) || {},
-        current_step: activated.current_step || 0,
-        completed: activated.completed || false,
+        id: workspace.id,
+        progress: (workspace.progress as Record<string, unknown>) || {},
+        current_step: Math.min(workspace.current_step || 0, Math.max(0, parsedModel.steps.length - 1)),
+        completed: workspace.completed || false,
       };
       setActivatedModel(parsedActivated);
       setCurrentStep(parsedActivated.current_step);
-      setFormData(parsedActivated.progress);
+      let progress = parsedActivated.progress;
+      const draft = localStorage.getItem(`book-tool-draft:${parsedActivated.id}`);
+      if (draft) { try { progress = JSON.parse(draft); } catch { /* Keep the saved values if the local draft is invalid. */ } }
+      setFormData(progress);
       setLoading(false);
     };
 
@@ -157,8 +166,7 @@ export default function ModelWorkspace() {
   const handleNext = async () => {
     if (!model) return;
     const nextStep = Math.min(currentStep + 1, model.steps.length - 1);
-    await saveProgress(nextStep);
-    setCurrentStep(nextStep);
+    if (await saveProgress(nextStep)) setCurrentStep(nextStep);
   };
 
   const handlePrev = () => {
@@ -167,25 +175,9 @@ export default function ModelWorkspace() {
 
   const handleComplete = async () => {
     if (!model) return;
-    await saveProgress(model.steps.length);
-    toast({ title: "Model completed!", description: "Congratulations on finishing this model." });
-    navigate(`/models/${model.id}`);
-  };
-
-  const handleDeactivate = async () => {
-    if (!activatedModel) return;
-    
-    const { error } = await supabase
-      .from("activated_models")
-      .delete()
-      .eq("id", activatedModel.id);
-
-    if (error) {
-      toast({ title: "Error deactivating model", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Model deactivated" });
-      navigate(`/models/${id}`);
-    }
+    if (!await saveProgress(model.steps.length)) return;
+    toast({ title: "Tool completed", description: "Your work has been saved." });
+    navigate("/book/tools");
   };
 
   const handleDownloadPDF = () => {
@@ -198,6 +190,18 @@ export default function ModelWorkspace() {
     });
     toast({ title: "PDF Downloaded", description: "Your model summary has been downloaded." });
   };
+
+  useEffect(() => {
+    if (!activatedModel || !id) return;
+    const draftKey = `book-tool-draft:${activatedModel.id}`;
+    localStorage.setItem(draftKey, JSON.stringify(formData));
+    const timer = window.setTimeout(async () => {
+      const snapshot = JSON.stringify(formData);
+      const { error } = await supabase.from("activated_models").update({ progress: formData as Json, current_step: currentStep }).eq("id", activatedModel.id);
+      if (!error && localStorage.getItem(draftKey) === snapshot) localStorage.removeItem(draftKey);
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [formData, activatedModel, currentStep, id]);
 
   const updateFieldValue = (fieldId: string, value: unknown) => {
     setFormData((prev) => ({
@@ -349,6 +353,7 @@ export default function ModelWorkspace() {
   }
 
   const step = model.steps[currentStep];
+  if (!step) return <AppLayout><p className="p-8">This tool is being prepared.</p></AppLayout>;
   const progress = ((currentStep + 1) / model.steps.length) * 100;
 
   return (
@@ -357,12 +362,12 @@ export default function ModelWorkspace() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/models/${model.id}`)}>
+            <Button variant="ghost" size="icon" onClick={async () => { if (await saveProgress()) navigate("/book"); }}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
-                <span>{model.emoji}</span>
+                
                 {model.name}
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -375,27 +380,7 @@ export default function ModelWorkspace() {
               <Save className="h-4 w-4 mr-2" />
               {saving ? "Saving..." : "Save"}
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon" title="Deactivate model">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Deactivate Model?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will delete all your progress on this model. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeactivate}>
-                    Deactivate
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+
           </div>
         </div>
 
@@ -418,7 +403,7 @@ export default function ModelWorkspace() {
               <Progress value={progress} className="h-2" />
               <div className="flex justify-between mt-2">
                 {model.steps.map((s, i) => (
-                  <button
+                  <Button
                     key={s.id}
                     onClick={() => setCurrentStep(i)}
                     className={`text-xs px-2 py-1 rounded transition-colors ${
@@ -431,7 +416,7 @@ export default function ModelWorkspace() {
                   >
                     {i < currentStep && <Check className="h-3 w-3 inline mr-1" />}
                     {i + 1}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -454,6 +439,7 @@ export default function ModelWorkspace() {
                         modelId={model.id}
                         stepTitle={step.title}
                         stepInstruction={step.instruction}
+                        book
                         fieldLabel={field.label}
                         currentValue={formData[field.id]}
                         allProgress={formData}

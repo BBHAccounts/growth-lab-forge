@@ -47,3 +47,11 @@
 - [x] Inventory account and app senders; no legacy queue files or queue call sites exist.
 - [x] Refresh account handler and preserve six branded templates; scaffold app-email helper and preview.
 - [x] Deploy refreshed account handler and preview; unsigned requests correctly return 401, latest app build is OK and 19 related rule tests pass. No legacy suppression/unsubscribe surfaces exist, so no events receiver is needed. Inbox delivery remains unverified; leave publication to the user.
+
+
+## Book-only application
+
+- [ ] Replace Growth Lab routes and navigation with one book header and BBH theme throughout.
+- [ ] Retain name and firm onboarding, account controls and tagged tool workspace with safe return routes.
+- [ ] Limit admin navigation and programmes to book surfaces; preserve progress-only note privacy.
+- [ ] Remove obsolete interface-only files, run tests and check desktop/mobile flows without changing stored data.

@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AdminSidebar } from './AdminSidebar';
+import { BookLayout } from '@/components/book/BookLayout';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -8,7 +9,7 @@ interface AdminLayoutProps {
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
-    <SidebarProvider>
+    <BookLayout><SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <AdminSidebar />
         <main className="flex-1 overflow-auto">
@@ -20,6 +21,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           </div>
         </main>
       </div>
-    </SidebarProvider>
+    </SidebarProvider></BookLayout>
   );
 };

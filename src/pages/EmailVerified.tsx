@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CheckCircle, Loader2, XCircle, Eye, EyeOff } from "lucide-react";
+import { BookLayout } from "@/components/book/BookLayout";
 import { supabase } from "@/integrations/supabase/client";
 
-const EmailVerified = () => {
+const EmailVerifiedContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [isVerifying, setIsVerifying] = useState(true);
@@ -118,7 +119,7 @@ const EmailVerified = () => {
               Complete Your Account
             </h1>
             <p className="text-muted-foreground">
-              Set a password to finish setting up your Growth Lab account
+              Set a password to finish setting up your Beyond the Book account
               {userEmail && <span className="block mt-1 text-sm">for <strong>{userEmail}</strong></span>}
             </p>
           </div>
@@ -181,7 +182,7 @@ const EmailVerified = () => {
           </form>
 
           <p className="text-sm text-muted-foreground text-center mt-6">
-            Welcome to Growth Lab by Beyond Billable Hours
+            Welcome to Beyond the Book by Beyond Billable Hours
           </p>
         </div>
       </div>
@@ -221,7 +222,7 @@ const EmailVerified = () => {
         </h1>
         
         <p className="text-muted-foreground mb-8">
-          Your email has been verified and your account is all set. You can now log in to Growth Lab and start exploring strategic frameworks and tools.
+          Your email has been verified and your account is all set. You can now log in to Beyond the Book and start exploring the chapters and exercises.
         </p>
         
         <Button 
@@ -233,11 +234,11 @@ const EmailVerified = () => {
         </Button>
         
         <p className="text-sm text-muted-foreground mt-6">
-          Welcome to Growth Lab by Beyond Billable Hours
+          Welcome to Beyond the Book by Beyond Billable Hours
         </p>
       </div>
     </div>
   );
 };
 
-export default EmailVerified;
+export default function EmailVerified() { return <BookLayout><EmailVerifiedContent /></BookLayout>; }

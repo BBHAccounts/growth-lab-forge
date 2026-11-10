@@ -39,7 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, ArrowUp, ArrowDown, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search, GripVertical } from 'lucide-react';
 import { BookProgramSettings } from '@/components/admin/BookProgramSettings';
-import { weeklyBookDates } from '@/lib/book-admin';
+import { bookJoinLink, weeklyBookDates } from '@/lib/book-admin';
 
 interface Model {
   id: string;
@@ -108,7 +108,7 @@ export default function AdminProgramForm() {
     status: 'draft',
     allow_pdf_upload: false,
     sequential: true,
-    is_book: false,
+    is_book: true,
     join_code: null,
   });
 
@@ -131,7 +131,7 @@ export default function AdminProgramForm() {
           .eq('id', programId)
           .single();
 
-        if (error || !program) {
+        if (error || !program || !program.is_book) {
           toast({ title: 'Program not found', variant: 'destructive' });
           navigate('/admin/programs');
           return;
@@ -440,41 +440,16 @@ export default function AdminProgramForm() {
   };
 
   const copyAccessLink = (accessCode: string) => {
-    const link = `${window.location.origin}/program/${accessCode}`;
+    const link = bookJoinLink(formData.join_code || "");
     navigator.clipboard.writeText(link);
     toast({ title: 'Link copied to clipboard' });
   };
 
   const generateShareableLink = async () => {
-    if (!programId) return;
-
-    const accessCode = generateAccessCode();
-    
-    const { error } = await supabase
-      .from('program_participants')
-      .insert({
-        program_id: programId,
-        access_code: accessCode,
-        status: 'invited',
-      });
-
-    if (error) {
-      toast({ title: 'Error generating link', description: error.message, variant: 'destructive' });
-      return;
-    }
-
-    const link = `${window.location.origin}/program/${accessCode}`;
+    const link = bookJoinLink(formData.join_code || "");
     setShareableLink(link);
-    navigator.clipboard.writeText(link);
-    toast({ title: 'Shareable link created and copied!' });
-
-    const { data } = await supabase
-      .from('program_participants')
-      .select('*')
-      .eq('program_id', programId)
-      .order('created_at', { ascending: false });
-    
-    setParticipants(data || []);
+    try { await navigator.clipboard.writeText(link); toast({ title: "Join link copied" }); }
+    catch { toast({ title: "We could not copy the link", variant: "destructive" }); }
   };
 
   if (loading) {
@@ -539,7 +514,7 @@ export default function AdminProgramForm() {
             <CardDescription>Basic information about the program</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-2"><Switch id="is_book" checked={formData.is_book} onCheckedChange={checked => setFormData({ ...formData, is_book: checked })} /><Label htmlFor="is_book">is_book</Label></div>
+            <div className="flex items-center gap-2"><Switch id="is_book" checked={formData.is_book} disabled onCheckedChange={checked => setFormData({ ...formData, is_book: checked })} /><Label htmlFor="is_book">is_book</Label></div>
             {formData.is_book && <BookProgramSettings code={formData.join_code || ''} onCode={join_code => setFormData({ ...formData, join_code })} modelCount={programModels.length} onWeeklyDates={date => setProgramModels(prev => weeklyBookDates(prev, date))} />}
             <div className="space-y-2">
               <Label htmlFor="name">Program Name *</Label>
@@ -732,7 +707,7 @@ export default function AdminProgramForm() {
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={generateShareableLink}>
                     <Link2 className="h-4 w-4 mr-2" />
-                    Create Shareable Link
+                    Create Join link
                   </Button>
                   <Dialog open={showAddParticipant} onOpenChange={setShowAddParticipant}>
                     <DialogTrigger asChild>
@@ -884,7 +859,7 @@ export default function AdminProgramForm() {
                       <div className="flex items-center gap-3">
                         <div>
                           <p className="font-medium">
-                            {participant.name || participant.email || 'Anonymous link'}
+                            {participant.name || participant.email || 'Participant link'}
                           </p>
                           {participant.name && participant.email && (
                             <p className="text-sm text-muted-foreground">{participant.email}</p>

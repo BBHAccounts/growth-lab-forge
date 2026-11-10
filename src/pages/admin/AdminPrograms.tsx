@@ -41,6 +41,7 @@ export default function AdminPrograms() {
             *,
             models (name)
           `)
+          .eq('is_book', true)
           .order('created_at', { ascending: false });
 
         if (statusFilter !== 'all') {
@@ -133,12 +134,12 @@ export default function AdminPrograms() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Programs</h1>
-            <p className="text-muted-foreground">Manage assignments and pre-work for participants</p>
+            <h1 className="text-2xl font-bold">Book programmes</h1>
+            <p className="text-muted-foreground">Book programmes and participant progress</p>
           </div>
           <Button onClick={() => navigate('/admin/programs/new')}>
             <Plus className="w-4 h-4 mr-2" />
-            Create Program
+            Create book programme
           </Button>
         </div>
 

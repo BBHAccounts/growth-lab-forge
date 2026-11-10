@@ -1,6 +1,6 @@
 import type { Json } from "@/integrations/supabase/types";
 
-/** Extra book metadata is optional, so ordinary Growth Lab steps remain valid. */
+/** Extra book metadata is optional, so existing tool steps remain valid. */
 export interface BookStep {
   id: string;
   title: string;

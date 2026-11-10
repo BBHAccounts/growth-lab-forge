@@ -3,16 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { BookDashboardEntry } from "./components/book/BookDashboardEntry";
+import { BookRootEntry } from "./components/book/BookRootEntry";
 import Auth from "./pages/Auth";
-import Models from "./pages/Models";
-import ModelDetail from "./pages/ModelDetail";
 import ModelWorkspace from "./pages/ModelWorkspace";
-import Research from "./pages/Research";
-import ResearchSurvey from "./pages/ResearchSurvey";
-import About from "./pages/About";
 import Account from "./pages/Account";
-import InsightsHub from "./pages/InsightsHub";
 import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
 import ResetPassword from "./pages/ResetPassword";
@@ -29,38 +23,23 @@ import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminUserForm from "./pages/admin/AdminUserForm";
 import AdminModels from "./pages/admin/AdminModels";
 import AdminModelForm from "./pages/admin/AdminModelForm";
-import AdminResearch from "./pages/admin/AdminResearch";
-import AdminResearchForm from "./pages/admin/AdminResearchForm";
-import AdminResearchResponses from "./pages/admin/AdminResearchResponses";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
-import AdminTopics from "./pages/admin/AdminTopics";
-import AdminTopicForm from "./pages/admin/AdminTopicForm";
-import AdminResources from "./pages/admin/AdminResources";
-import AdminResourceForm from "./pages/admin/AdminResourceForm";
-import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminPrograms from "./pages/admin/AdminPrograms";
 import AdminProgramForm from "./pages/admin/AdminProgramForm";
 import AdminProgramResponses from "./pages/admin/AdminProgramResponses";
-import AdminProgramCompare from "./pages/admin/AdminProgramCompare";
 
 // Program pages (participant-facing)
-import Programmes from "./pages/Programmes";
-import ProgramLanding from "./pages/program/ProgramLanding";
-import ProgramWorkspace from "./pages/program/ProgramWorkspace";
-import ProgramReview from "./pages/program/ProgramReview";
-import ProgramComplete from "./pages/program/ProgramComplete";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <div className="theme-book min-h-screen bg-background text-foreground"><QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<BookDashboardEntry />} />
+          <Route path="/" element={<BookRootEntry />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/book/join" element={<BookJoin />} />
           <Route path="/book/v/:stepId" element={<BookVideo />} />
@@ -68,18 +47,11 @@ const App = () => (
           <Route path="/book/chapters" element={<BookHome />} />
           <Route path="/book/tools" element={<BookHome />} />
           <Route path="/book/notes" element={<BookHome />} />
-          <Route path="/models" element={<Models />} />
-          <Route path="/models/:id" element={<ModelDetail />} />
-          <Route path="/models/:id/workspace" element={<ModelWorkspace />} />
-          <Route path="/research" element={<Research />} />
-          <Route path="/research/:studyId" element={<ResearchSurvey />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/book/tools/:modelId" element={<ModelWorkspace />} />
           <Route path="/account" element={<Account />} />
-          <Route path="/insights-hub" element={<InsightsHub />} />
           <Route path="/email-verified" element={<EmailVerified />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/programmes" element={<Programmes />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminRouteGuard><AdminOverview /></AdminRouteGuard>} />
@@ -88,32 +60,18 @@ const App = () => (
           <Route path="/admin/users/:userId" element={<AdminRouteGuard><AdminUserDetail /></AdminRouteGuard>} />
           <Route path="/admin/models" element={<AdminRouteGuard><AdminModels /></AdminRouteGuard>} />
           <Route path="/admin/models/:modelId" element={<AdminRouteGuard><AdminModelForm /></AdminRouteGuard>} />
-          <Route path="/admin/research" element={<AdminRouteGuard><AdminResearch /></AdminRouteGuard>} />
-          <Route path="/admin/research/:studyId" element={<AdminRouteGuard><AdminResearchForm /></AdminRouteGuard>} />
-          <Route path="/admin/research/:studyId/responses" element={<AdminRouteGuard><AdminResearchResponses /></AdminRouteGuard>} />
-          <Route path="/admin/analytics" element={<AdminRouteGuard><AdminAnalytics /></AdminRouteGuard>} />
           <Route path="/admin/settings" element={<AdminRouteGuard><AdminSettings /></AdminRouteGuard>} />
-          <Route path="/admin/notifications" element={<AdminRouteGuard><AdminNotifications /></AdminRouteGuard>} />
-          <Route path="/admin/topics" element={<AdminRouteGuard><AdminTopics /></AdminRouteGuard>} />
-          <Route path="/admin/topics/:topicId" element={<AdminRouteGuard><AdminTopicForm /></AdminRouteGuard>} />
-          <Route path="/admin/insights-hub" element={<AdminRouteGuard><AdminResources /></AdminRouteGuard>} />
-          <Route path="/admin/insights-hub/:resourceId" element={<AdminRouteGuard><AdminResourceForm /></AdminRouteGuard>} />
           <Route path="/admin/programs" element={<AdminRouteGuard><AdminPrograms /></AdminRouteGuard>} />
           <Route path="/admin/programs/:programId" element={<AdminRouteGuard><AdminProgramForm /></AdminRouteGuard>} />
           <Route path="/admin/programs/:programId/responses" element={<AdminRouteGuard><AdminProgramResponses /></AdminRouteGuard>} />
-          <Route path="/admin/programs/:programId/compare" element={<AdminRouteGuard><AdminProgramCompare /></AdminRouteGuard>} />
           
           {/* Program Routes (public, participant-facing) */}
-          <Route path="/program/:code" element={<ProgramLanding />} />
-          <Route path="/program/:code/workspace" element={<ProgramWorkspace />} />
-          <Route path="/program/:code/review" element={<ProgramReview />} />
-          <Route path="/program/:code/complete" element={<ProgramComplete />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>
+  </QueryClientProvider></div>
 );
 
 export default App;

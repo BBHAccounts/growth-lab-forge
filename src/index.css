@@ -25,6 +25,21 @@
   --gradient-book: linear-gradient(92deg, hsl(332 75% 59%) 0%, hsl(15 82% 58%) 50%, hsl(39 94% 57%) 100%);
   --book-track: 225 63% 12% / 0.12;
   --shadow-elevated: var(--shadow-book);
+  --destructive: 225 63% 12%;
+  --destructive-foreground: 42 62% 96%;
+  --chart-1: 223 95% 25%;
+  --chart-2: 225 63% 12%;
+  --chart-3: 223 95% 25%;
+  --chart-4: 223 95% 25%;
+  --chart-5: 225 63% 12%;
+  --sidebar-background: 42 62% 96%;
+  --sidebar-foreground: 223 95% 25%;
+  --sidebar-primary: 225 63% 12%;
+  --sidebar-primary-foreground: 42 62% 96%;
+  --sidebar-accent: 45 48% 92%;
+  --sidebar-accent-foreground: 225 63% 12%;
+  --sidebar-border: 225 63% 12% / 0.1;
+  --sidebar-ring: 225 63% 12%;
   font-family: 'Raleway', sans-serif;
   line-height: 1.5;
   letter-spacing: 0;
@@ -68,196 +83,16 @@
 @keyframes book-entry { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .theme-book .book-enter, .theme-book .book-unlock { animation: none; } }
 
-/* BBH Brand Design System - Tech Edition */
 
 @layer base {
-  :root {
-    /* BBH Brand Colors - Lighter Tech Feel */
-    --background: 0 0% 100%;
-    --foreground: 220 13% 18%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 220 13% 18%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 13% 18%;
-
-    --primary: 220 13% 18%; /* Dark gray/charcoal */
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 51 100% 50%; /* Bright Yellow #FFD300 */
-    --secondary-foreground: 220 13% 18%;
-
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-
-    --accent: 51 100% 50%; /* Bright Yellow */
-    --accent-foreground: 220 13% 18%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 13% 18%;
-
-    --radius: 0.75rem;
-
-    /* Tech Gradients */
-    --gradient-brand: linear-gradient(135deg, hsl(220, 13%, 18%), hsl(51, 100%, 50%));
-    --gradient-hero: linear-gradient(135deg, hsl(51, 100%, 50%) 0%, hsl(51, 100%, 60%) 100%);
-    --gradient-hero-subtle: linear-gradient(180deg, hsl(51, 100%, 50%, 0.08) 0%, transparent 100%);
-    --shadow-brand: 0 10px 40px -10px hsl(51, 100%, 50%, 0.3);
-    --shadow-elevated: 0 20px 60px -15px hsl(220, 13%, 18%, 0.15);
-
-    /* Chart Colors */
-    --chart-1: 330 68% 62%;
-    --chart-2: 196 100% 44%;
-    --chart-3: 0 84% 60%;
-    --chart-4: 152 69% 48%;
-    --chart-5: 51 100% 50%;
-
-    /* Sidebar - Light & Clean */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 13% 18%;
-    --sidebar-primary: 262 83% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 13% 18%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 262 83% 58%;
-  }
-
-  .dark {
-    --background: 220 13% 10%;
-    --foreground: 0 0% 98%;
-
-    --card: 220 13% 14%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 220 13% 14%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 51 100% 50%;
-    --primary-foreground: 220 13% 18%;
-
-    --secondary: 220 13% 20%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 220 13% 18%;
-    --muted-foreground: 220 9% 60%;
-
-    --accent: 51 100% 50%;
-    --accent-foreground: 220 13% 18%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 220 13% 20%;
-    --input: 220 13% 20%;
-    --ring: 51 100% 50%;
-
-    --gradient-brand: linear-gradient(135deg, hsl(220, 13%, 15%), hsl(51, 100%, 50%));
-    --gradient-hero: linear-gradient(135deg, hsl(220, 13%, 15%) 0%, hsl(220, 13%, 20%) 100%);
-    --gradient-hero-subtle: linear-gradient(180deg, hsl(51, 100%, 50%, 0.1) 0%, transparent 100%);
-    --shadow-brand: 0 10px 40px -10px hsl(51, 100%, 50%, 0.4);
-    --shadow-elevated: 0 20px 60px -15px hsl(0, 0%, 0%, 0.5);
-
-    --chart-1: 330 68% 62%;
-    --chart-2: 196 100% 44%;
-    --chart-3: 0 84% 60%;
-    --chart-4: 152 69% 48%;
-    --chart-5: 51 100% 50%;
-
-    --sidebar-background: 220 13% 14%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 262 83% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 20%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 13% 20%;
-    --sidebar-ring: 262 83% 58%;
-  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; font-family: 'Raleway', sans-serif; }
 }
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-}
-
-@layer utilities {
-  .gradient-brand {
-    background: var(--gradient-brand);
-  }
-  
-  .gradient-hero {
-    background: var(--gradient-hero);
-  }
-
-  .gradient-hero-subtle {
-    background: var(--gradient-hero-subtle);
-  }
-  
-  .shadow-brand {
-    box-shadow: var(--shadow-brand);
-  }
-  
-  .shadow-elevated {
-    box-shadow: var(--shadow-elevated);
-  }
-
-  /* Tech Grid Background Pattern */
-  .bg-grid-pattern {
-    background-image: 
-      linear-gradient(to right, hsl(220, 13%, 91%) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(220, 13%, 91%) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-
-  .bg-grid-pattern-yellow {
-    background-image: 
-      linear-gradient(to right, hsl(51, 100%, 45%, 0.3) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(51, 100%, 45%, 0.3) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-
-  .bg-dots-pattern {
-    background-image: radial-gradient(hsl(220, 13%, 85%) 1px, transparent 1px);
-    background-size: 20px 20px;
-  }
-}
-
-@layer components {
-  .hero-tech {
-    @apply relative overflow-hidden;
-    background: linear-gradient(135deg, hsl(51, 100%, 50%) 0%, hsl(51, 100%, 55%) 100%);
-  }
-
-  .hero-tech::before {
-    content: '';
-    @apply absolute inset-0 pointer-events-none;
-    background-image: 
-      linear-gradient(to right, hsl(51, 100%, 40%, 0.25) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(51, 100%, 40%, 0.25) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-
-  .hero-subtle {
-    @apply relative overflow-hidden bg-muted/50;
-  }
-
-  .hero-subtle::before {
-    content: '';
-    @apply absolute inset-0 pointer-events-none;
-    background-image: 
-      linear-gradient(to right, hsl(220, 13%, 91%) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(220, 13%, 91%) 1px, transparent 1px);
-    background-size: 40px 40px;
-  }
-}
+.theme-book h1, .theme-book h2 { font-family: 'DM Serif Display', serif; font-weight: 400; line-height: 1.1; letter-spacing: 0; }
+.theme-book h1 { font-size: 32px; }
+.theme-book h2 { font-size: 24px; }
+.theme-book input:not([type=checkbox]), .theme-book [role=combobox], .theme-book button:not([role=checkbox]):not([role=tab]), .theme-book a[data-book-control] { border-radius: 999px; }
+.theme-book button, .theme-book input, .theme-book [role=combobox] { min-height: 44px; }
+.theme-book button { box-shadow: none; }
+.theme-book :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+.shadow-elevated { box-shadow: var(--shadow-elevated); }

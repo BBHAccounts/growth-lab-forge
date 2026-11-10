@@ -205,9 +205,9 @@ export default function AdminUserForm() {
           </div>
 
           {existingUser && (
-            <Alert variant="destructive" className="border-amber-500 bg-amber-500/10">
-              <AlertCircle className="h-4 w-4 text-amber-500" />
-              <AlertTitle className="text-amber-500">User Already Exists</AlertTitle>
+            <Alert variant="destructive" className="border-border bg-secondary">
+              <AlertCircle className="h-4 w-4 text-foreground" />
+              <AlertTitle className="text-foreground">User Already Exists</AlertTitle>
               <AlertDescription className="space-y-3">
                 <p>
                   A user with email <strong>{existingUser.email}</strong> already exists with status: <strong className="capitalize">{existingUser.status}</strong>

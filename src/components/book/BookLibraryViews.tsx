@@ -21,12 +21,12 @@ export function BookTools({ data }: { data: BookPathData }) {
     return () => { active = false; };
   }, []);
   return <section className="max-w-5xl mx-auto px-6 lg:px-10 py-12 space-y-8 book-enter">
-    <div className="space-y-4"><p className="book-eyebrow">Tools from the book</p><h1 className="book-display text-4xl lg:text-5xl">Go deeper with Growth Lab</h1><p>Practical frameworks that build on the chapters.</p></div>
+    <div className="space-y-4"><p className="book-eyebrow">Tools from the book</p><h1 className="book-display text-4xl lg:text-5xl">Tools from the book</h1><p>Practical frameworks that build on the chapters.</p></div>
     {loading ? <div role="status" aria-label="Loading tools" className="h-40 bg-muted rounded-xl animate-pulse" /> : error ? <p role="alert">We could not load the tools. Please try again.</p> : data.chapters.map(ch => {
       const matches = tools.filter(tool => tool.tags?.includes(`book-ch${ch.order_index}`));
       return matches.length ? <section key={ch.id} className="space-y-4"><h2 className="book-display text-2xl">Chapter {ch.order_index}: {chapterTitle(ch.name)}</h2>{matches.map(tool => <article key={tool.id} className="book-card bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div className="space-y-3 min-w-0"><h3 className="text-lg font-semibold">{tool.name}</h3>{tool.short_description && <p className="text-sm leading-relaxed">{tool.short_description}</p>}{tool.time_estimate && <p className="text-xs flex items-center gap-2"><Clock className="h-4 w-4" strokeWidth={1.5} />{tool.time_estimate}</p>}</div>
-        <Button asChild variant="outline" className="rounded-full min-h-11 px-6 self-start sm:self-center"><Link to={`/models/${tool.id}`}>Open<span className="sr-only"> {tool.name}</span></Link></Button>
+        <Button asChild variant="outline" className="rounded-full min-h-11 px-6 self-start sm:self-center"><Link to={`/book/tools/${tool.id}`}>Open<span className="sr-only"> {tool.name}</span></Link></Button>
       </article>)}</section> : null;
     })}
   </section>;

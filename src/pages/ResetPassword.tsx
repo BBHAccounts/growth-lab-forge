@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Loader2, CheckCircle, KeyRound, ArrowLeft } from "lucide-react";
-import glLogoDark from "@/assets/gl-logo-dark.svg";
+import { BookLayout } from "@/components/book/BookLayout";
 
 export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -33,7 +33,7 @@ export default function ResetPassword() {
     
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
+        title: "Passwords do not match",
         description: "Please make sure both passwords are the same.",
         variant: "destructive"
       });
@@ -96,29 +96,11 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 hero-tech items-center justify-center p-12">
-        <div className="max-w-md relative z-10">
-          <img alt="Growth Lab" className="w-16 h-16 rounded-xl mb-8" src="/lovable-uploads/89dc4fa4-283a-40b4-aaf9-cd91cde9af43.png" />
-          <h1 className="text-4xl font-bold mb-4 text-foreground">Growth Lab</h1>
-          <p className="text-xl text-foreground/80 mb-8">
-            Strategic frameworks and tools to accelerate your legal business development.
-          </p>
-          <div className="mt-12 pt-8 border-t border-foreground/20">
-            <a href="https://beyondbillablehours.io/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-foreground/60 hover:text-foreground/80 transition-colors">
-              <img alt="Beyond Billable Hours" src="/lovable-uploads/795bbaf9-8839-4d49-bec7-219bd69566c9.png" className="h-5 w-5" />
-              <span className="text-sm">By Beyond Billable Hours</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
+    <BookLayout>
       {/* Right side - Reset password form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <Card className="w-full max-w-md border-border shadow-elevated">
           <CardHeader className="text-center">
-            <img src={glLogoDark} alt="Growth Lab" className="lg:hidden w-12 h-12 rounded-lg mx-auto mb-4" />
             <CardTitle className="text-2xl">
               {success ? "Password Updated" : "Create New Password"}
             </CardTitle>
@@ -150,12 +132,12 @@ export default function ResetPassword() {
               </div>
             ) : success ? (
               <div className="text-center py-8 space-y-6">
-                <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-                  <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
+                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mx-auto">
+                  <CheckCircle className="h-10 w-10 text-foreground" />
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-xl font-semibold">
-                    Password Changed Successfully!
+                    Password updated
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Your password has been updated. You can now sign in with your new password.
@@ -212,6 +194,6 @@ export default function ResetPassword() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </BookLayout>
   );
 }

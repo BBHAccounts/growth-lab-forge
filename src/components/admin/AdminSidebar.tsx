@@ -27,14 +27,9 @@ import {
 
 const adminNavItems = [
   { title: 'Overview', url: '/admin', icon: LayoutDashboard },
-  { title: 'Users', url: '/admin/users', icon: Users },
-  { title: 'Topics', url: '/admin/topics', icon: Tags },
-  { title: 'Models', url: '/admin/models', icon: Box },
-  { title: 'Programs', url: '/admin/programs', icon: ClipboardList },
-  { title: 'Insights Hub', url: '/admin/insights-hub', icon: FileText },
-  { title: 'Research Lab', url: '/admin/research', icon: FlaskConical },
-  { title: 'Analytics', url: '/admin/analytics', icon: BarChart3 },
-  { title: 'Notifications', url: '/admin/notifications', icon: Bell },
+  { title: 'Book programmes', url: '/admin/programs', icon: ClipboardList },
+  { title: 'Participants', url: '/admin/users', icon: Users },
+  { title: 'Tools and chapters', url: '/admin/models', icon: Box },
   { title: 'Settings', url: '/admin/settings', icon: Settings },
 ];
 
@@ -48,7 +43,7 @@ export const AdminSidebar = () => {
           </div>
           <div>
             <h2 className="font-semibold text-sm">Admin Panel</h2>
-            <p className="text-xs text-muted-foreground">Growth Lab</p>
+            <p className="text-xs text-muted-foreground">Beyond the Book</p>
           </div>
         </div>
       </SidebarHeader>
@@ -80,11 +75,11 @@ export const AdminSidebar = () => {
 
       <SidebarFooter className="p-4 border-t border-border/50">
         <NavLink
-          to="/"
+          to="/book"
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Growth Lab</span>
+          <span>Back to your path</span>
         </NavLink>
       </SidebarFooter>
     </Sidebar>

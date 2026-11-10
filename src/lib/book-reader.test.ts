@@ -1,25 +1,8 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
-import { bookNotesText, isFocusedBookReader, savedBookNotes } from "./book-reader";
+import { bookNotesText, savedBookNotes } from "./book-reader";
 import type { PathChapter } from "./book-path";
 
-const book = { is_book: true, status: "active" };
-test("a non-admin with only a book programme and no self-activated models is book-focused", () => {
-  expect(isFocusedBookReader(false, [book], 0)).toBe(true);
-  expect(isFocusedBookReader(false, [], 0)).toBe(false);
-});
-test("admins always retain Growth Lab navigation", () => {
-  expect(isFocusedBookReader(true, [book], 0)).toBe(false);
-});
-test("an ordinary programme preserves Growth Lab navigation", () => {
-  expect(isFocusedBookReader(false, [book, { is_book: false, status: "active" }], 0)).toBe(false);
-});
-test("self-activated models preserve Growth Lab navigation", () => {
-  expect(isFocusedBookReader(false, [book], 1)).toBe(false);
-});
-test("inactive-only book membership does not redirect to the active book area", () => {
-  expect(isFocusedBookReader(false, [{ ...book, status: "draft" }], 0)).toBe(false);
-});
 const chapter = (n: number): PathChapter => ({ id: String(n), name: `Chapter ${n}: Environment`, order_index: n, deadline: null, steps: [{ id: `${n}B`, title: `Video ${n}B`, instruction: "", fields: [{ id: `notes_${n}B`, type: "textarea" }] }] });
 test("saved notes include only exercise fields in chapter and video order", () => {
   const groups = savedBookNotes([chapter(3), chapter(1), chapter(2)], { notes_1B: "First answer", notes_2B: "  ", notes_3B: "Third answer", unrelated: "Never export", __done: { "1B": "2026-11-10T00:00:00Z" } });

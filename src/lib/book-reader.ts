@@ -2,10 +2,6 @@ import type { BookResponses } from "./book";
 import { bookNoteField } from "./book-video";
 import { chapterTitle, type PathChapter } from "./book-path";
 
-export function isFocusedBookReader(admin: boolean, programmes: readonly { is_book: boolean | null; status: string }[], activatedCount: number): boolean {
-  return !admin && activatedCount === 0 && programmes.length > 0 && programmes.every(p => p.is_book === true) && programmes.some(p => p.status === "active");
-}
-
 export function savedBookNotes(chapters: readonly PathChapter[], responses: BookResponses) {
   return [...chapters].sort((a, b) => a.order_index - b.order_index).flatMap(chapter => {
     const notes = chapter.steps.flatMap(step => {

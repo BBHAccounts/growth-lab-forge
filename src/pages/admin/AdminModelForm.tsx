@@ -244,17 +244,6 @@ export default function AdminModelForm() {
         await supabase.from('model_topic_categories').insert(linkedTopicCatIds);
       }
 
-      // Send notification if toggle is on
-      if (notifyUsers && model.status === 'active') {
-        await supabase.rpc('notify_all_users', {
-          p_type: 'new_model',
-          p_title: `New Model Available: ${model.name}`,
-          p_message: model.short_description || 'Check out our latest model!',
-          p_link: `/models/${model.slug || savedModelId}`,
-          p_reference_id: savedModelId,
-        });
-      }
-
       navigate('/admin/models');
     } catch (error) {
       console.error('Error saving model:', error);
@@ -349,9 +338,9 @@ export default function AdminModelForm() {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{isNew ? 'Create Model' : 'Edit Model'}</h1>
+              <h1 className="text-2xl font-bold">{isNew ? 'Create tool or chapter' : 'Edit tool or chapter'}</h1>
               <p className="text-muted-foreground">
-                {isNew ? 'Create a new toolbox model' : model.name}
+                {isNew ? 'Create a book tool or chapter' : model.name}
               </p>
             </div>
           </div>
@@ -485,25 +474,6 @@ export default function AdminModelForm() {
               </div>
 
               <div className="space-y-2">
-                <Label>Unlock Level</Label>
-                <Select
-                  value={model.unlock_level}
-                  onValueChange={(value) => setModel({ ...model, unlock_level: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="registered">Registered</SelectItem>
-                    <SelectItem value="research_contributor">Research Contributor Only</SelectItem>
-                    <SelectItem value="request_only">On Request Only</SelectItem>
-                    <SelectItem value="client">Client</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
                 <Label>Audience (comma-separated)</Label>
                 <Input
                   value={model.audience.join(', ')}
@@ -539,90 +509,6 @@ export default function AdminModelForm() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Featured</Label>
-                  <p className="text-sm text-muted-foreground">Show on home page</p>
-                </div>
-                <Switch
-                  checked={model.featured}
-                  onCheckedChange={(checked) => setModel({ ...model, featured: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between border-t pt-4">
-                <div>
-                  <Label className="flex items-center gap-2">
-                    <Bell className="w-4 h-4" />
-                    Notify Users
-                  </Label>
-                  <p className="text-sm text-muted-foreground">Send notification to all users on save</p>
-                </div>
-                <Switch
-                  checked={notifyUsers}
-                  onCheckedChange={setNotifyUsers}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recommendations - Topic Categories & Topics */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Recommendations</CardTitle>
-              <CardDescription>Link to topic categories and topics for recommendations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Topic Categories */}
-                <div className="space-y-2">
-                  <Label>Topic Categories ({topicCategories.filter((tc) => tc.linked).length} selected)</Label>
-                  {topicCategories.length > 0 ? (
-                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                      {topicCategories.map((tc) => (
-                        <label key={tc.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={tc.linked}
-                            onCheckedChange={() => toggleTopicCategory(tc.id)}
-                          />
-                          <span className="text-sm">{tc.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No topic categories found.</p>
-                  )}
-                </div>
-
-                {/* Topics */}
-                <div className="space-y-2">
-                  <Label>
-                    Topics ({topics.filter((t) => t.linked).length} selected)
-                    {selectedTopicCategoryKeys.length > 0 && (
-                      <span className="text-muted-foreground ml-2">(filtered by selected categories)</span>
-                    )}
-                  </Label>
-                  {filteredTopics.length > 0 ? (
-                    <div className="max-h-48 overflow-y-auto border rounded-md p-2 space-y-2">
-                      {filteredTopics.map((topic) => (
-                        <label key={topic.id} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={topic.linked}
-                            onCheckedChange={() => toggleTopic(topic.id)}
-                          />
-                          <span className="text-sm">{topic.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {selectedTopicCategoryKeys.length > 0 
-                        ? 'No topics in selected categories.' 
-                        : 'No active topics found. Create topics first.'}
-                    </p>
-                  )}
-                </div>
-              </div>
             </CardContent>
           </Card>
 

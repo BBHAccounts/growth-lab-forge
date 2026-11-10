@@ -24,9 +24,9 @@ interface Settings {
 }
 
 const defaultSettings: Settings = {
-  site_name: 'Growth Lab',
+  site_name: 'Beyond the Book',
   tagline: 'Your Growth Partner',
-  welcome_modal_text: 'Welcome to Growth Lab!',
+  welcome_modal_text: 'Welcome to Beyond the Book',
   support_email: 'support@bbh.com',
   support_url: 'https://bbh.com/contact',
   ai_assistant_global_prompt: '',
@@ -145,7 +145,7 @@ export default function AdminSettings() {
                   <Input
                     value={settings.site_name}
                     onChange={(e) => setSettings({ ...settings, site_name: e.target.value })}
-                    placeholder="Growth Lab"
+                    placeholder="Beyond the Book"
                   />
                 </div>
                 <div className="space-y-2">

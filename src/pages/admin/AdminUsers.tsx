@@ -203,9 +203,6 @@ export default function AdminUsers() {
       render: (user) => (
         <div className="flex flex-wrap gap-1">
           {user.is_admin && <Badge variant="secondary">Admin</Badge>}
-          {user.is_client && <Badge variant="outline">Client</Badge>}
-          {user.research_contributor && <Badge variant="outline">Research</Badge>}
-          {user.game_of_life_access && <Badge variant="outline">GoL</Badge>}
         </div>
       ),
     },
@@ -221,18 +218,10 @@ export default function AdminUsers() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Users</h1>
-            <p className="text-muted-foreground">Manage users and access control</p>
+            <h1 className="text-2xl font-bold">Participants</h1>
+            <p className="text-muted-foreground">Participants and account details</p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleSetPasswords}
-              disabled={settingPasswords}
-            >
-              <Key className="w-4 h-4 mr-2" />
-              {settingPasswords ? 'Setting...' : 'Set BBH Passwords'}
-            </Button>
             <Button onClick={() => navigate('/admin/users/new')}>
               <Plus className="w-4 h-4 mr-2" />
               Add User
@@ -242,19 +231,19 @@ export default function AdminUsers() {
 
         {/* New Users Queue */}
         {!loading && newUsers.length > 0 && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 space-y-3">
+          <div className="rounded-xl border border-border bg-secondary p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-amber-500/15 flex items-center justify-center">
-                <span className="text-lg">👋</span>
+              <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center">
+                <Plus className="h-4 w-4" />
               </div>
               <div>
                 <h3 className="font-semibold">New Users ({newUsers.length})</h3>
-                <p className="text-xs text-muted-foreground">Users who haven't completed their profile yet</p>
+                <p className="text-xs text-muted-foreground">Participants who have not completed their profile</p>
               </div>
             </div>
             <div className="grid gap-2">
               {newUsers.slice(0, 5).map(user => (
-                <button
+                <Button variant="ghost"
                   key={user.id}
                   onClick={() => navigate(`/admin/users/${user.user_id}`)}
                   className="flex items-center justify-between p-3 rounded-lg bg-background border border-border hover:border-primary/50 hover:shadow-sm transition-all text-left"
@@ -268,7 +257,7 @@ export default function AdminUsers() {
                       {!user.full_name || user.full_name.trim() === '' ? 'No profile' : user.status}
                     </Badge>
                   </div>
-                </button>
+                </Button>
               ))}
               {newUsers.length > 5 && (
                 <p className="text-xs text-muted-foreground text-center pt-1">
