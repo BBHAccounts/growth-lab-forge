@@ -1,5 +1,13 @@
 # Beyond the Book preparation
 
+## Full model library correction
+
+- [x] Restore the full active-model library, details and legacy redirects in BBH design.
+- [x] Widen only the book model-access function and verify its deployed definition preserves chapter access; confirm 12 active library models.
+- [x] Add chapter multi-select in admin and update chapter links, participant model progress and menus.
+- [x] Run 38 rule tests and sample-account search, filtering, saving/reload, legacy redirects, mobile layout and admin chapter save/reload checks.
+- [ ] Real member saving/AI Coach and admin chapter selection checks: blocked because no auth account matches the requesting user; sign in in the preview to enable them.
+
 - [x] Add programme flags, secure joining and book model/media access.
 - [x] Add shared completion and chapter unlock helpers with tests.
 - [x] Create and verify the fifteen-chapter BBH test programme.

@@ -14,7 +14,7 @@ import { ArrowLeft, ArrowRight, Check, Save, X, Plus, Trash2, FileText, Download
 import { ModelSummary } from "@/components/ModelSummary";
 import { generateModelPDF } from "@/lib/pdf-generator";
 import type { Json } from "@/integrations/supabase/types";
-import { isBookTool } from "@/lib/book-routing";
+import { isLibraryModel } from "@/lib/model-library";
 import { canAccessBookModel } from "@/lib/book-api";
 import { FieldAssistant } from "@/components/FieldAssistant";
 
@@ -68,7 +68,7 @@ export default function ModelWorkspace() {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate(`/auth?returnTo=${encodeURIComponent(`/book/tools/${id}`)}`);
+        navigate(`/auth?returnTo=${encodeURIComponent(`/book/library/${id}/workspace`)}`);
         return;
       }
 
@@ -79,9 +79,9 @@ export default function ModelWorkspace() {
         .eq("id", id)
         .single();
 
-      if (modelError || !modelData || !isBookTool(modelData.tags) || modelData.status !== "active") {
+      if (modelError || !modelData || !isLibraryModel(modelData)) {
         toast({ title: "Model not found", variant: "destructive" });
-        navigate("/book/tools");
+        navigate("/book/library");
         return;
       }
 
@@ -90,6 +90,9 @@ export default function ModelWorkspace() {
         steps: Array.isArray(modelData.steps) ? (modelData.steps as unknown as ModelStep[]) : [],
       };
       setModel(parsedModel);
+
+      const [access, role] = await Promise.all([canAccessBookModel(id), supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })]);
+      if (!access && role.data !== true) { navigate("/book/join"); return; }
 
       // Fetch activated model
       const { data: activated } = await supabase
@@ -101,10 +104,8 @@ export default function ModelWorkspace() {
 
       let workspace = activated;
       if (!workspace) {
-        const [access, role] = await Promise.all([canAccessBookModel(id), supabase.rpc("has_role", { _user_id: user.id, _role: "admin" })]);
-        if (!access && role.data !== true) { navigate("/book/join"); return; }
         const { data, error } = await supabase.from("activated_models").insert({ user_id: user.id, model_id: id, progress: {}, current_step: 0, completed: false }).select().single();
-        if (error || !data) { toast({ title: "We could not open this tool", description: error?.message, variant: "destructive" }); navigate("/book/tools"); return; }
+        if (error || !data) { toast({ title: "We could not open this model", description: error?.message, variant: "destructive" }); navigate("/book/library"); return; }
         workspace = data;
       }
 
@@ -167,8 +168,8 @@ export default function ModelWorkspace() {
   const handleComplete = async () => {
     if (!model) return;
     if (!await saveProgress(model.steps.length)) return;
-    toast({ title: "Tool completed", description: "Your work has been saved." });
-    navigate("/book/tools");
+    toast({ title: "Model completed", description: "Your work has been saved." });
+    navigate("/book/library");
   };
 
   const handleDownloadPDF = () => {
@@ -350,18 +351,16 @@ export default function ModelWorkspace() {
   }
 
   const step = model.steps[currentStep];
-  if (!step) return <AppLayout><p className="p-8">This tool is being prepared.</p></AppLayout>;
+  if (!step) return <AppLayout><p className="p-8">This model is being prepared.</p></AppLayout>;
   const progress = ((currentStep + 1) / model.steps.length) * 100;
 
   return (
-    <AppLayout onBookBack={() => saveProgress()}>
+    <AppLayout>
       <div className="p-6 md:p-8 max-w-4xl mx-auto">
+        <Button variant="ghost" className="px-0 mb-6" onClick={async () => { if (await saveProgress()) navigate("/book/library"); }}><ArrowLeft className="h-4 w-4" />Back to the library</Button>
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={async () => { if (await saveProgress()) navigate("/book"); }}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 
@@ -387,7 +386,7 @@ export default function ModelWorkspace() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="work" className="flex items-center gap-2">
               <PenLine className="h-4 w-4" />
-              Work on tool
+              Work on model
             </TabsTrigger>
             <TabsTrigger value="summary" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
@@ -458,7 +457,7 @@ export default function ModelWorkspace() {
               {currentStep === model.steps.length - 1 ? (
                 <Button onClick={handleComplete}>
                   <Check className="h-4 w-4 mr-2" />
-                  Complete tool
+                  Complete model
                 </Button>
               ) : (
                 <Button onClick={handleNext}>

@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { BookRootEntry } from "./components/book/BookRootEntry";
 import Auth from "./pages/Auth";
 import ModelWorkspace from "./pages/ModelWorkspace";
+import ModelDetail from "./pages/ModelDetail";
+import ModelLibrary from "./pages/book/ModelLibrary";
+import { LegacyModelRedirect } from "./components/book/LegacyModelRedirect";
 import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
@@ -45,9 +48,15 @@ const App = () => (
           <Route path="/book/v/:stepId" element={<BookVideo />} />
           <Route path="/book" element={<BookHome />} />
           <Route path="/book/chapters" element={<BookHome />} />
-          <Route path="/book/tools" element={<BookHome />} />
+          <Route path="/book/library" element={<ModelLibrary />} />
+          <Route path="/book/library/:modelId" element={<ModelDetail />} />
+          <Route path="/book/library/:modelId/workspace" element={<ModelWorkspace />} />
+          <Route path="/book/tools" element={<LegacyModelRedirect />} />
           <Route path="/book/notes" element={<BookHome />} />
-          <Route path="/book/tools/:modelId" element={<ModelWorkspace />} />
+          <Route path="/book/tools/:modelId" element={<LegacyModelRedirect />} />
+          <Route path="/models" element={<LegacyModelRedirect />} />
+          <Route path="/models/:id" element={<LegacyModelRedirect />} />
+          <Route path="/models/:id/workspace" element={<LegacyModelRedirect workspace />} />
           <Route path="/account" element={<Account />} />
           <Route path="/email-verified" element={<EmailVerified />} />
           <Route path="/reset-password" element={<ResetPassword />} />

@@ -18,6 +18,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { linkedChapters, setLinkedChapters } from '@/lib/model-library';
 import { ArrowLeft, Save, Trash2, Plus, X, GripVertical, User, Bell, Sparkles } from 'lucide-react';
 
 interface Step {
@@ -324,9 +325,9 @@ export default function AdminModelForm() {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{isNew ? 'Create tool or chapter' : 'Edit tool or chapter'}</h1>
+              <h1 className="text-2xl font-bold">{isNew ? 'Create model' : 'Edit model'}</h1>
               <p className="text-muted-foreground">
-                {isNew ? 'Create a book tool or chapter' : model.name}
+                {isNew ? 'Models and book chapters' : model.name}
               </p>
             </div>
           </div>
@@ -468,11 +469,18 @@ export default function AdminModelForm() {
                 />
               </div>
 
+              <fieldset className="space-y-3">
+                <legend className="text-sm font-medium">Linked chapters</legend>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {Array.from({ length: 15 }, (_, i) => i + 1).map(chapter => <label key={chapter} className="flex items-center gap-2 text-sm min-h-11"><Checkbox checked={linkedChapters(model.tags).includes(chapter)} onCheckedChange={checked => setModel(previous => ({ ...previous, tags: setLinkedChapters(previous.tags, checked === true ? [...linkedChapters(previous.tags), chapter] : linkedChapters(previous.tags).filter(n => n !== chapter)) }))} />Chapter {chapter}</label>)}
+                </div>
+              </fieldset>
+
               <div className="space-y-2">
                 <Label>Search Tags (comma-separated)</Label>
                 <Input
-                  value={model.tags.join(', ')}
-                  onChange={(e) => updateArrayField('tags', e.target.value)}
+                  value={model.tags.filter(tag => !/^book-ch(?:[1-9]|1[0-5])$/.test(tag)).join(', ')}
+                  onChange={(e) => setModel({ ...model, tags: setLinkedChapters(e.target.value.split(',').map(value => value.trim()).filter(Boolean), linkedChapters(model.tags)) })}
                   placeholder="marketing, strategy, growth"
                 />
               </div>

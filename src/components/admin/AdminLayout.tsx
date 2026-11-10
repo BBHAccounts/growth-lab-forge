@@ -7,7 +7,7 @@ const items = [
   { label: "Overview", to: "/admin", icon: LayoutDashboard },
   { label: "Book programmes", to: "/admin/programs", icon: ClipboardList },
   { label: "Participants", to: "/admin/users", icon: Users },
-  { label: "Tools and chapters", to: "/admin/models", icon: Wrench },
+  { label: "Models", to: "/admin/models", icon: Wrench },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 export function AdminLayout({ children }: { children: ReactNode }) {

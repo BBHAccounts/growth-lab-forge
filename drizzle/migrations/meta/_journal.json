@@ -15,6 +15,13 @@
       "when": 1794322258894,
       "tag": "0001_book_admin_progress_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794323493143,
+      "tag": "0002_allow_all_active_book_library_models",
+      "breakpoints": true
     }
   ]
 }

@@ -17,6 +17,7 @@ import {
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { isLibraryModel } from '@/lib/model-library';
 import { ArrowLeft, Save, Shield, FlaskConical, Trash2, Send, Loader2 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
@@ -134,11 +135,10 @@ export default function AdminUserDetail() {
         // Fetch activated models
         const { data: modelsData } = await supabase
           .from('activated_models')
-          .select('id, model_id, current_step, completed, updated_at, models!inner(name, tags)')
-          .overlaps('models.tags', Array.from({ length: 15 }, (_, i) => `book-ch${i + 1}`))
+          .select('id, model_id, current_step, completed, updated_at, models!inner(name, tags, status)')
           .eq('user_id', userId);
 
-        const models = (modelsData || []).map((m) => ({
+        const models = (modelsData || []).filter(m => m.models && isLibraryModel(m.models)).map((m) => ({
           ...m,
           model_name: (m.models as { name: string } | null)?.name || 'Unknown',
         }));

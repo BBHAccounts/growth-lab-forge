@@ -13,7 +13,9 @@ describe("book-only routing", () => {
     expect(safeAppReturn("/book/tools/tool-123")).toBe("/book/tools/tool-123");
     expect(safeAppReturn("/book/v/3B")).toBe("/book/v/3B");
     expect(safeAppReturn("/account")).toBe("/account");
-    for (const path of ["//example.com", "https://example.com", "/models/123", "/research", "/book/../auth", "/book\\evil", null]) expect(safeAppReturn(path)).toBe("/book");
+    expect(safeAppReturn("/book/library/model-123/workspace")).toBe("/book/library/model-123/workspace");
+    expect(safeAppReturn("/models/123/workspace")).toBe("/models/123/workspace");
+    for (const path of ["//example.com", "https://example.com", "/research", "/book/../auth", "/book\\evil", null]) expect(safeAppReturn(path)).toBe("/book");
   });
   test("participant tools have book chapter tags 1 to 15 only", () => {
     expect(isBookTool(["book-ch1"])).toBe(true);

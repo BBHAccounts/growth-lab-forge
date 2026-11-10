@@ -13,4 +13,5 @@
 - Save book programme chapter order as one-based and ordinary programme task order as zero-based; chapter unlocking uses the persisted order index.
 - Use scaffolded version-pinned email SDK handlers for account email verification and sending; preserve branded templates and leave non-queue third-party senders untouched during the managed email update.
 
-- Render tagged active book tools through the retained ModelWorkspace under BookLayout and keep its activated-model progress contract; removed member routes must resolve to NotFound.
+- Render all active non-chapter models through the book library detail and retained ModelWorkspace under BookLayout, keeping its activated-model progress contract; legacy model routes redirect to the library while other removed routes resolve to NotFound.
+- Derive chapter filters and admin chapter selection from shared model-library tag helpers, preserving unrelated tags; model access is enforced by the existing book-access function and unchanged RLS.

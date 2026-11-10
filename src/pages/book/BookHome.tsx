@@ -6,7 +6,7 @@ import { useBookPath } from "@/hooks/use-book-path";
 import { deriveBookPath } from "@/lib/book-path";
 import { ChapterList, DesktopPath, MobileWeek } from "@/components/book/BookPathViews";
 import { Button } from "@/components/ui/button";
-import { BookNotes, BookTools } from "@/components/book/BookLibraryViews";
+import { BookNotes } from "@/components/book/BookLibraryViews";
 
 export default function BookHome() {
   const state = useBookEntry();
@@ -40,7 +40,7 @@ export default function BookHome() {
   return <BookLayout path name={data?.name}>
     {state.loading || (state.member && loading) ? <div role="status" aria-label="Loading your path" className="max-w-7xl mx-auto p-6 lg:p-10 space-y-6"><div className="h-48 bg-muted rounded-xl animate-pulse" /><div className="h-96 bg-muted rounded-xl animate-pulse" /></div> : state.error || error ? <div className="p-10" role="alert"><p>{state.error || error}</p><Button className="rounded-full mt-6" onClick={() => window.location.reload()}>Try again</Button></div> : path && data && state.member ? <>
       {data.preview && <p role="status" className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 text-sm">BBHTEST preview</p>}
-      {section === "chapters" ? <ChapterList path={path} /> : section === "tools" ? <BookTools data={data} /> : section === "notes" ? <BookNotes data={data} /> : <><MobileWeek path={path} />{selected && <DesktopPath path={path} selected={selected} onSelect={setSelectedId} unlocked={unlocked} responses={data.responses} />}</>}
+      {section === "chapters" ? <ChapterList path={path} /> : section === "notes" ? <BookNotes data={data} /> : <><MobileWeek path={path} />{selected && <DesktopPath path={path} selected={selected} onSelect={setSelectedId} unlocked={unlocked} responses={data.responses} />}</>}
       {notice && <div role="status" className="book-toast fixed bottom-24 lg:bottom-6 left-6 right-6 lg:left-auto lg:w-auto rounded-2xl bg-primary text-primary-foreground px-6 py-4 shadow-elevated">{notice}</div>}
     </> : null}
   </BookLayout>;

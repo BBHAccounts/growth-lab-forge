@@ -106,8 +106,8 @@ export default function AdminModels() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Tools and chapters</h1>
-            <p className="text-muted-foreground">Edit book chapters and tools</p>
+            <h1 className="text-2xl font-bold">Models</h1>
+            <p className="text-muted-foreground">Edit models and book chapters</p>
           </div>
           <Button onClick={() => navigate('/admin/models/new')}>
             <Plus className="w-4 h-4 mr-2" />

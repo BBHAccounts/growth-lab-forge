@@ -3,6 +3,7 @@ import { BookOpen, Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BookPoster } from "./BookPoster";
 import { GradientWord } from "./GradientWord";
+import { ChapterModels } from "./ChapterModels";
 import { chapterCountWord, chapterOpeningText, chapterTitle, latestBookNote, type PathChapter, deriveBookPath } from "@/lib/book-path";
 import type { BookResponses } from "@/lib/book";
 
@@ -34,6 +35,7 @@ export function MobileWeek({ path }: { path: DerivedPath }) {
           <Link to={`/book/v/${step.id}`}><BookPoster path={step.poster_path} small /><span className="flex-1 min-w-0 text-left"><span className="book-eyebrow block mb-2">Video {step.section}</span><span className="font-semibold text-sm leading-snug block">{step.title}</span></span><span className={`book-status ${path.done[step.id] ? "bg-foreground text-background" : "border border-foreground/40"}`} aria-label={path.done[step.id] ? "Done" : "Not done"}>{path.done[step.id] && <Check className="h-4 w-4" />}</span></Link>
         </Button>)}
       </div></section>
+      <ChapterModels chapter={chapter.order_index} />
       <section><p className="book-eyebrow mb-4">Your progress</p><p className="text-sm mb-3">{path.doneCount} of {path.total} videos</p><Meter count={path.doneCount} total={path.total} /></section>
     </div>
   </div>;
@@ -76,7 +78,7 @@ export function DesktopPath({ path, selected, onSelect, unlocked, responses }: {
       <section className="book-card bg-card min-w-0"><div className="flex justify-between gap-4 items-start"><p className="book-eyebrow">Chapter {selected.order_index} · {path.states[selected.id]}</p><span className="rounded-full bg-secondary px-3 py-2 text-xs whitespace-nowrap">{count} of 3 done</span></div><h2 className="book-display text-4xl mt-4 mb-6">{chapterTitle(selected.name)}</h2><ReadingLine chapter={selected} />
         <div className="grid grid-cols-3 gap-4 mt-8">{selected.steps.map(step => <article key={step.id} className="min-w-0"><Link to={`/book/v/${step.id}`} className="block relative rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:outline-offset-4" aria-label={`Video ${step.section}: ${step.title}`}><BookPoster path={step.poster_path} />{path.done[step.id] ? <span className="absolute left-2 top-3 rounded-full bg-foreground text-background text-xs px-3 py-2 flex gap-1 items-center"><Check className="h-3 w-3" />Done</span> : next?.id === step.id ? <span className="absolute left-2 top-3 rounded-full bg-background text-primary text-xs px-3 py-2">Up next</span> : null}</Link><p className="book-eyebrow mt-4 mb-2">Video {step.section}</p><h3 className="text-sm leading-snug font-semibold">{step.title}</h3>{next?.id === step.id && <Button asChild className="rounded-full mt-4 h-auto min-h-11 whitespace-normal px-4 py-3 text-xs w-full"><Link to={`/book/v/${step.id}`}>Watch and do the exercise</Link></Button>}</article>)}</div>
       </section>
-      <aside className="space-y-6">{nextLocked && <section className="book-card bg-card"><p className="book-eyebrow mb-6">Next to unlock</p><Lock className="h-6 w-6 mb-4" strokeWidth={1.5} /><h2 className="book-display text-2xl mb-4">Chapter {nextLocked.order_index}: {chapterTitle(nextLocked.name)}</h2><p className="text-sm leading-relaxed mb-6">{chapterOpeningText(nextLocked)}, whichever comes first.</p><Meter count={3 - remaining} total={3} /><p className="text-xs mt-3">{remaining} {remaining === 1 ? "video" : "videos"} to go</p></section>}
+      <aside className="space-y-6"><ChapterModels chapter={selected.order_index} />{nextLocked && <section className="book-card bg-card"><p className="book-eyebrow mb-6">Next to unlock</p><Lock className="h-6 w-6 mb-4" strokeWidth={1.5} /><h2 className="book-display text-2xl mb-4">Chapter {nextLocked.order_index}: {chapterTitle(nextLocked.name)}</h2><p className="text-sm leading-relaxed mb-6">{chapterOpeningText(nextLocked)}, whichever comes first.</p><Meter count={3 - remaining} total={3} /><p className="text-xs mt-3">{remaining} {remaining === 1 ? "video" : "videos"} to go</p></section>}
         {note && <section className="book-card bg-card"><p className="book-eyebrow mb-6">From your notes</p><p className="text-sm leading-relaxed line-clamp-5 whitespace-pre-wrap">{note.text}</p><p className="text-xs font-semibold mt-4">Chapter {note.chapter.order_index} · Video {note.step.section}</p><Button asChild variant="link" className="px-0 h-11 mt-2"><Link to="/book/notes">See all notes</Link></Button></section>}
       </aside>
     </div>
