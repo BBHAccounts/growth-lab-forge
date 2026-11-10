@@ -9,6 +9,7 @@
 - Queue book notes and completion writes per exercise, retaining user/participant/field-scoped local drafts until confirmed saved; this prevents auto-save from overwriting completion or losing notes on navigation.
 - Resolve root navigation from current-user book membership and protected admin checks; validate sign-in returns against retained same-origin routes.
 - Admin book previews read BBHTEST chapter content without creating membership or reading any participant responses; previews never write notes or completion.
+- Keep actual participant membership separate from admin preview access in book entry; only membership bypasses joining, so admins can explicitly enrol for personal progress using the existing secure code flow.
 - Book admin progress pages use only the admin-checked `book_programme_progress` RPC; never fetch raw participant response JSON in admin reporting.
 - Save book programme chapter order as one-based and ordinary programme task order as zero-based; chapter unlocking uses the persisted order index.
 - Use scaffolded version-pinned email SDK handlers for account email verification and sending; preserve branded templates and leave non-queue third-party senders untouched during the managed email update.

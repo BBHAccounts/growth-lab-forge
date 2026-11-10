@@ -1,5 +1,11 @@
 # Beyond the Book preparation
 
+## Personal path joining
+
+- [x] Separate actual enrolment from read-only admin preview when opening the firm-code join page.
+- [x] Replace disabled preview completion with explicit joining links on the path and exercise pages.
+- [x] Verify the current account joins BBHTEST, returns to video 2B, saves completion across reload and can undo it; all 51 tests pass. Existing privacy and access policies unchanged.
+
 ## BBH constellation path
 
 - [x] Replace the raised trail with an Ink constellation, Cream framing and compact progress header.

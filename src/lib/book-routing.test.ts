@@ -1,7 +1,16 @@
 import { describe, expect, test } from "bun:test";
-import { bookRootDestination, isBookTool, safeAppReturn } from "./book-routing";
+import { bookRootDestination, isBookTool, safeAppReturn, shouldLeaveBookJoin } from "./book-routing";
 
 describe("book-only routing", () => {
+  test("admin preview without personal membership must stay on joining", () => {
+    expect(shouldLeaveBookJoin(false, true)).toBe(false);
+  });
+  test("enrolled participants return to their personal path", () => {
+    expect(shouldLeaveBookJoin(true, true)).toBe(true);
+  });
+  test("membership in another firm does not bypass the requested organisation code", () => {
+    expect(shouldLeaveBookJoin(true, false)).toBe(false);
+  });
   test("book members and admins open the path", () => {
     expect(bookRootDestination(true, false)).toBe("/book");
     expect(bookRootDestination(false, true)).toBe("/book");
