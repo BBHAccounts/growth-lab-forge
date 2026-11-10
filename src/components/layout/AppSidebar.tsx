@@ -33,7 +33,7 @@ const secondaryNavItems = [{
   url: "/account",
   icon: User
 }];
-export function AppSidebar() {
+export function AppSidebar({ bookMember = false }: { bookMember?: boolean }) {
   const {
     toast
   } = useToast();
@@ -73,7 +73,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map(item => <SidebarMenuItem key={item.title}>
+              {(bookMember ? [...mainNavItems, { title: "Beyond the Book", url: "/book", icon: BookOpen }] : mainNavItems).map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} className={({
                   isActive

@@ -16,6 +16,7 @@ import { bookNoteField, followingBookStep } from "@/lib/book-video";
 import { supabase } from "@/integrations/supabase/client";
 
 function Exercise({ data, chapter, step }: { data: BookPathData; chapter: PathChapter; step: BookStep }) {
+  if (data.preview) return <div className="book-card bg-card space-y-6"><p className="book-eyebrow">Your exercise</p><h2 className="book-display text-3xl">{step.exercise_title || step.title}</h2><p className="text-sm whitespace-pre-line">{step.instruction}</p>{step.keep && <div className="bg-secondary p-6 rounded-xl space-y-3"><p className="book-eyebrow">What to keep</p><p className="text-sm">{step.keep}</p></div>}<p className="text-xs">BBHTEST preview</p></div>;
   const field = bookNoteField(step.fields);
   // Book content has one existing textarea per exercise. Never invent an unrelated field.
   if (!field) return <p role="alert">This exercise is being prepared.</p>;

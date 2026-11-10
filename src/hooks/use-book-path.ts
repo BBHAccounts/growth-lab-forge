@@ -11,6 +11,7 @@ export interface BookPathData {
   sequential: boolean;
   chapters: PathChapter[];
   responses: BookResponses;
+  preview?: boolean;
 }
 
 export function useBookPath(userId: string | undefined) {
@@ -19,6 +20,7 @@ export function useBookPath(userId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
+    setData(null); setError(null);
     if (!userId) return () => { active = false; };
     const load = async () => {
       setLoading(true);
@@ -28,16 +30,24 @@ export function useBookPath(userId: string | undefined) {
           .eq("user_id", userId).eq("programs.is_book", true).eq("programs.status", "active")
           .order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (membership.error) throw membership.error;
-        const member = membership.data;
-        if (!member) throw new Error("No active book programme");
+        let member = membership.data;
+        let preview = false;
+        if (!member) {
+          const role = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+          if (role.error || role.data !== true) throw new Error("No active book programme");
+          const test = await supabase.from("programs").select("id, is_book, status, sequential").eq("is_book", true).eq("status", "active").ilike("join_code", "BBHTEST").single();
+          if (test.error || !test.data) throw new Error("No test book programme");
+          member = { id: "", name: "Admin", program_id: test.data.id, programs: test.data };
+          preview = true;
+        }
         const [links, responses] = await Promise.all([
           supabase.from("program_models").select("order_index, deadline, models(id, name, steps)").eq("program_id", member.program_id).order("order_index"),
-          supabase.from("program_responses").select("responses").eq("participant_id", member.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
+          preview ? Promise.resolve({ data: null, error: null }) : supabase.from("program_responses").select("responses").eq("participant_id", member.id).order("updated_at", { ascending: false }).limit(1).maybeSingle(),
         ]);
         if (links.error) throw links.error;
         if (responses.error) throw responses.error;
         const chapters = (links.data ?? []).flatMap(link => link.models ? [{ id: link.models.id, name: link.models.name, order_index: link.order_index, deadline: link.deadline, steps: Array.isArray(link.models.steps) ? link.models.steps as unknown as BookStep[] : [] }] : []);
-        if (active) { setData({ programmeId: member.program_id, participantId: member.id, userId, name: member.name ?? "", sequential: member.programs.sequential !== false, chapters, responses: responses.data?.responses as BookResponses ?? {} }); setError(null); }
+        if (active) { setData({ programmeId: member.program_id, participantId: member.id, userId, name: member.name ?? "", preview, sequential: member.programs.sequential !== false, chapters, responses: responses.data?.responses as BookResponses ?? {} }); setError(null); }
       } catch { if (active) setError("We could not load your path. Please try again."); }
       finally { if (active) setLoading(false); }
     };

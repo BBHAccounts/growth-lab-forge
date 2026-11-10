@@ -26,3 +26,11 @@
 - [x] Add queued note auto-save with retained drafts, done/undo and book coaching.
 - [x] Test save/undo/navigation rules and populated desktop/mobile flows: 22 tests pass; controlled saves, failure recovery, reload, coaching, next navigation and locked states pass without runtime errors. Real signed-out reminder redirect verified.
 - [ ] Verify real signed-in note saving and coaching: blocked because session minting found no account matching the requesting user. Sign in in the preview to enable these checks. Video playback awaits uploaded media.
+
+## Step 5: tools, notes and focused navigation
+
+- [x] Add chapter-grouped tools and private notes with text download.
+- [x] Add book model return bar and focused navigation for book-only users.
+- [x] Add read-only BBHTEST admin preview without membership or participant notes.
+- [x] Verify rules and desktop/mobile screens: 29 tests pass, controlled actual-hook flows cover root redirect, mixed menu, restricted-level model/workspace access, notes download and admin preview without note reads or writes.
+- [ ] Verify real signed-in book-only, mixed-user and admin accounts: blocked by unavailable preview session, as noted above.

@@ -151,6 +151,7 @@ export default function ModelWorkspace() {
     }
 
     setSaving(false);
+    return !error;
   };
 
   const handleNext = async () => {
@@ -351,7 +352,7 @@ export default function ModelWorkspace() {
   const progress = ((currentStep + 1) / model.steps.length) * 100;
 
   return (
-    <AppLayout>
+    <AppLayout onBookBack={() => saveProgress()}>
       <div className="p-6 md:p-8 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
