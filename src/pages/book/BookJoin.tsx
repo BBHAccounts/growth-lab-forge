@@ -53,5 +53,37 @@ export default function BookJoin() {
   };
 
   const checking = state.loading || programmeCode.loading || (state.user && !state.error && !programmeCode.error && (shouldLeaveBookJoin(state.participant, programmeCode.matches) || state.needsOnboarding));
-  return <BookLayout><section className="book-auth-page max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-16 book-enter"><div className="space-y-6"><p className="book-eyebrow">The book, put into practice</p><h1 className="book-display text-5xl lg:text-7xl">Beyond<br />the <em className="book-gradient-word">Book.</em></h1><p className="text-xl font-medium">The companion to Beyond Billable Hours</p><p className="max-w-md leading-relaxed">Fifteen chapters, three short videos each, one practical exercise per video.</p><figure className="book-join-cover"><img src={bookCover.url} width={511} height={767} alt="Beyond Billable Hours book cover by Barbara Koenen-Geerdink" fetchPriority="high" /><figcaption className="space-y-3"><p className="book-eyebrow">Beyond Billable Hours</p><p className="book-display text-2xl">The Growth Accelerator for Lawyers</p><p className="text-sm leading-relaxed">By Barbara Koenen-Geerdink</p></figcaption></figure></div><div className="book-auth-form space-y-6"><p className="book-eyebrow">{state.user ? "Your firm programme" : "Your next chapter starts here"}</p>{checking ? <div role="status" aria-label="Checking your account"><Loader2 className="h-6 w-6 animate-spin" /></div> : state.error || programmeCode.error ? <p role="alert">{state.error || "We could not check this programme. Please try again."}</p> : state.user ? <><h2 className="book-display text-3xl">Enter the access code from your firm</h2><form onSubmit={submit} className="space-y-6"><Label htmlFor="firm-code">Access code</Label><Input id="firm-code" value={code} onChange={e => setCode(e.target.value)} required autoComplete="off" className="h-12" />{error && <p role="alert" className="text-sm">{error}</p>}<Button type="submit" disabled={busy} size="lg">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}Join</Button></form></> : <><h2 className="book-display text-3xl">Sign in or create your account</h2><EmailCodeSignIn returnUrl={bookMagicLinkReturn(window.location.origin, code, bookDestination(localStorage))} beforeSend={() => rememberBookEntry(localStorage, code)} /></>}</div></section></BookLayout>;
+  return <BookLayout>
+    <section className="book-join-page book-enter">
+      <div className="book-join-intro space-y-5">
+        <p className="book-eyebrow">The book, put into practice</p>
+        <h1 className="book-display">Beyond the <em className="book-gradient-word">Book.</em></h1>
+        <p className="text-lg font-medium">The companion to Beyond Billable Hours</p>
+        <p className="text-sm leading-relaxed max-w-md">Fifteen chapters, three short videos each, one practical exercise per video.</p>
+      </div>
+      <figure className="book-join-feature">
+        <img src={bookCover.url} width={511} height={767} alt="Beyond Billable Hours book cover by Barbara Koenen-Geerdink" fetchPriority="high" />
+        <figcaption className="mt-6 space-y-2">
+          <p className="book-eyebrow">Beyond Billable Hours</p>
+          <p className="text-sm font-semibold">The Growth Accelerator for Lawyers</p>
+          <p className="text-xs">Barbara Koenen-Geerdink</p>
+        </figcaption>
+      </figure>
+      <div className="book-join-entry space-y-6">
+        {checking ? <div role="status" aria-label="Checking your account"><Loader2 className="h-6 w-6 animate-spin" /></div>
+          : state.error || programmeCode.error ? <p role="alert">{state.error || "We could not check this programme. Please try again."}</p>
+          : state.user ? <>
+            <div className="space-y-3"><p className="book-eyebrow">Your firm programme</p><h2 className="book-display text-3xl">Enter your access code</h2><p className="text-sm">Use the code from your organisation.</p></div>
+            <form onSubmit={submit} className="space-y-5">
+              <div className="space-y-3"><Label htmlFor="firm-code">Access code</Label><Input id="firm-code" value={code} onChange={e => setCode(e.target.value)} required autoComplete="off" className="h-12" /></div>
+              {error && <p role="alert" className="text-sm">{error}</p>}
+              <Button type="submit" disabled={busy} size="lg" className="w-full">{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}Join</Button>
+            </form>
+          </> : <>
+            <div className="space-y-3"><p className="book-eyebrow">Your next chapter starts here</p><h2 className="book-display text-3xl">Sign in or create your account</h2></div>
+            <EmailCodeSignIn returnUrl={bookMagicLinkReturn(window.location.origin, code, bookDestination(localStorage))} beforeSend={() => rememberBookEntry(localStorage, code)} />
+          </>}
+      </div>
+    </section>
+  </BookLayout>;
 }
