@@ -16,6 +16,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Eye, GitCompare, Download } from 'lucide-react';
+import { BookProgramProgress } from '@/components/admin/BookProgramProgress';
+import type { BookParticipantProgress } from '@/lib/book-admin';
 
 interface Participant {
   id: string;
@@ -38,6 +40,7 @@ interface Program {
   id: string;
   name: string;
   model_id: string | null;
+  is_book: boolean;
 }
 
 interface ModelStep {
@@ -58,16 +61,19 @@ export default function AdminProgramResponses() {
   const [loading, setLoading] = useState(true);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [viewingResponse, setViewingResponse] = useState<string | null>(null);
+  const [bookProgress, setBookProgress] = useState<BookParticipantProgress[]>([]);
+  const [bookError, setBookError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!programId) return;
+      setLoading(true); setProgram(null); setResponses([]); setBookProgress([]); setBookError(null); setViewingResponse(null); setSelectedParticipants([]);
 
       try {
         // Fetch program
         const { data: programData, error: programError } = await supabase
           .from('programs')
-          .select('id, name, model_id')
+          .select('id, name, model_id, is_book')
           .eq('id', programId)
           .single();
 
@@ -78,6 +84,12 @@ export default function AdminProgramResponses() {
         }
 
         setProgram(programData);
+        if (programData.is_book) {
+          const { data, error } = await supabase.rpc('book_programme_progress', { programme_id: programId });
+          if (error) setBookError('Could not load participant progress. Please try again.');
+          else setBookProgress(data ?? []);
+          return;
+        }
 
         // Fetch model steps if linked
         if (programData.model_id) {
@@ -221,6 +233,8 @@ export default function AdminProgramResponses() {
       </AdminLayout>
     );
   }
+
+  if (program?.is_book) return <AdminLayout><div className="space-y-6"><div className="flex items-center gap-4"><Button variant="ghost" size="icon" aria-label="Back to programme" onClick={() => navigate(`/admin/programs/${programId}`)}><ArrowLeft className="h-5 w-5" /></Button><div><h1 className="text-2xl font-bold">Progress</h1><p className="text-muted-foreground">{program.name}</p></div></div><BookProgramProgress rows={bookProgress} error={bookError} /></div></AdminLayout>;
 
   return (
     <AdminLayout>

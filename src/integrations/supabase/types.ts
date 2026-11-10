@@ -1519,6 +1519,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      book_programme_progress: {
+        Args: { programme_id: string }
+        Returns: {
+          current_chapter: number
+          email: string
+          joined_at: string
+          last_active: string
+          name: string
+          participant_id: string
+          steps_done: number
+        }[]
+      }
       can_access_book_model: { Args: { model_id: string }; Returns: boolean }
       has_role: {
         Args: {

@@ -38,11 +38,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, ArrowUp, ArrowDown, Copy, Plus, Send, Trash2, Users, Link2, Mail, Search, GripVertical } from 'lucide-react';
+import { BookProgramSettings } from '@/components/admin/BookProgramSettings';
+import { weeklyBookDates } from '@/lib/book-admin';
 
 interface Model {
   id: string;
   name: string;
   emoji: string | null;
+  tags?: string[] | null;
 }
 
 interface ProgramModel {
@@ -72,6 +75,8 @@ interface Program {
   status: string;
   allow_pdf_upload: boolean;
   sequential: boolean;
+  is_book: boolean;
+  join_code: string | null;
 }
 
 export default function AdminProgramForm() {
@@ -103,6 +108,8 @@ export default function AdminProgramForm() {
     status: 'draft',
     allow_pdf_upload: false,
     sequential: true,
+    is_book: false,
+    join_code: null,
   });
 
   useEffect(() => {
@@ -110,8 +117,8 @@ export default function AdminProgramForm() {
       // Fetch available models
       const { data: modelsData } = await supabase
         .from('models')
-        .select('id, name, emoji')
-        .eq('status', 'active')
+        .select('id, name, emoji, tags')
+        .or('status.eq.active,tags.cs.{beyond-the-book}')
         .order('name');
       
       setAllModels(modelsData || []);
@@ -138,6 +145,8 @@ export default function AdminProgramForm() {
           status: program.status,
           allow_pdf_upload: program.allow_pdf_upload || false,
           sequential: program.sequential ?? true,
+          is_book: program.is_book,
+          join_code: program.join_code,
         });
 
         // Fetch program models
@@ -178,12 +187,12 @@ export default function AdminProgramForm() {
     const model = allModels.find(m => m.id === modelId);
     setProgramModels(prev => [
       ...prev,
-      { model_id: modelId, order_index: prev.length, deadline: null, model },
+      { model_id: modelId, order_index: prev.length + (formData.is_book ? 1 : 0), deadline: null, model },
     ]);
   };
 
   const removeModelFromProgram = (index: number) => {
-    setProgramModels(prev => prev.filter((_, i) => i !== index).map((pm, i) => ({ ...pm, order_index: i })));
+    setProgramModels(prev => prev.filter((_, i) => i !== index).map((pm, i) => ({ ...pm, order_index: i + (formData.is_book ? 1 : 0) })));
   };
 
   const moveModel = (index: number, direction: 'up' | 'down') => {
@@ -191,14 +200,14 @@ export default function AdminProgramForm() {
     if (newIndex < 0 || newIndex >= programModels.length) return;
     const updated = [...programModels];
     [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-    setProgramModels(updated.map((pm, i) => ({ ...pm, order_index: i })));
+    setProgramModels(updated.map((pm, i) => ({ ...pm, order_index: i + (formData.is_book ? 1 : 0) })));
   };
 
   const updateModelDeadline = (index: number, deadline: string | null) => {
     setProgramModels(prev => prev.map((pm, i) => i === index ? { ...pm, deadline } : pm));
   };
 
-  const availableModels = allModels.filter(m => !programModels.some(pm => pm.model_id === m.id));
+  const availableModels = allModels.filter(m => (formData.is_book || !m.tags?.includes('beyond-the-book')) && !programModels.some(pm => pm.model_id === m.id));
 
   const generateAccessCode = () => {
     const prefix = formData.name.slice(0, 4).toLowerCase().replace(/[^a-z]/g, '') || 'prog';
@@ -280,6 +289,8 @@ export default function AdminProgramForm() {
         status: formData.status,
         allow_pdf_upload: formData.allow_pdf_upload,
         sequential: formData.sequential,
+        is_book: formData.is_book,
+        join_code: formData.join_code?.trim().toUpperCase() || null,
         created_by: user?.id,
       };
 
@@ -305,19 +316,20 @@ export default function AdminProgramForm() {
 
       // Save program_models: delete existing and re-insert
       if (savedProgramId) {
-        await supabase
+        const { error: deleteError } = await supabase
           .from('program_models')
           .delete()
           .eq('program_id', savedProgramId);
+        if (deleteError) throw deleteError;
 
         if (programModels.length > 0) {
           const { error: pmError } = await supabase
             .from('program_models')
             .insert(
               programModels.map((pm, i) => ({
-                program_id: savedProgramId!,
+                program_id: savedProgramId,
                 model_id: pm.model_id,
-                order_index: i,
+                order_index: i + (formData.is_book ? 1 : 0),
                 deadline: pm.deadline ? new Date(pm.deadline).toISOString() : null,
               }))
             );
@@ -527,6 +539,8 @@ export default function AdminProgramForm() {
             <CardDescription>Basic information about the program</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-center gap-2"><Switch id="is_book" checked={formData.is_book} onCheckedChange={checked => setFormData({ ...formData, is_book: checked })} /><Label htmlFor="is_book">is_book</Label></div>
+            {formData.is_book && <BookProgramSettings code={formData.join_code || ''} onCode={join_code => setFormData({ ...formData, join_code })} modelCount={programModels.length} onWeeklyDates={date => setProgramModels(prev => weeklyBookDates(prev, date))} />}
             <div className="space-y-2">
               <Label htmlFor="name">Program Name *</Label>
               <Input

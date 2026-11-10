@@ -34,3 +34,11 @@
 - [x] Add read-only BBHTEST admin preview without membership or participant notes.
 - [x] Verify rules and desktop/mobile screens: 29 tests pass, controlled actual-hook flows cover root redirect, mixed menu, restricted-level model/workspace access, notes download and admin preview without note reads or writes.
 - [ ] Verify real signed-in book-only, mixed-user and admin accounts: blocked by unavailable preview session, as noted above.
+
+## Step 6: book programme admin
+
+- [x] Add book flag, generated firm codes, join-link copying and weekly dates to the existing form; retain chapter indices 1 to 15 on save.
+- [x] Add admin-only progress summary function without note text; deployed function and unchanged restrictive private-note policy verified in the database.
+- [x] Show sortable book progress and CSV export without fetching responses.
+- [x] Verify code, date and privacy rules and admin views: five new tests pass; controlled form save, date picker, join link, progress sorting/export and ordinary response UI checks pass without page errors.
+- [ ] Verify progress RPC with a real admin session and participant data: blocked by unavailable preview session. Read-only database tool cannot execute this auth-only function.
