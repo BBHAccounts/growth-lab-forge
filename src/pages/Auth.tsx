@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, CheckCircle, ArrowLeft, BookOpen, FlaskConical, Lightbulb, ArrowRight, Sparkles } from "lucide-react";
 import glLogoDark from "@/assets/gl-logo-dark.svg";
+import { sendMagicLink } from "@/lib/magic-link";
 
 type AuthMode = "main" | "success" | "resetting";
 
@@ -64,13 +65,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: window.location.origin,
-        },
-      });
+      const { error } = await sendMagicLink(email);
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {

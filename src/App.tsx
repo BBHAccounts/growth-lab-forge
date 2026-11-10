@@ -17,6 +17,8 @@ import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
 import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
+import BookJoin from "./pages/book/BookJoin";
+import BookHome from "./pages/book/BookHome";
 
 // Admin pages
 import { AdminRouteGuard } from "./components/admin/AdminRouteGuard";
@@ -59,6 +61,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/book/join" element={<BookJoin />} />
+          <Route path="/book" element={<BookHome />} />
           <Route path="/models" element={<Models />} />
           <Route path="/models/:id" element={<ModelDetail />} />
           <Route path="/models/:id/workspace" element={<ModelWorkspace />} />

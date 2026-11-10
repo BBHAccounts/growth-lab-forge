@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+.theme-book {
+  --background: 42 62% 96%;
+  --foreground: 223 95% 25%;
+  --primary: 225 63% 12%;
+  --primary-foreground: 42 62% 96%;
+  --card: 42 62% 96%;
+  --card-foreground: 223 95% 25%;
+  --secondary: 45 48% 92%;
+  --secondary-foreground: 225 63% 12%;
+  --muted: 45 48% 92%;
+  --muted-foreground: 225 63% 12%;
+  --accent: 45 48% 92%;
+  --accent-foreground: 225 63% 12%;
+  --border: 225 63% 12% / 0.1;
+  --input: 225 63% 12% / 0.15;
+  --ring: 225 63% 12%;
+  --popover: 42 62% 96%;
+  --popover-foreground: 223 95% 25%;
+  --radius: 1rem;
+  --shadow-book: 0 8px 24px hsl(225 63% 12% / 0.04);
+  font-family: 'Raleway', sans-serif;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+.theme-book .book-display { font-family: 'DM Serif Display', serif; font-weight: 400; line-height: 1.1; }
+.theme-book .book-eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; }
+.theme-book .book-card { border: 1px solid hsl(var(--border)); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-book); }
+.theme-book .book-enter { animation: book-entry 500ms ease-out both; }
+.theme-book input { background: hsl(var(--background)); }
+@keyframes book-entry { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .theme-book .book-enter { animation: none; } }
+
 /* BBH Brand Design System - Tech Edition */
 
 @layer base {
