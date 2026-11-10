@@ -8,6 +8,8 @@ import { ChapterPathway, ChapterPanel } from "@/components/book/ChapterPathway";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookNotes } from "@/components/book/BookLibraryViews";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { chapterTitle } from "@/lib/book-path";
 
 export default function BookHome() {
   const state = useBookEntry();
@@ -22,10 +24,11 @@ export default function BookHome() {
   }, [state, navigate]);
   const selected = path?.chapters.find(ch => chapterNumber ? ch.order_index === Number(chapterNumber) : ch.id === selectedId) ?? path?.current ?? path?.chapters[0];
   const section = location.pathname.split("/")[2];
+  const closeChapter = () => { setSelectedId(null); if (chapterNumber) navigate("/book", { replace: true }); };
+  const selectChapter = (id: string) => { setSelectedId(id); if (chapterNumber) navigate("/book", { replace: true }); };
   return <BookLayout path name={data?.name}>
     {state.loading || (state.member && loading) ? <div role="status" aria-label="Loading your path" className="max-w-7xl mx-auto p-6 lg:p-10 space-y-6"><div className="h-48 bg-muted rounded-xl animate-pulse" /><div className="h-96 bg-muted rounded-xl animate-pulse" /></div> : state.error || error ? <div className="p-10" role="alert"><p>{state.error || error}</p><Button className="rounded-full mt-6" onClick={() => window.location.reload()}>Try again</Button></div> : path && data && state.member ? <>
-      {data.preview && <p role="status" className="max-w-7xl mx-auto px-6 lg:px-10 pt-6 text-sm">BBHTEST preview</p>}
-      {section === "notes" ? <BookNotes data={data} /> : selected ? chapterNumber ? <ChapterPanel chapter={selected} path={path} /> : <ChapterPathway path={path} selected={selected} onSelect={id => { setSelectedId(id); const chapter = path.chapters.find(ch => ch.id === id); if (chapter) navigate(`/book/chapter/${chapter.order_index}`); }} /> : null}
+      {section === "notes" ? <BookNotes data={data} /> : selected ? <><ChapterPathway path={path} selected={selected} onSelect={selectChapter} /><Dialog open={Boolean(selectedId || chapterNumber)} onOpenChange={open => { if (!open) closeChapter(); }}><DialogContent className="theme-book book-chapter-dialog"><DialogTitle className="sr-only">Chapter {selected.order_index}: {chapterTitle(selected.name)}</DialogTitle><DialogDescription className="sr-only">Chapter videos, exercises and linked models</DialogDescription><ChapterPanel chapter={selected} path={path} onNext={selectChapter} /></DialogContent></Dialog></> : null}
     </> : null}
   </BookLayout>;
 }

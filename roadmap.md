@@ -1,5 +1,11 @@
 # Beyond the Book preparation
 
+## Dimensional pathway and chapter pop-ups
+
+- [x] Create a raised winding pathway with clearer current, started and completed states.
+- [x] Open chapters in a large accessible pop-up on the path and remove the test-code preview label.
+- [x] Verify real signed-in desktop/mobile chapter exploration, pop-up next/close and video navigation; 38 tests pass with no page errors.
+
 ## Design, open path and email codes
 
 - [x] Upgrade the app-wide BBH design and use the official transparent BBH logo with matching favicon.

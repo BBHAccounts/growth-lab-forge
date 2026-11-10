@@ -18,3 +18,4 @@
 
 - Share Cloud email OTP sending and verification between auth and book joining; hosted OTP length remains an owner setting, never generate codes locally.
 - Share the BBH email layout across all six scaffolded auth templates and pass Cloud-issued tokens to signup and sign-in emails; preserve SDK dispatch and signature handling.
+- Keep pathway chapter exploration in a themed accessible dialog on BookHome, including next-chapter navigation; this preserves the path context and handles legacy chapter links without a separate screen.
