@@ -1,6 +1,10 @@
 import type { Json } from "@/integrations/supabase/types";
 import type { PathChapter } from "./book-path";
 
+export function bookVideoNumber(chapterNumber: number, stepIndex: number): string {
+  return `${chapterNumber}.${stepIndex + 1}`;
+}
+
 export function bookNoteField(fields: Json[]): { id: string; label: string } | null {
   const field = fields.find(field => field && typeof field === "object" && !Array.isArray(field) && (field.type === "textarea" || field.type === "long_text"));
   if (!field || typeof field !== "object" || Array.isArray(field) || typeof field.id !== "string") return null;

@@ -1,5 +1,11 @@
 # Beyond the Book preparation
 
+## Numbered videos and completion
+
+- [x] Display chapter.video numbering and a numbered placeholder before playback.
+- [x] Keep participant completion below exercises and show a disabled completion control with a joining explanation in read-only admin preview.
+- [x] Verify real admin numbered chapters/exercise and sample-media play/overlay removal; all 44 tests pass. Participant completion persistence remains covered by existing rule tests, not a new member write.
+
 ## Programme reminder emails
 
 - [x] Add Barbara's exact 45 emails, programme reminder tab, per-programme sender draft and rich/plain copy.

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { BookPoster } from "./BookPoster";
 import { ChapterModels } from "./ChapterModels";
 import { chapterTitle, type PathChapter, type deriveBookPath } from "@/lib/book-path";
+import { bookVideoNumber } from "@/lib/book-video";
 
 type Path = ReturnType<typeof deriveBookPath>;
 export function ChapterPanel({ chapter, path, onNext }: { chapter: PathChapter; path: Path; onNext?: (id: string) => void }) {
@@ -11,7 +12,7 @@ export function ChapterPanel({ chapter, path, onNext }: { chapter: PathChapter; 
   return <section className="max-w-7xl mx-auto px-6 lg:px-10 py-10 space-y-8 book-enter" id="chapter-content">
     {!onNext && <Button asChild variant="ghost" className="px-0"><Link to="/book"><ArrowLeft className="h-4 w-4" />Back to your path</Link></Button>}
     <div className="flex flex-wrap justify-between items-start gap-6"><div className="space-y-4 max-w-3xl"><p className="book-eyebrow">Chapter {chapter.order_index} · {chapter.steps.filter(step => path.done[step.id]).length} of 3 complete</p><h2 className="book-display text-3xl lg:text-4xl">{chapterTitle(chapter.name)}</h2>{chapter.steps[0]?.reading && <p className="text-sm flex gap-3 items-center"><BookOpen className="h-4 w-4" />{chapter.steps[0].reading}</p>}</div>{following && (onNext ? <Button variant="outline" onClick={() => onNext(following.id)}>Next chapter<ArrowRight className="h-4 w-4" /></Button> : <Button asChild variant="outline"><Link to={`/book/chapter/${following.order_index}`}>Next chapter<ArrowRight className="h-4 w-4" /></Link></Button>)}</div>
-    <div className="grid md:grid-cols-3 gap-6">{chapter.steps.map((step, index) => <article key={step.id} className="book-chapter-video min-w-0"><Link to={`/book/v/${step.id}`} aria-label={`Watch video ${step.section || index + 1}: ${step.title}`} className="block relative"><BookPoster path={step.poster_path} />{path.done[step.id] && <span className="absolute top-4 right-4 bg-background text-foreground rounded-full p-2"><Check className="h-4 w-4" /></span>}</Link><div className="py-6 space-y-4"><p className="book-eyebrow">Video {step.section || String.fromCharCode(65 + index)}</p><h3 className="text-lg font-semibold leading-snug">{step.title}</h3><Button variant="outline" asChild><Link to={`/book/v/${step.id}`}><Play className="h-4 w-4" />Watch and practise</Link></Button></div></article>)}</div>
+    <div className="grid md:grid-cols-3 gap-6">{chapter.steps.map((step, index) => <article key={step.id} className="book-chapter-video min-w-0"><Link to={`/book/v/${step.id}`} aria-label={`Watch video ${bookVideoNumber(chapter.order_index, index)}: ${step.title}`} className="block relative"><BookPoster path={step.poster_path} label={bookVideoNumber(chapter.order_index, index)} />{path.done[step.id] && <span className="absolute top-4 right-4 bg-background text-foreground rounded-full p-2"><Check className="h-4 w-4" /></span>}</Link><div className="py-6 space-y-4"><p className="book-eyebrow">Video {bookVideoNumber(chapter.order_index, index)}</p><h3 className="text-lg font-semibold leading-snug">{step.title}</h3><Button variant="outline" asChild><Link to={`/book/v/${step.id}`}><Play className="h-4 w-4" />Watch and practise</Link></Button></div></article>)}</div>
     <ChapterModels chapter={chapter.order_index} />
   </section>;
 }
