@@ -1,0 +1,28 @@
+import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Check, Play, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookPoster } from "./BookPoster";
+import { ChapterModels } from "./ChapterModels";
+import { chapterTitle, type PathChapter, type deriveBookPath } from "@/lib/book-path";
+
+type Path = ReturnType<typeof deriveBookPath>;
+export function ChapterPanel({ chapter, path }: { chapter: PathChapter; path: Path }) {
+  const following = path.chapters.find(ch => ch.order_index === chapter.order_index + 1);
+  return <section className="max-w-7xl mx-auto px-6 lg:px-10 py-10 space-y-8 book-enter" id="chapter-content">
+    <Button asChild variant="ghost" className="px-0"><Link to="/book"><ArrowLeft className="h-4 w-4" />Back to your path</Link></Button>
+    <div className="flex flex-wrap justify-between items-start gap-6"><div className="space-y-4 max-w-3xl"><p className="book-eyebrow">Chapter {chapter.order_index} · {chapter.steps.filter(step => path.done[step.id]).length} of 3 complete</p><h2 className="book-display text-3xl lg:text-4xl">{chapterTitle(chapter.name)}</h2>{chapter.steps[0]?.reading && <p className="text-sm flex gap-3 items-center"><BookOpen className="h-4 w-4" />{chapter.steps[0].reading}</p>}</div>{following && <Button asChild variant="outline"><Link to={`/book/chapter/${following.order_index}`}>Next chapter<ArrowRight className="h-4 w-4" /></Link></Button>}</div>
+    <div className="grid md:grid-cols-3 gap-6">{chapter.steps.map((step, index) => <article key={step.id} className="book-chapter-video min-w-0"><Link to={`/book/v/${step.id}`} aria-label={`Watch video ${step.section || index + 1}: ${step.title}`} className="block relative"><BookPoster path={step.poster_path} />{path.done[step.id] && <span className="absolute top-4 right-4 bg-background text-foreground rounded-full p-2"><Check className="h-4 w-4" /></span>}</Link><div className="py-6 space-y-4"><p className="book-eyebrow">Video {step.section || String.fromCharCode(65 + index)}</p><h3 className="text-lg font-semibold leading-snug">{step.title}</h3><Button variant="outline" asChild><Link to={`/book/v/${step.id}`}><Play className="h-4 w-4" />Watch and practise</Link></Button></div></article>)}</div>
+    <ChapterModels chapter={chapter.order_index} />
+  </section>;
+}
+
+export function ChapterPathway({ path, selected, onSelect }: { path: Path; selected: PathChapter; onSelect: (id: string) => void }) {
+  return <><section className="book-path-surface book-dot-grid bg-primary text-primary-foreground"><div className="max-w-7xl mx-auto px-6 lg:px-10 pt-10 pb-12">
+    <div className="flex flex-wrap justify-between items-start gap-6 mb-10"><div className="space-y-4"><p className="book-eyebrow">Beyond the Book · Your path</p><h1 className="book-display text-4xl lg:text-6xl">From reading<br />to <em className="book-gradient-word">doing.</em></h1></div><div className="space-y-4 lg:max-w-72"><p className="text-sm">{path.doneCount} of {path.total} exercises complete</p><progress value={path.doneCount} max={path.total || 1} className="book-path-progress w-full" aria-label="Exercise progress" />{path.nextStep && <Button asChild className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"><Link to={`/book/v/${path.nextStep.id}`}>Continue your path<ArrowRight className="h-4 w-4" /></Link></Button>}</div></div>
+    <div className="book-pathway" aria-label="Chapter pathway">{path.chapters.map((chapter, index) => {
+      const complete = path.states[chapter.id] === "completed";
+      const count = chapter.steps.filter(step => path.done[step.id]).length;
+      return <div key={chapter.id} className="book-path-stop"><Button variant="ghost" onClick={() => onSelect(chapter.id)} aria-label={`Open chapter ${chapter.order_index}: ${chapterTitle(chapter.name)}`} aria-pressed={selected.id === chapter.id} className={`book-path-node ${selected.id === chapter.id ? "is-selected" : ""} ${complete ? "is-complete" : ""} ${path.states[chapter.id] === "in progress" ? "is-started" : ""}`}><span className="book-display">{complete ? <Check className="h-6 w-6" /> : String(chapter.order_index).padStart(2, "0")}</span></Button><p className="book-path-label">{chapterTitle(chapter.name)}</p><span className="book-path-count">{count ? `${count} of 3 complete` : path.states[chapter.id] === "in progress" ? "In progress" : "3 videos · 3 exercises"}</span></div>;
+    })}</div>
+  </div></section><ChapterPanel chapter={selected} path={path} /></>;
+}

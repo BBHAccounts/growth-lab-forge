@@ -17,20 +17,12 @@ describe("book chapter rules", () => {
   test("chapter 1 is always open", () => {
     expect(isBookChapterUnlocked(first, chapters, {}, true, now)).toBe(true);
   });
-  test("all three previous steps unlock the next chapter before its deadline", () => {
-    expect(isBookChapterUnlocked(second, chapters, complete, true, now)).toBe(true);
-    expect(isBookChapterUnlocked(second, chapters, { __done: { "1A": now.toISOString(), "1B": now.toISOString() } }, true, now)).toBe(false);
+  test("all 15 chapters are open before any deadline or previous completion", () => {
+    for (let n = 1; n <= 15; n++) expect(isBookChapterUnlocked({ ...second, order_index: n }, chapters, {}, true, now)).toBe(true);
   });
-  test("the chapter's own deadline unlocks it independently of completion", () => {
-    expect(isBookChapterUnlocked(second, chapters, {}, true, new Date("2026-11-16T23:59:59Z"))).toBe(false);
-    expect(isBookChapterUnlocked(second, chapters, {}, true, new Date("2026-11-17T00:00:00Z"))).toBe(true);
-  });
-  test("non-sequential programmes open every chapter", () => {
+  test("chapter dates and non-sequential settings never block exploration", () => {
+    expect(isBookChapterUnlocked(second, chapters, {}, true, new Date("2026-11-16T23:59:59Z"))).toBe(true);
     expect(isBookChapterUnlocked(second, chapters, {}, false, now)).toBe(true);
-  });
-  test("chapter number is order_index, not array position", () => {
-    expect(isBookChapterUnlocked(second, [second, first], complete, true, now)).toBe(true);
-    expect(isBookChapterUnlocked({ ...second, order_index: 3 }, chapters, complete, true, now)).toBe(false);
   });
   test("completion requires exactly three valid done timestamps, not filled notes", () => {
     expect(isBookChapterComplete(first, complete)).toBe(true);

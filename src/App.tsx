@@ -47,6 +47,7 @@ const App = () => (
           <Route path="/book/join" element={<BookJoin />} />
           <Route path="/book/v/:stepId" element={<BookVideo />} />
           <Route path="/book" element={<BookHome />} />
+          <Route path="/book/chapter/:chapterNumber" element={<BookHome />} />
           <Route path="/book/chapters" element={<BookHome />} />
           <Route path="/book/library" element={<ModelLibrary />} />
           <Route path="/book/library/:modelId" element={<ModelDetail />} />

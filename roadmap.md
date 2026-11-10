@@ -1,5 +1,13 @@
 # Beyond the Book preparation
 
+## Design, open path and email codes
+
+- [x] Upgrade the app-wide BBH design and use the official transparent BBH logo with matching favicon.
+- [x] Replace weekly locks with a freely explorable connected chapter pathway, retaining progress and next-chapter guidance.
+- [x] Use shared Cloud email-code sign-in and deploy all six rebranded account templates; existing verified sender domain retained.
+- [x] 38 tests and sample-account chapter 15 exploration, notes/done persistence, code error/success and desktop/mobile checks pass. Email preview renders and the public logo loads.
+- [ ] Owner must confirm More → Users → Auth settings → Email → Email OTP length is 6; this hosted setting cannot be changed or verified by agent tools. Real inbox delivery and account sign-in remain unverified because no requesting-user auth session is available.
+
 ## Full model library correction
 
 - [x] Restore the full active-model library, details and legacy redirects in BBH design.

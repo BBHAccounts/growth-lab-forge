@@ -7,7 +7,7 @@ export interface PathChapter {
   deadline: string | null;
   steps: BookStep[];
 }
-export type ChapterState = "completed" | "in progress" | "open" | "locked";
+export type ChapterState = "completed" | "in progress" | "open";
 
 export function bookWeek(firstDeadline: string | null, now = new Date()): number {
   const start = firstDeadline ? Date.parse(firstDeadline) : NaN;
@@ -18,9 +18,10 @@ export function deriveBookPath(chapters: readonly PathChapter[], responses: Book
   const sorted = [...chapters].sort((a, b) => a.order_index - b.order_index);
   const done = getBookDone(responses);
   const open = sorted.filter(ch => isBookChapterUnlocked(ch, sorted, responses, sequential, now));
-  const current = open.find(ch => !isBookChapterComplete(ch, responses)) ?? null;
+  const started = (ch: PathChapter) => ch.steps.some(step => done[step.id] || step.fields.some(field => field && typeof field === "object" && !Array.isArray(field) && typeof field.id === "string" && typeof responses[field.id] === "string" && String(responses[field.id]).trim()));
+  const current = open.find(ch => started(ch) && !isBookChapterComplete(ch, responses)) ?? open.find(ch => !isBookChapterComplete(ch, responses)) ?? null;
   const states = Object.fromEntries(sorted.map(ch => [ch.id,
-    isBookChapterComplete(ch, responses) ? "completed" : current?.id === ch.id ? "in progress" : open.includes(ch) ? "open" : "locked",
+    isBookChapterComplete(ch, responses) ? "completed" : started(ch) || current?.id === ch.id ? "in progress" : "open",
   ])) as Record<string, ChapterState>;
   const nextStep = open.flatMap(ch => ch.steps).find(step => !done[step.id]) ?? null;
   return { chapters: sorted, done, open, current, states, nextStep,

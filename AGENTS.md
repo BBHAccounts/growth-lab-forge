@@ -1,6 +1,6 @@
 # Architecture rules
 
-- Keep book completion and unlocking in `src/lib/book.ts`, with Cloud calls in `book-api.ts`; this allows rule tests without browser or session dependencies.
+- Keep book completion and unrestricted chapter exploration in `src/lib/book.ts`, with Cloud calls in `book-api.ts`; chapter dates guide ordering but never gate access.
 - Store book step completion alongside existing programme responses under `__done`, retaining the full JSON and optional step metadata; this keeps ordinary Growth Lab models compatible.
 - Validate book joining and model/media access in security-definer functions and RLS, never browser state; restrictive policies target book rows only to preserve existing programme access.
 - Apply the semantic book theme at the application root and load its fonts once in the document head; shared BookLayout owns every retained page header.
@@ -15,3 +15,6 @@
 
 - Render all active non-chapter models through the book library detail and retained ModelWorkspace under BookLayout, keeping its activated-model progress contract; legacy model routes redirect to the library while other removed routes resolve to NotFound.
 - Derive chapter filters and admin chapter selection from shared model-library tag helpers, preserving unrelated tags; model access is enforced by the existing book-access function and unchanged RLS.
+
+- Share Cloud email OTP sending and verification between auth and book joining; hosted OTP length remains an owner setting, never generate codes locally.
+- Share the BBH email layout across all six scaffolded auth templates and pass Cloud-issued tokens to signup and sign-in emails; preserve SDK dispatch and signature handling.

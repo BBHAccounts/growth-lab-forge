@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 // Configuration
-const SITE_NAME = "Growth Lab Hub"
+const SITE_NAME = "Beyond the Book"
 const SENDER_DOMAIN = "notify.growthlab.beyondbillablehours.io"
 const ROOT_DOMAIN = "growthlab.beyondbillablehours.io"
 const FROM_DOMAIN = "notify.growthlab.beyondbillablehours.io"
@@ -36,16 +36,18 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 // The sample email uses a fixed placeholder (RFC 6761 .test TLD) so the Go backend
 // can always find-and-replace it with the actual recipient when sending test emails,
 // even if the project's domain has changed since the template was scaffolded.
-const SAMPLE_PROJECT_URL = "https://growth-lab-forge.lovable.app"
+const SAMPLE_PROJECT_URL = SITE_URL
 const SAMPLE_EMAIL = "user@example.test"
 const SAMPLE_DATA: Record<string, object> = {
   signup: {
+    token: '123456',
     siteName: SITE_NAME,
     siteUrl: SAMPLE_PROJECT_URL,
     recipient: SAMPLE_EMAIL,
     confirmationUrl: SAMPLE_PROJECT_URL,
   },
   magiclink: {
+    token: '123456',
     siteName: SITE_NAME,
     confirmationUrl: SAMPLE_PROJECT_URL,
   },
@@ -123,23 +125,24 @@ async function handlePreview(req: Request): Promise<Response> {
 // The SDK handler owns verification, dispatch, and retry semantics; this file
 // owns only the email decisions: subjects, templates, and per-type props.
 const handler = createAuthEmailHandler({
-  apiKey: Deno.env.get('LOVABLE_API_KEY')!,
+  apiKey: Deno.env.get('LOVABLE_API_KEY') ?? '',
   from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
   senderDomain: SENDER_DOMAIN,
   sendUrl: Deno.env.get('LOVABLE_SEND_URL'),
   emails: {
     signup: {
-      subject: 'Confirm your email',
+      subject: 'Your Beyond the Book sign-in code',
       render: (data) =>
         React.createElement(SignupEmail, {
           siteName: SITE_NAME,
           siteUrl: SITE_URL,
           recipient: data.email,
+          token: data.token ?? '',
           confirmationUrl: data.url,
         }),
     },
     invite: {
-      subject: "You've been invited",
+      subject: "You are invited to Beyond the Book",
       render: (data) =>
         React.createElement(InviteEmail, {
           siteName: SITE_NAME,
@@ -148,10 +151,11 @@ const handler = createAuthEmailHandler({
         }),
     },
     magiclink: {
-      subject: 'Your login link',
+      subject: 'Your Beyond the Book sign-in code',
       render: (data) =>
         React.createElement(MagicLinkEmail, {
           siteName: SITE_NAME,
+          token: data.token ?? '',
           confirmationUrl: data.url,
         }),
     },

@@ -59,10 +59,8 @@ export function isBookChapterUnlocked(
   sequential: boolean,
   now = new Date(),
 ): boolean {
-  if (!sequential || chapter.order_index === 1) return true;
-  if (chapter.deadline && Date.parse(chapter.deadline) <= now.getTime()) return true;
-  const previous = chapters.find(item => item.order_index === chapter.order_index - 1);
-  return previous ? isBookChapterComplete(previous, responses) : false;
+  // Chapter order and dates guide progress, never restrict exploration.
+  return true;
 }
 
 export function hasBookChapterTag(tags: readonly string[] | null): boolean {
