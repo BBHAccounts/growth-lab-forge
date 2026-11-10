@@ -134,7 +134,8 @@ export default function AdminUserDetail() {
         // Fetch activated models
         const { data: modelsData } = await supabase
           .from('activated_models')
-          .select('*, models(name)')
+          .select('id, model_id, current_step, completed, updated_at, models!inner(name, tags)')
+          .overlaps('models.tags', Array.from({ length: 15 }, (_, i) => `book-ch${i + 1}`))
           .eq('user_id', userId);
 
         const models = (modelsData || []).map((m) => ({
@@ -143,102 +144,6 @@ export default function AdminUserDetail() {
         }));
         setActivatedModels(models);
 
-        // Fetch all topics to match with user's profile
-        const { data: topicsData } = await supabase
-          .from('topics')
-          .select('*')
-          .eq('active', true);
-
-        // Calculate matched topics based on user profile
-        if (topicsData && profileData) {
-          const matchedTopics: Topic[] = [];
-          
-          topicsData.forEach((topic) => {
-            let isMatch = false;
-            let isAutomatic = true;
-            
-            // Check interest area keywords match
-            if (topic.interest_area_keywords && profileData.interest_areas) {
-              const hasKeywordMatch = topic.interest_area_keywords.some(
-                (keyword: string) => profileData.interest_areas?.includes(keyword)
-              );
-              if (hasKeywordMatch) isMatch = true;
-            }
-            
-            // Check firm type match
-            if (topic.recommended_firm_types && profileData.firm_type) {
-              if (topic.recommended_firm_types.includes(profileData.firm_type)) {
-                isMatch = true;
-              }
-            }
-            
-            // Check firm size match
-            if (topic.recommended_firm_sizes && profileData.firm_size) {
-              if (topic.recommended_firm_sizes.includes(profileData.firm_size)) {
-                isMatch = true;
-              }
-            }
-            
-            // Check maturity levels
-            if (profileData.data_maturity_level !== null) {
-              const dataLevel = profileData.data_maturity_level;
-              if (
-                topic.min_data_maturity !== null &&
-                topic.max_data_maturity !== null &&
-                dataLevel >= topic.min_data_maturity &&
-                dataLevel <= topic.max_data_maturity
-              ) {
-                isMatch = true;
-              }
-            }
-            
-            if (profileData.growth_maturity_level !== null) {
-              const growthLevel = profileData.growth_maturity_level;
-              if (
-                topic.min_growth_maturity !== null &&
-                topic.max_growth_maturity !== null &&
-                growthLevel >= topic.min_growth_maturity &&
-                growthLevel <= topic.max_growth_maturity
-              ) {
-                isMatch = true;
-              }
-            }
-            
-            // Check international scope
-            if (topic.national_or_international && topic.national_or_international.length > 0) {
-              const scope = profileData.international_scope ? 'international' : 'national';
-              if (topic.national_or_international.includes(scope)) {
-                isMatch = true;
-              }
-            }
-            
-            if (isMatch) {
-              matchedTopics.push({
-                id: topic.id,
-                name: topic.name,
-                category_key: topic.category_key,
-                isAutomatic,
-              });
-            }
-          });
-          
-          setLinkedTopics(matchedTopics);
-        }
-
-        // Fetch research contributions
-        const { data: responsesData } = await supabase
-          .from('research_responses')
-          .select('*, research_studies(title)')
-          .eq('user_id', userId);
-
-        const contributions = (responsesData || []).map((r) => ({
-          id: r.id,
-          study_id: r.study_id,
-          study_title: (r.research_studies as { title: string } | null)?.title || 'Unknown Study',
-          completed: r.completed || false,
-          created_at: r.created_at,
-        }));
-        setResearchContributions(contributions);
       } catch (error) {
         console.error('Error fetching user:', error);
         toast({
@@ -434,12 +339,7 @@ export default function AdminUserDetail() {
                   Admin
                 </Badge>
               )}
-              {profile.research_contributor && (
-                <Badge variant="outline" className="flex items-center gap-1">
-                  <FlaskConical className="w-3 h-3" />
-                  Research Contributor
-                </Badge>
-              )}
+
             </div>
             <div className="flex items-center gap-4 text-muted-foreground">
               <span>{profile.email}</span>
@@ -573,100 +473,13 @@ export default function AdminUserDetail() {
                 <Switch checked={isAdmin} onCheckedChange={handleAdminToggle} />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Client</Label>
-                  <p className="text-sm text-muted-foreground">BBH client status</p>
-                </div>
-                <Switch
-                  checked={profile.is_client || false}
-                  onCheckedChange={(checked) => setProfile({ ...profile, is_client: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Research Contributor</Label>
-                  <p className="text-sm text-muted-foreground">Has Research Contributor badge</p>
-                </div>
-                <Switch
-                  checked={profile.research_contributor || false}
-                  onCheckedChange={(checked) =>
-                    setProfile({ ...profile, research_contributor: checked })
-                  }
-                />
-              </div>
             </CardContent>
           </Card>
 
-          {/* Research Contributions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FlaskConical className="w-5 h-5" />
-                Research Contributions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {researchContributions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No research contributions yet</p>
-              ) : (
-                <div className="space-y-2">
-                  {researchContributions.map((contribution) => (
-                    <div
-                      key={contribution.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <span className="font-medium">{contribution.study_title}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={contribution.completed ? 'default' : 'secondary'}>
-                          {contribution.completed ? 'Completed' : 'In Progress'}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(contribution.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Linked Topics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Linked Topics</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Topics matched based on user profile and interests
-              </p>
-            </CardHeader>
-            <CardContent>
-              {linkedTopics.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No topics linked to this user</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {linkedTopics.map((topic) => (
-                    <Badge
-                      key={topic.id}
-                      variant="outline"
-                      className="flex items-center gap-1"
-                    >
-                      {topic.name}
-                      {topic.isAutomatic && (
-                        <span className="text-xs text-muted-foreground">(auto)</span>
-                      )}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Activated Models */}
+          {/* Tool progress */}
           <Card className="md:col-span-2">
             <CardHeader>
-              <CardTitle>Activated Models</CardTitle>
+              <CardTitle>Tool progress</CardTitle>
             </CardHeader>
             <CardContent>
               {activatedModels.length === 0 ? (

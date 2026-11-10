@@ -54,7 +54,7 @@ export default function BookJoin() {
 
   const checking = state.loading || (state.user && !state.error && (state.member || state.needsOnboarding));
   return <BookLayout>
-    <section className="bg-primary text-primary-foreground book-intro">
+    <section className="bg-background text-foreground book-intro">
       <div className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-16 book-enter">
         <p className="book-eyebrow mb-6">The book, put into practice</p>
         <h1 className="book-display text-5xl md:text-7xl mb-6">Beyond the Book</h1>

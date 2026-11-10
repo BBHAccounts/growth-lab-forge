@@ -322,29 +322,6 @@ export default function AdminUserForm() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="is_client">Client</Label>
-                  <p className="text-sm text-muted-foreground">Mark as a client user</p>
-                </div>
-                <Switch
-                  id="is_client"
-                  checked={formData.is_client}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_client: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="research_contributor">Research Contributor</Label>
-                  <p className="text-sm text-muted-foreground">Grant Research Contributor badge</p>
-                </div>
-                <Switch
-                  id="research_contributor"
-                  checked={formData.research_contributor}
-                  onCheckedChange={(checked) => setFormData({ ...formData, research_contributor: checked })}
-                />
-              </div>
             </div>
           </div>
 

@@ -97,7 +97,6 @@ export function ModelSummary({ modelName, emoji, steps, formData, currentStep }:
   return (
     <div className="space-y-6" id="model-summary-content">
       <div className="text-center mb-8">
-        <span className="text-4xl">{emoji}</span>
         <h1 className="text-2xl font-bold mt-2">{modelName}</h1>
         <p className="text-muted-foreground">Summary of your progress</p>
       </div>

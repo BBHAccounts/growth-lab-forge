@@ -25,10 +25,10 @@ interface Settings {
 
 const defaultSettings: Settings = {
   site_name: 'Beyond the Book',
-  tagline: 'Your Growth Partner',
+  tagline: 'The companion to Beyond Billable Hours',
   welcome_modal_text: 'Welcome to Beyond the Book',
-  support_email: 'support@bbh.com',
-  support_url: 'https://bbh.com/contact',
+  support_email: '',
+  support_url: '',
   ai_assistant_global_prompt: '',
   enable_feed: false,
   enable_comments: false,
@@ -78,7 +78,7 @@ export default function AdminSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updates = Object.entries(settings).map(([key, value]) => ({
+      const updates = Object.entries(settings).filter(([key]) => ["site_name", "tagline", "support_email", "support_url", "ai_assistant_global_prompt"].includes(key)).map(([key, value]) => ({
         key,
         value: JSON.stringify(value),
       }));
@@ -202,7 +202,7 @@ export default function AdminSettings() {
           {/* AI Assistant */}
           <Card>
             <CardHeader>
-              <CardTitle>AI Field Assistant</CardTitle>
+              <CardTitle>AI Coach</CardTitle>
               <CardDescription>Global coaching prompt used across all model workspaces</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -221,70 +221,6 @@ export default function AdminSettings() {
             </CardContent>
           </Card>
 
-          {/* Feature Flags */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Feature Flags</CardTitle>
-              <CardDescription>Enable or disable platform features (for future use)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Community Feed</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enable activity feed for the community
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.enable_feed}
-                  onCheckedChange={(checked) => setSettings({ ...settings, enable_feed: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Comments</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow users to comment on models and content
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.enable_comments}
-                  onCheckedChange={(checked) => setSettings({ ...settings, enable_comments: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Member Directory</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Show a directory of platform members
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.enable_member_directory}
-                  onCheckedChange={(checked) =>
-                    setSettings({ ...settings, enable_member_directory: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Live Sessions</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enable live webinar and session features
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.enable_live_sessions}
-                  onCheckedChange={(checked) =>
-                    setSettings({ ...settings, enable_live_sessions: checked })
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </AdminLayout>

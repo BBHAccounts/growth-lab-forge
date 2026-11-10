@@ -89,8 +89,7 @@
   body { @apply bg-background text-foreground; font-family: 'Raleway', sans-serif; }
 }
 .theme-book h1, .theme-book h2 { font-family: 'DM Serif Display', serif; font-weight: 400; line-height: 1.1; letter-spacing: 0; }
-.theme-book h1 { font-size: 32px; }
-.theme-book h2 { font-size: 24px; }
+
 .theme-book input:not([type=checkbox]), .theme-book [role=combobox], .theme-book button:not([role=checkbox]):not([role=tab]), .theme-book a[data-book-control] { border-radius: 999px; }
 .theme-book button, .theme-book input, .theme-book [role=combobox] { min-height: 44px; }
 .theme-book button { box-shadow: none; }

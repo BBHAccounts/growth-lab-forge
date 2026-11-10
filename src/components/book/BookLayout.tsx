@@ -4,11 +4,13 @@ import { NavLink, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, BookOpen, List, Wrench, NotebookPen, UserRound, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useBookEntry } from "@/hooks/use-book-entry";
 import { useBookAudience } from "@/hooks/use-book-audience";
 import { supabase } from "@/integrations/supabase/client";
 
 export function BookLayout({ children, name = "", video = false, onBack }: { children: ReactNode; path?: boolean; name?: string; video?: boolean; onBack?: () => Promise<boolean | void> }) {
   const audience = useBookAudience();
+  const entry = useBookEntry();
   const navigate = useNavigate();
   const back = async () => { if (onBack && await onBack() === false) return; navigate("/book"); };
   return <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -18,7 +20,7 @@ export function BookLayout({ children, name = "", video = false, onBack }: { chi
         <nav aria-label="Book navigation" className="hidden lg:flex items-center gap-1">
           {[["/book", "Path"], ["/book/chapters", "Chapters"], ["/book/tools", "Tools"], ["/book/notes", "My notes"], ...(audience.admin ? [["/admin", "Admin"]] : [])].map(([to, label]) => <Button key={to} variant="ghost" asChild className="text-primary-foreground hover:bg-primary-foreground hover:text-primary"><NavLink to={to} end={to === "/book" || to === "/admin"}>{label}</NavLink></Button>)}
         </nav>
-        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Account menu" className="shrink-0 text-primary-foreground hover:bg-primary-foreground hover:text-primary"><UserRound className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem asChild><Link to="/account">{name || "My account"}</Link></DropdownMenuItem>{audience.admin && <DropdownMenuItem asChild><Link to="/admin">Admin</Link></DropdownMenuItem>}<DropdownMenuItem asChild><Link to="/auth">Sign in</Link></DropdownMenuItem><DropdownMenuItem onClick={async () => { const { error } = await supabase.auth.signOut(); if (!error) navigate("/book/join"); }}><LogOut className="h-4 w-4 mr-2" />Sign out</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label="Account menu" className="shrink-0 text-primary-foreground hover:bg-primary-foreground hover:text-primary"><UserRound className="h-5 w-5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{entry.user && <DropdownMenuItem asChild><Link to="/account">{name || "My account"}</Link></DropdownMenuItem>}{audience.admin && <DropdownMenuItem asChild><Link to="/admin">Admin</Link></DropdownMenuItem>}{!entry.user && <DropdownMenuItem asChild><Link to="/auth">Sign in</Link></DropdownMenuItem>}{entry.user && <DropdownMenuItem onClick={async () => { const { error } = await supabase.auth.signOut(); if (!error) navigate("/book/join"); }}><LogOut className="h-4 w-4 mr-2" />Sign out</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>
       </div>
     </header>
     <main className="flex-1 pb-20 lg:pb-0">{video && <div className="max-w-7xl mx-auto px-6 lg:px-10 pt-6"><Button variant="ghost" onClick={back}><ArrowLeft className="h-5 w-5" />Back to your path</Button></div>}{children}</main>

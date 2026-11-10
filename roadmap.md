@@ -51,7 +51,8 @@
 
 ## Book-only application
 
-- [ ] Replace Growth Lab routes and navigation with one book header and BBH theme throughout.
-- [ ] Retain name and firm onboarding, account controls and tagged tool workspace with safe return routes.
-- [ ] Limit admin navigation and programmes to book surfaces; preserve progress-only note privacy.
-- [ ] Remove obsolete interface-only files, run tests and check desktop/mobile flows without changing stored data.
+- [x] Replace Growth Lab routes and navigation with one book header and BBH theme throughout.
+- [x] Retain name and firm onboarding, account controls and tagged tool workspace with safe return routes.
+- [x] Limit admin navigation and programmes to book surfaces; preserve progress-only note privacy.
+- [x] Remove obsolete interface-only files; 33 rule tests and public/controlled desktop/mobile checks pass. No backend files or stored data were changed.
+- [ ] Real email return, account changes, tool saving/coaching and admin progress checks: blocked because no auth account matches the requesting user. Media playback awaits uploaded videos.

@@ -1,19 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,6 +59,8 @@ export default function ModelWorkspace() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [activeTab, setActiveTab] = useState("work");
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
+  const [saveLabel, setSaveLabel] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -125,6 +116,7 @@ export default function ModelWorkspace() {
       };
       setActivatedModel(parsedActivated);
       setCurrentStep(parsedActivated.current_step);
+      setSaving(false);
       let progress = parsedActivated.progress;
       const draft = localStorage.getItem(`book-tool-draft:${parsedActivated.id}`);
       if (draft) { try { progress = JSON.parse(draft); } catch { /* Keep the saved values if the local draft is invalid. */ } }
@@ -148,10 +140,9 @@ export default function ModelWorkspace() {
       updates.completed = true;
     }
 
-    const { error } = await supabase
-      .from("activated_models")
-      .update(updates)
-      .eq("id", activatedModel.id);
+    const write = saveQueue.current.then(() => supabase.from("activated_models").update(updates).eq("id", activatedModel.id));
+    saveQueue.current = write.catch(() => undefined);
+    const { error } = await write;
 
     if (error) {
       toast({ title: "Error saving progress", description: error.message, variant: "destructive" });
@@ -195,10 +186,16 @@ export default function ModelWorkspace() {
     if (!activatedModel || !id) return;
     const draftKey = `book-tool-draft:${activatedModel.id}`;
     localStorage.setItem(draftKey, JSON.stringify(formData));
+    setSaveLabel("Saving");
     const timer = window.setTimeout(async () => {
       const snapshot = JSON.stringify(formData);
-      const { error } = await supabase.from("activated_models").update({ progress: formData as Json, current_step: currentStep }).eq("id", activatedModel.id);
-      if (!error && localStorage.getItem(draftKey) === snapshot) localStorage.removeItem(draftKey);
+      const write = saveQueue.current.then(() => supabase.from("activated_models").update({ progress: formData as Json }).eq("id", activatedModel.id));
+      saveQueue.current = write.catch(() => undefined);
+      try {
+        const { error } = await write;
+        if (!error && localStorage.getItem(draftKey) === snapshot) { localStorage.removeItem(draftKey); setSaveLabel("Saved"); }
+        else if (error) setSaveLabel("Not saved. Your draft is kept on this device.");
+      } catch { setSaveLabel("Not saved. Your draft is kept on this device."); }
     }, 1000);
     return () => window.clearTimeout(timer);
   }, [formData, activatedModel, currentStep, id]);
@@ -360,7 +357,7 @@ export default function ModelWorkspace() {
     <AppLayout onBookBack={() => saveProgress()}>
       <div className="p-6 md:p-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={async () => { if (await saveProgress()) navigate("/book"); }}>
               <ArrowLeft className="h-5 w-5" />
@@ -376,6 +373,7 @@ export default function ModelWorkspace() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <span role="status" className="text-xs">{saveLabel}</span>
             <Button variant="outline" onClick={() => saveProgress()} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
               {saving ? "Saving..." : "Save"}
@@ -389,11 +387,11 @@ export default function ModelWorkspace() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="work" className="flex items-center gap-2">
               <PenLine className="h-4 w-4" />
-              Work on Model
+              Work on tool
             </TabsTrigger>
             <TabsTrigger value="summary" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              View Summary
+              View summary
             </TabsTrigger>
           </TabsList>
 
@@ -460,7 +458,7 @@ export default function ModelWorkspace() {
               {currentStep === model.steps.length - 1 ? (
                 <Button onClick={handleComplete}>
                   <Check className="h-4 w-4 mr-2" />
-                  Complete Model
+                  Complete tool
                 </Button>
               ) : (
                 <Button onClick={handleNext}>

@@ -27,6 +27,7 @@ export default function Auth() {
       const { data: profile, error } = await supabase.from("profiles").select("full_name, firm_name").eq("user_id", data.session.user.id).maybeSingle();
       if (!live) return;
       if (error) { setError("We could not check your account. Please try again."); return; }
+      sessionStorage.removeItem("book-auth-return");
       navigate(needsBookOnboarding(profile) ? `/onboarding?returnTo=${encodeURIComponent(destination)}` : destination, { replace: true });
     };
     void check();

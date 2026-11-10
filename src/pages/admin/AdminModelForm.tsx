@@ -230,20 +230,6 @@ export default function AdminModelForm() {
         toast({ title: 'Success', description: 'Model updated successfully' });
       }
 
-      // Update linked topics
-      await supabase.from('topic_models').delete().eq('model_id', savedModelId);
-      const linkedTopicIds = topics.filter((t) => t.linked).map((t) => ({ topic_id: t.id, model_id: savedModelId }));
-      if (linkedTopicIds.length > 0) {
-        await supabase.from('topic_models').insert(linkedTopicIds);
-      }
-
-      // Update linked topic categories
-      await supabase.from('model_topic_categories').delete().eq('model_id', savedModelId);
-      const linkedTopicCatIds = topicCategories.filter((tc) => tc.linked).map((tc) => ({ topic_category_id: tc.id, model_id: savedModelId }));
-      if (linkedTopicCatIds.length > 0) {
-        await supabase.from('model_topic_categories').insert(linkedTopicCatIds);
-      }
-
       navigate('/admin/models');
     } catch (error) {
       console.error('Error saving model:', error);

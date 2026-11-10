@@ -8,12 +8,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight } from "lucide-react";
 import { safeAppReturn } from "@/lib/book-routing";
 import { BookLayout } from "@/components/book/BookLayout";
-import { isBookEntry, needsBookOnboarding, rememberBookEntry } from "@/lib/book-entry";
+import { isBookEntry, needsBookOnboarding } from "@/lib/book-entry";
 
 export default function Onboarding() {
   const [params] = useSearchParams();
-  const fromBook = true;
-  const [fullName, setFullName] = useState("");
+    const [fullName, setFullName] = useState("");
   const [firmName, setFirmName] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -25,7 +24,7 @@ export default function Onboarding() {
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate(fromBook ? "/book/join" : "/auth");
+        navigate("/auth");
         return;
       }
       // If already has a name, skip onboarding
@@ -35,22 +34,22 @@ export default function Onboarding() {
         .eq("user_id", user.id)
         .single();
 
-      if (fromBook ? !needsBookOnboarding(profile) : profile?.full_name && profile.full_name.trim() !== '') {
+      if (!needsBookOnboarding(profile)) {
         navigate(isBookEntry(localStorage) ? "/book/join" : safeAppReturn(params.get("returnTo")));
         return;
       }
-      if (fromBook && profile) {
+      if (profile) {
         setFullName(profile.full_name || "");
         setFirmName(profile.firm_name || "");
       }
       setCheckingAuth(false);
     };
     checkAuth();
-  }, [navigate, fromBook]);
+  }, [navigate, params]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || (fromBook && !firmName.trim())) return;
+    if (!fullName.trim() || !firmName.trim()) return;
     
     setLoading(true);
     try {
@@ -80,7 +79,7 @@ export default function Onboarding() {
     setLoading(false);
   };
 
-  if (fromBook) return <BookLayout>
+  return <BookLayout>
     <section className="max-w-5xl mx-auto px-6 md:px-10 py-12 md:py-16 book-enter">
       <p className="book-eyebrow mb-6">Beyond the Book</p>
       {checkingAuth ? <Loader2 role="status" aria-label="Checking your account" className="h-6 w-6 animate-spin" /> : <div className="book-card max-w-xl">

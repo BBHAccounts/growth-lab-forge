@@ -32,7 +32,6 @@ export default function AdminModels() {
   const [models, setModels] = useState<Model[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [unlockFilter, setUnlockFilter] = useState<string>('all');
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -42,10 +41,6 @@ export default function AdminModels() {
         if (statusFilter !== 'all') {
           query = query.eq('status', statusFilter);
         }
-        if (unlockFilter !== 'all') {
-          query = query.eq('unlock_level', unlockFilter);
-        }
-
         const { data, error } = await query;
         if (error) throw error;
         setModels(data || []);
@@ -57,7 +52,7 @@ export default function AdminModels() {
     };
 
     fetchModels();
-  }, [statusFilter, unlockFilter]);
+  }, [statusFilter]);
 
   const columns: Column<Model>[] = [
     {
@@ -66,7 +61,6 @@ export default function AdminModels() {
       sortable: true,
       render: (model) => (
         <div className="flex items-center gap-2">
-          <span>{model.emoji || '📚'}</span>
           <span>{model.name}</span>
         </div>
       ),
@@ -87,14 +81,6 @@ export default function AdminModels() {
             </Badge>
           ))}
         </div>
-      ),
-    },
-    {
-      key: 'unlock_level',
-      header: 'Unlock Level',
-      sortable: true,
-      render: (model) => (
-        <Badge variant="secondary">{model.unlock_level || 'registered'}</Badge>
       ),
     },
     {
@@ -120,8 +106,8 @@ export default function AdminModels() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Models</h1>
-            <p className="text-muted-foreground">Manage toolbox models</p>
+            <h1 className="text-2xl font-bold">Tools and chapters</h1>
+            <p className="text-muted-foreground">Edit book chapters and tools</p>
           </div>
           <Button onClick={() => navigate('/admin/models/new')}>
             <Plus className="w-4 h-4 mr-2" />
@@ -143,18 +129,7 @@ export default function AdminModels() {
             </SelectContent>
           </Select>
 
-          <Select value={unlockFilter} onValueChange={setUnlockFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by unlock level" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Levels</SelectItem>
-              <SelectItem value="public">Public</SelectItem>
-              <SelectItem value="registered">Registered</SelectItem>
-              <SelectItem value="research_contributor">Research Contributor</SelectItem>
-              <SelectItem value="client">Client</SelectItem>
-            </SelectContent>
-          </Select>
+
         </div>
 
         {loading ? (

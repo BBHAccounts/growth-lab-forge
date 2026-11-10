@@ -98,7 +98,7 @@ const EmailVerifiedContent = () => {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[60vh] flex items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Verifying your email...</p>
@@ -109,7 +109,7 @@ const EmailVerifiedContent = () => {
 
   if (needsPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-[60vh] flex items-center justify-center bg-background px-4">
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
             <div className="bg-primary/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
@@ -191,7 +191,7 @@ const EmailVerifiedContent = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="min-h-[60vh] flex items-center justify-center bg-background px-4">
         <div className="max-w-md w-full text-center">
           <div className="bg-destructive/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
             <XCircle className="h-12 w-12 text-destructive" />
@@ -211,14 +211,14 @@ const EmailVerifiedContent = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-[60vh] flex items-center justify-center bg-background px-4">
       <div className="max-w-md w-full text-center">
         <div className="bg-primary/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="h-12 w-12 text-primary" />
         </div>
         
         <h1 className="text-2xl font-bold text-foreground mb-4">
-          Account Ready!
+          Account ready
         </h1>
         
         <p className="text-muted-foreground mb-8">
