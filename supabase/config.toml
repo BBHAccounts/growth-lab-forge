@@ -23,3 +23,6 @@ project_id = "pavcfkubatwuwgrtwqlr"
     verify_jwt = false
   [functions.send-invite-email]
     verify_jwt = false
+
+[functions.preview-transactional-email]
+verify_jwt = false

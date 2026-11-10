@@ -11,3 +11,4 @@
 - Admin book previews read BBHTEST chapter content without creating membership or reading any participant responses; previews never write notes or completion.
 - Book admin response pages use only the admin-checked `book_programme_progress` RPC, returning an explicit progress-only projection; private-note RLS remains intact and ordinary programme responses retain their existing flow.
 - Save book programme chapter order as one-based and ordinary programme task order as zero-based; chapter unlocking uses the persisted order index.
+- Use scaffolded version-pinned email SDK handlers for account email verification and sending; preserve branded templates and leave non-queue third-party senders untouched during the managed email update.

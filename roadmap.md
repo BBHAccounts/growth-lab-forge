@@ -42,3 +42,8 @@
 - [x] Show sortable book progress and CSV export without fetching responses.
 - [x] Verify code, date and privacy rules and admin views: five new tests pass; controlled form save, date picker, join link, progress sorting/export and ordinary response UI checks pass without page errors.
 - [ ] Verify progress RPC with a real admin session and participant data: blocked by unavailable preview session. Read-only database tool cannot execute this auth-only function.
+## Email update
+
+- [x] Inventory account and app senders; no legacy queue files or queue call sites exist.
+- [x] Refresh account handler and preserve six branded templates; scaffold app-email helper and preview.
+- [x] Deploy refreshed account handler and preview; unsigned requests correctly return 401, latest app build is OK and 19 related rule tests pass. No legacy suppression/unsubscribe surfaces exist, so no events receiver is needed. Inbox delivery remains unverified; leave publication to the user.
