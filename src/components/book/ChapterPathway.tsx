@@ -34,15 +34,16 @@ export function ChapterPathway({ path, selected, onSelect }: { path: Path; selec
       points.forEach((point, i) => {
         const previous = points[i - 1];
         if (!previous) { line = `M ${point.x} ${point.y}`; return; }
-        if (Math.abs(point.y - previous.y) > 80) {
+        if (Math.abs(point.y - previous.y) > 40) {
           const side = point.x > bounds.width / 2 ? 1 : -1;
-          const bend = side * Math.min(64, bounds.width / 12);
+          const bend = side * Math.abs(point.y - previous.y) * 0.62;
           line += ` C ${previous.x + bend} ${previous.y}, ${point.x + bend} ${point.y}, ${point.x} ${point.y}`;
         } else {
-          const middle = (previous.x + point.x) / 2;
-          line += ` C ${middle} ${previous.y + 24}, ${middle} ${point.y - 24}, ${point.x} ${point.y}`;
+          line += ` L ${point.x} ${point.y}`;
         }
       });
+      const last = points[points.length - 1];
+      if (last) line += ` L ${last.x} ${last.y + 150}`;
       const index = path.chapters.findIndex(ch => ch.id === selected.id);
       const point = points[index];
       setGeometry({ line, x: point?.x ?? 0, y: (point?.y ?? 0) - 52 });
@@ -58,7 +59,7 @@ export function ChapterPathway({ path, selected, onSelect }: { path: Path; selec
     </div>
     <div className="book-constellation book-dot-grid"><div className="max-w-7xl mx-auto px-6 lg:px-10 py-12 lg:py-16">
       <div ref={trail} className="book-pathway" aria-label="Chapter pathway">
-        <svg className="book-path-connections" aria-hidden="true"><path d={geometry.line} /></svg>
+        <svg className="book-path-connections" aria-hidden="true"><defs><linearGradient id="book-path-gradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" className="book-path-stop-a" /><stop offset="50%" className="book-path-stop-b" /><stop offset="100%" className="book-path-stop-c" /></linearGradient><marker id="book-path-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="2.6" markerHeight="2.6" orient="auto-start-reverse"><path d="M 1 1 L 8 5 L 1 9" className="book-path-arrow" /></marker></defs><path d={geometry.line} markerEnd="url(#book-path-arrow)" /></svg>
         {geometry.line && <span className="book-view-marker" aria-hidden="true" style={{ left: geometry.x, top: geometry.y }} />}
         {path.chapters.map(chapter => {
           const complete = path.states[chapter.id] === "completed";
