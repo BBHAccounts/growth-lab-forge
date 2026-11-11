@@ -192,3 +192,6 @@
  .theme-book .book-join-entry { grid-column:1;grid-row:3;max-width:none; }
 }
 @media(prefers-reduced-motion:reduce) { .theme-book .book-view-marker, .theme-book .book-path-node { transition:none; } }
+.theme-book .book-path-platform { transition:transform 300ms ease; }
+.theme-book .book-path-stop:hover .book-path-platform { transform:translateY(-6px) scale(1.06); }
+@media (prefers-reduced-motion: reduce) { .theme-book .book-path-platform { animation:none !important; transition:none; } .theme-book .book-path-stop:hover .book-path-platform { transform:none; } }
