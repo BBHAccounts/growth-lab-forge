@@ -127,7 +127,7 @@
 .theme-book .book-path-number { font-size:10px; font-weight:600; margin-bottom:12px; }
 .theme-book .book-path-platform { position:relative; height:80px; display:grid; place-items:center; }
 .theme-book .book-path-node { width:80px; height:80px; padding:0; border:2px solid hsl(var(--primary-foreground) / .8); background:hsl(var(--path-node-fill)); color:hsl(var(--primary-foreground)); position:relative; transition:background-color 200ms, color 200ms; }
-.theme-book .book-path-node:hover { background:hsl(var(--primary-foreground)); color:hsl(var(--primary)); }
+.theme-book .book-path-node:hover { background:hsl(var(--primary-foreground)) !important; color:hsl(var(--primary)) !important; }
 .theme-book .book-path-node:focus-visible { outline-color:hsl(var(--primary-foreground)); outline-offset:8px; }
 .theme-book .book-path-node .book-display { font-size:30px; }
 .theme-book .book-path-node.is-complete { background:hsl(var(--primary-foreground)); color:hsl(var(--primary)); }
