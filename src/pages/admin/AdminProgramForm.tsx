@@ -518,7 +518,6 @@ export default function AdminProgramForm() {
             <CardDescription>Basic information about the program</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-2"><Switch id="is_book" checked={formData.is_book} disabled onCheckedChange={checked => setFormData({ ...formData, is_book: checked })} /><Label htmlFor="is_book">is_book</Label></div>
             {formData.is_book && <BookProgramSettings code={formData.join_code || ''} onCode={join_code => setFormData({ ...formData, join_code })} modelCount={programModels.length} onWeeklyDates={date => setProgramModels(prev => weeklyBookDates(prev, date))} />}
             <div className="space-y-2">
               <Label htmlFor="name">Program Name *</Label>
