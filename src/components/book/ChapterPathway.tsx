@@ -42,8 +42,6 @@ export function ChapterPathway({ path, selected, onSelect }: { path: Path; selec
           line += ` L ${point.x} ${point.y}`;
         }
       });
-      const last = points[points.length - 1];
-      if (last) line += ` L ${last.x} ${last.y + 150}`;
       const index = path.chapters.findIndex(ch => ch.id === selected.id);
       const point = points[index];
       setGeometry({ line, x: point?.x ?? 0, y: (point?.y ?? 0) - 52 });
